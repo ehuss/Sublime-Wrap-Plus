@@ -26,12 +26,14 @@ def next_line(view, sr):
 
 
 blank_line_pattern = re.compile("^[\\t ]*\\n?$")
+sep_line_pattern = re.compile("^[\\t \\n!@#$%^&*=+`~'\":;.,?_-]*$")
 # This doesn't always work, but seems decent.
-new_paragraph_pattern = re.compile("^[\\t ]*[][\"!#$%&'()*+,./:;<=>?@^_`{|}~-].*$")
+new_paragraph_pattern = re.compile("^[\\t ]*[][0-9\"!#$%&'()*+,./:;<=>?@^_`{|}~-].*$")
 
 def is_blank_line(view, sr):
     """Determins if the given Region is a "blank" line."""
-    return blank_line_pattern.match(view.substr(sr)) != None
+    line = view.substr(sr)
+    return blank_line_pattern.match(line) != None or sep_line_pattern.match(line) != None
 
 def is_new_paragraph(view, sr, required_prefix=''):
     """Determines if the given Region is the beginning of a new paragraph."""
@@ -119,6 +121,16 @@ def expand_to_paragraph(view, tp):
 
     return sublime.Region(firstr.begin(), last)
 
+def my_full_line(view, region):
+    # Special case scenario where you select an entire line.  The normal
+    # "full_line" function will extend it to contain the next line (because
+    # the cursor is actually at the beginning of the next line).  I would
+    # prefer it didn't do that.
+    if view.substr(region.end()-1) == '\n':
+        return view.full_line(sublime.Region(region.begin(), region.end()-1))
+    else:
+        return view.full_line(region)
+
 def all_paragraphs_intersecting_selection(view, sr):
     """Returns a list of Regions that represent "paragraphs" based on the
     given selection region.
@@ -139,8 +151,8 @@ def all_paragraphs_intersecting_selection(view, sr):
     else:
         # Expand the selection so the beginning starts at the start of a line
         # and the end ends at the end of a line.
-        new_sr = view.full_line(sr)
-        print 'Initial expanded selection=%r: %r' % (new_sr, view.substr(new_sr))
+        new_sr = my_full_line(view, sr)
+        # print 'Initial expanded selection=%r: %r' % (new_sr, view.substr(new_sr))
         # Scanning starts at the beggining.
         para = sublime.Region(new_sr.begin(), new_sr.begin())
         while True:
@@ -187,7 +199,7 @@ def all_paragraphs_intersecting_selection(view, sr):
                     break
                 # Extend the paragraph.
                 para = sublime.Region(para.begin(), line.end())
-            
+
             if para.empty():
                 # print 'Empty paragraph, no paragraphs found in selection.'
                 break
@@ -200,7 +212,7 @@ def all_paragraphs_intersecting_selection(view, sr):
 
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
-    list_prefix_pattern = re.compile('^[ \\t]*[-=*][ \\t]*')
+    list_prefix_pattern = re.compile('^[ \\t]*(([0-9]+\\.)|([-=*]+))[ \\t]*')
     space_prefix_pattern = re.compile('^[ \\t]*')
 
     def extract_prefix(self, sr, tab_width):
@@ -313,7 +325,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 pass
 
         if tab_width == 0:
-            tab_width == 8
+            tab_width = 8
 
         paragraphs = []
         for s in self.view.sel():
