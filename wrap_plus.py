@@ -8,6 +8,10 @@ import comment
 # - Handle > quoted text better.
 #   Would like to treat it like single-line comment (as detected from the comment module).
 # - Would be nice if it knew it was in a multi-line python string.
+# - Don't modify the view if there is no change.
+# - Wrap on a blank line should advance to the next line.
+# - Handle HTML.
+# - Hard tab handling is a little funky.  Particularly with subsequent_indent.
 
 def previous_line(view, sr):
     """sr should be a Region covering the entire hard line"""
@@ -28,20 +32,35 @@ def next_line(view, sr):
 blank_line_pattern = re.compile("^[\\t ]*\\n?$")
 sep_line_pattern = re.compile("^[\\t \\n!@#$%^&*=+`~'\":;.,?_-]*$")
 # This doesn't always work, but seems decent.
-new_paragraph_pattern = re.compile("^[\\t ]*[][0-9\"!#$%&'()*+,./:;<=>?@^_`{|}~-].*$")
+numbered_list = '(?:(?:[0-9#]+[.)]?)+[\\t ])'
+lettered_list = '(?:[\w][.)][\\t ])'
+bullet_list = '(?:[*+-]+[\\t ])'
+header1 = '(:?[=#]+.*)'
+new_paragraph_pattern = re.compile('^[\\t ]*' +
+    '(?:' +
+        '(?:(?:' + numbered_list + '|' + lettered_list + '|' + bullet_list + ').*' + ')|' +
+        header1 + '|' +
+        '(?::.*)'
+    ')$')
+standalone_pattern = re.compile('^[\\t ]*'+header1+'$')
 
-def is_blank_line(view, sr):
-    """Determins if the given Region is a "blank" line."""
-    line = view.substr(sr)
+def is_blank_line(line):
+    """Determins if the given line is a "blank" line."""
     return blank_line_pattern.match(line) != None or sep_line_pattern.match(line) != None
 
-def is_new_paragraph(view, sr, required_prefix=''):
-    """Determines if the given Region is the beginning of a new paragraph."""
-    line = view.substr(sr)
+def is_new_paragraph(line, required_prefix=''):
+    """Determines if the given line is the beginning of a new paragraph."""
     if required_prefix and line.startswith(required_prefix):
         # Trim out the required prefix.
         line = line[len(required_prefix):]
     return new_paragraph_pattern.match(line) != None
+
+def is_standalone(line, required_prefix=''):
+    """Determines if the given line should be on its own (like a header)."""
+    if required_prefix and line.startswith(required_prefix):
+        # Trim out the required prefix.
+        line = line[len(required_prefix):]
+    return standalone_pattern.match(line) != None
 
 def has_prefix(view, line, prefix):
     if not prefix:
@@ -59,7 +78,7 @@ def expand_to_paragraph(view, tp):
     An empty region indicates that there is no paragraph here.
     """
     sr = view.full_line(tp)
-    if is_blank_line(view, sr):
+    if is_blank_line(view.substr(sr)):
         return sublime.Region(tp, tp)
 
     required_prefix = None
@@ -81,39 +100,47 @@ def expand_to_paragraph(view, tp):
     # Move up until we reach a blank line, the previous paragraph, or
     # beginning of view.
     firstr = sr
-    def should_stop(lr):
-        return ((lr == None or is_new_paragraph(view, lr, required_prefix)) or
-                is_blank_line(view, lr) or
+    def is_para_start(lr):
+        line = view.substr(lr)
+        return ((lr == None or is_new_paragraph(line, required_prefix)) or
+                is_blank_line(line) or
                 not has_prefix(view, lr, required_prefix))
 
-    if not should_stop(firstr):
+    if not is_para_start(firstr):
+        # print 'first line is not start of para.'
         while True:
             prev = previous_line(view, firstr)
             if prev==None:
+                # print 'start of view'
                 break
-            if is_blank_line(view, prev):
+            prev_line = view.substr(prev)
+            if is_blank_line(prev_line):
+                # print 'is blank line'
                 break
             if not has_prefix(view, prev, required_prefix):
+                # print 'does not have required prefix'
+                break
+            if is_standalone(prev_line, required_prefix):
+                # print 'is standalone'
                 break
             firstr = prev
-            if is_new_paragraph(view, firstr, required_prefix):
+            if is_new_paragraph(prev_line, required_prefix):
+                # print 'is new para'
                 break
 
-    #print 'First line of expand=%r: %r' % (firstr, view.substr(firstr))
+    # print 'First line of expand=%r: %r' % (firstr, view.substr(firstr))
 
     # Move down until the end of this para.
     last = sr.end()
     next = sr
     while True:
         next = next_line(view, next)
-        # if next!=None:
-            # print 'next line=%r: %r' % (next, view.substr(next))
-            # print 'is_new_p=%r is_blank=%r !has_pref=%r' % (is_new_paragraph(view, next, required_prefix),
-            #                                                is_blank_line(view, next),
-            #                                                not has_prefix(view, next, required_prefix))
 
-        if (next == None or is_new_paragraph(view, next, required_prefix) or
-                is_blank_line(view, next) or
+        if next != None:
+            # print 'next line=%r: %r' % (next, view.substr(next))
+            nextl = view.substr(next)
+        if (next == None or is_new_paragraph(nextl, required_prefix) or
+                is_blank_line(nextl) or
                 not has_prefix(view, next, required_prefix)):
             break
         else:
@@ -167,7 +194,7 @@ def all_paragraphs_intersecting_selection(view, sr):
                     # End of view reached.
                     # print 'End of view while skipping blank lines.'
                     break
-                if is_blank_line(view, line):
+                if is_blank_line(view.substr(line)):
                     # Move the beginning past this blank line.
                     # print 'Skipping blank line.'
                     if line.end() <= new_sr.end():
@@ -191,10 +218,11 @@ def all_paragraphs_intersecting_selection(view, sr):
                 if line.end() > new_sr.end():
                     # print 'Skipping lines reached end of selection line=%r new_sr=%r.' % (line, new_sr)
                     break
-                if is_blank_line(view, line):
+                line_text = view.substr(line)
+                if is_blank_line(line_text):
                     # print 'Is blank line.'
                     break
-                if is_new_paragraph(view, line):
+                if is_new_paragraph(line_text):
                     # print 'Is new para.'
                     break
                 # Extend the paragraph.
@@ -212,7 +240,8 @@ def all_paragraphs_intersecting_selection(view, sr):
 
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
-    list_prefix_pattern = re.compile('^[ \\t]*(([0-9]+\\.)|([-=*]+))[ \\t]*')
+    # XXX
+    list_prefix_pattern = re.compile('^[ \\t]*(([\w]+[.)])+|([-+*#]+))[ \\t]*')
     space_prefix_pattern = re.compile('^[ \\t]*')
 
     def extract_prefix(self, sr, tab_width):
@@ -326,6 +355,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         if tab_width == 0:
             tab_width = 8
+        # print 'tab_width=%r' % (tab_width,)
 
         paragraphs = []
         for s in self.view.sel():
@@ -353,7 +383,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if init_prefix or subsequent_prefix:
                     wrapper.initial_indent = init_prefix
                     wrapper.subsequent_indent = subsequent_prefix
-                    #wrapper.width -= self.width_in_spaces(init_prefix, tab_width)
+                    wrapper.width -= self.width_in_spaces(init_prefix, tab_width)
 
                 if wrapper.width < 0:
                     continue
@@ -365,6 +395,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # XXX: Need to think about this.
                 txt = string.expandtabs(txt, tab_width)
 
+                # print 'wrapping %r, init=%r, subseq=%r width=%r' % (txt, wrapper.initial_indent, wrapper.subsequent_indent, wrapper.width)
                 txt = wrapper.fill(txt) + u"\n"
                 self.view.replace(edit, s, txt)
 
