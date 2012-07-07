@@ -71,6 +71,20 @@ def has_prefix(view, line, prefix):
 
     return line_start == prefix
 
+def determine_required_prefix(view, line_begin):
+    required_prefix = None
+    (line_comments, block_comments) = comment.build_comment_data(view, line_begin)
+    #print 'line_comments=%r block_comments=%r' % (line_comments, block_comments)
+    dataStart = comment.advance_to_first_non_white_space_on_line(view, line_begin)
+    for c in line_comments:
+        (start, disable_indent) = c
+        comment_region = sublime.Region(dataStart,
+                                        dataStart + len(start))
+        if view.substr(comment_region) == start:
+            required_prefix = view.substr(sublime.Region(line_begin, comment_region.end()))
+            break
+    return required_prefix
+
 def expand_to_paragraph(view, tp):
     """
     Returns a region representing a "paragraph" surrounding the given text point.
@@ -81,20 +95,9 @@ def expand_to_paragraph(view, tp):
     if is_blank_line(view.substr(sr)):
         return sublime.Region(tp, tp)
 
-    required_prefix = None
-
     # If the current line starts with a comment, only select lines that are
     # also commented.
-    (line_comments, block_comments) = comment.build_comment_data(view, tp)
-    #print 'line_comments=%r block_comments=%r' % (line_comments, block_comments)
-    dataStart = comment.advance_to_first_non_white_space_on_line(view, sr.begin())
-    for c in line_comments:
-        (start, disable_indent) = c
-        comment_region = sublime.Region(dataStart,
-                                        dataStart + len(start))
-        if view.substr(comment_region) == start:
-            required_prefix = view.substr(sublime.Region(sr.begin(), comment_region.end()))
-            break
+    required_prefix = determine_required_prefix(view, sr.begin())
     #print 'required_prefix=%r' % (required_prefix,)
 
     # Move up until we reach a blank line, the previous paragraph, or
@@ -207,6 +210,9 @@ def all_paragraphs_intersecting_selection(view, sr):
                     para = view.full_line(para)
                     # print 'Found non-blank line.'
                     break
+
+            required_prefix = determine_required_prefix(view, para.begin())
+
             # Skip till a "blank" line, or a "new paragraph" line or end of selection.
             while True:
                 line = next_line(view, para)
@@ -222,8 +228,11 @@ def all_paragraphs_intersecting_selection(view, sr):
                 if is_blank_line(line_text):
                     # print 'Is blank line.'
                     break
-                if is_new_paragraph(line_text):
+                if is_new_paragraph(line_text, required_prefix):
                     # print 'Is new para.'
+                    break
+                if not has_prefix(view, line, required_prefix):
+                    # print 'Does not have prefix.'
                     break
                 # Extend the paragraph.
                 para = sublime.Region(para.begin(), line.end())
