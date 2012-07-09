@@ -8,7 +8,6 @@ import comment
 # - Handle > quoted text better.
 #   Would like to treat it like single-line comment (as detected from the comment module).
 # - Would be nice if it knew it was in a multi-line python string.
-# - Don't modify the view if there is no change.
 # - Wrap on a blank line should advance to the next line.
 # - Handle HTML.
 # - Hard tab handling is a little funky.  Particularly with subsequent_indent.
@@ -36,16 +35,19 @@ numbered_list = '(?:(?:[0-9#]+[.)]?)+[\\t ])'
 lettered_list = '(?:[\w][.)][\\t ])'
 bullet_list = '(?:[*+-]+[\\t ])'
 header1 = '(:?[=#]+.*)'
+# Hack for python triple quote for now.
+python_triple_quote = '(:?(:?(:?""")|(:?\'\'\')).*)'
 new_paragraph_pattern = re.compile('^[\\t ]*' +
     '(?:' +
         '(?:(?:' + numbered_list + '|' + lettered_list + '|' + bullet_list + ').*' + ')|' +
         header1 + '|' +
+        python_triple_quote + '|' +
         '(?::.*)'
     ')$')
-standalone_pattern = re.compile('^[\\t ]*'+header1+'$')
+standalone_pattern = re.compile('^[\\t ]*'+header1+ '|' + python_triple_quote + '$')
 
 def is_blank_line(line):
-    """Determins if the given line is a "blank" line."""
+    """Determines if the given line is a "blank" line."""
     return blank_line_pattern.match(line) != None or sep_line_pattern.match(line) != None
 
 def is_new_paragraph(line, required_prefix=''):
@@ -392,7 +394,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if init_prefix or subsequent_prefix:
                     wrapper.initial_indent = init_prefix
                     wrapper.subsequent_indent = subsequent_prefix
-                    wrapper.width -= self.width_in_spaces(init_prefix, tab_width)
+                    # XXX: Handle tabs.
+                    #wrapper.width -= self.width_in_spaces(init_prefix, tab_width)
 
                 if wrapper.width < 0:
                     continue
@@ -406,7 +409,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 # print 'wrapping %r, init=%r, subseq=%r width=%r' % (txt, wrapper.initial_indent, wrapper.subsequent_indent, wrapper.width)
                 txt = wrapper.fill(txt) + u"\n"
-                self.view.replace(edit, s, txt)
+                replaced_txt = self.view.substr(s)
+                if txt != replaced_txt:
+                    self.view.replace(edit, s, txt)
 
             # Move cursor below the last paragraph.
             end = self.view.sel()[-1].end()
