@@ -1,6 +1,6 @@
 Sublime Wrap Plus
 =================
-Enhanced "wrap lines" command for Sublime Text 2.
+Enhanced "wrap lines" command for Sublime Text 2.  This is for the *manual* hard line wrap command (Alt-Q in Windows, Command-Alt-Q in OS X).  It does not affect the automatic soft line wrapping.
 
 Downloading
 -----------
@@ -19,7 +19,7 @@ No need to configure anything.  By default it uses the default keystroke for wra
 * Windows/Linux: Alt+Q
 * OS X: Super+Alt+Q
 
-If you want to use a different keystroke, go to "Preferences" then "Key Bindings - User", and enter something like this:
+If you want to use a different keystroke, go to "Preferences" then "Key Bindings - User", and add an entry like this:
 
 	{ "keys": ["alt+q"], "command": "wrap_lines_plus" },
 
