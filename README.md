@@ -4,7 +4,18 @@ Enhanced "wrap lines" command for Sublime Text 2.  This is for the *manual* hard
 
 Downloading
 -----------
-The best way to download and install Sublime Wrap Plus is to use the Package Control plugin.  TBD
+The best way to download and install Sublime Wrap Plus is to use the Package Control plugin.  If you do not already have it installed, it's really the best way to manage your packages.
+
+For users new to the package manager:
+* Go to http://wbond.net/sublime_packages/package_control and install Package Control.
+* Restart Sublime Text 2.
+
+Install Sublime Wrap Plus:
+* Bring up the Command Palette (`Command+Shift+P` on OS X, `Control+Shift+P` on Linux/Windows).
+* Select "Package Control: Install Package" and wait while Package Control fetches the latest package list.
+* Select Wrap Plus when the list appears.
+
+Package Control will handle automatically updating your packages.
 
 Alternatively, you can fetch from github:
 
