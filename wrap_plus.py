@@ -27,6 +27,10 @@ def next_line(view, sr):
     else:
         return view.full_line(sr.end())
 
+def OR(*args):
+    return '(?:' + '|'.join(args) + ')'
+def CONCAT(*args):
+    return '(?:' + ''.join(args) + ')'
 
 blank_line_pattern = re.compile("^[\\t ]*\\n?$")
 sep_line_pattern = re.compile("^[\\t \\n!@#$%^&*=+`~'\":;.,?_-]*$")
@@ -35,16 +39,18 @@ numbered_list = '(?:(?:[0-9#]+[.)]?)+[\\t ])'
 lettered_list = '(?:[\w][.)][\\t ])'
 bullet_list = '(?:[*+-]+[\\t ])'
 header1 = '(:?[=#]+.*)'
+header2 = '(:?\\\\.*)'
 # Hack for python triple quote for now.
 python_triple_quote = '(:?(:?(:?""")|(:?\'\'\')).*)'
 new_paragraph_pattern = re.compile('^[\\t ]*' +
-    '(?:' +
-        '(?:(?:' + numbered_list + '|' + lettered_list + '|' + bullet_list + ').*' + ')|' +
-        header1 + '|' +
-        python_triple_quote + '|' +
+    OR(
+        CONCAT(OR(numbered_list, lettered_list, bullet_list), '.*'),
+        header1, header2,
+        python_triple_quote,
         '(?::.*)'
-    ')$')
-standalone_pattern = re.compile('^[\\t ]*'+header1+ '|' + python_triple_quote + '$')
+      ) +
+    '$')
+standalone_pattern = re.compile('^[\\t ]*' + OR(header1, header2, python_triple_quote) + '$')
 
 def is_blank_line(line):
     """Determines if the given line is a "blank" line."""

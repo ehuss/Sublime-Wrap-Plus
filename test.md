@@ -101,3 +101,11 @@ quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
 consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
 cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
 proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+The quadratic form $\mN$ for the integration of the squared norm of an $m$-dimensional linear function on any simplex $\Omega$ of dimension $n$ can therefore be written as
+\begin{align}
+\label{eq:integration_matrix}
+\mN &= \Factorial{n} \, \vol{\Omega} \, \Transpose{\mP} \inp{\mH^0_n \otimes \IdentityMatrix_m} \, \mP \nonumber\\%
+    &= \Factorial{n} \, \vol{\Omega} \, \mN^0~.
+\end{align}
+The discrete $L^2$-product of piecewise-linear functions on a simplical complexes is obtained by assembling the quadratic forms $\mN$ of each simplex into an operator $\mM$ on the whole complex.
