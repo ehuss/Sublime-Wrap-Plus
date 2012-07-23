@@ -109,3 +109,9 @@ The quadratic form $\mN$ for the integration of the squared norm of an $m$-dimen
     &= \Factorial{n} \, \vol{\Omega} \, \mN^0~.
 \end{align}
 The discrete $L^2$-product of piecewise-linear functions on a simplical complexes is obtained by assembling the quadratic forms $\mN$ of each simplex into an operator $\mM$ on the whole complex.
+
+.. data:: sample
+    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+.. data:: sample2
+    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+
