@@ -1,347 +1,323 @@
 import sublime, sublime_plugin
-import string
 import textwrap
 import re
 import comment
 
-# Ideas for improvements:
-# - Handle > quoted text better.
-#   Would like to treat it like single-line comment (as detected from the comment module).
-# - Would be nice if it knew it was in a multi-line python string.
-# - Wrap on a blank line should advance to the next line.
-# - Handle HTML.
-# - Hard tab handling is a little funky.  Particularly with subsequent_indent.
+def is_quoted_string(scope_r, scope_name):
+    return 'quoted' in scope_name
 
-def previous_line(view, sr):
-    """sr should be a Region covering the entire hard line"""
-    if sr.begin() == 0:
-        return None
-    else:
-        return view.full_line(sr.begin() - 1)
+class PrefixStrippingView(object):
+    single_line_comment = ''
+    required_comment_prefix = ''
+    required_comment_pattern = None
 
-def next_line(view, sr):
-    """sr should be a Region covering the entire hard line, including
-    the newline"""
-    if sr.end() == view.size():
-        return None
-    else:
-        return view.full_line(sr.end())
+    def __init__(self, view, min, max):
+        self.view = view
+        self.min = min
+        self.max = max
+
+    def set_comments(self, lc, bc, pt):
+        self.lc = lc
+        self.bc = bc
+        # If the line at pt is a comment line, set required_comment_prefix to
+        # the comment prefix.
+        self.required_comment_prefix = ''
+        # Grab the line.
+        line_r = self.view.line(pt)
+        line = self.view.substr(line_r)
+        line_strp = line.strip()
+        if not line_strp:
+            # Empty line, nothing to do.
+            # print 'Empty line, no comment characters found.'
+            return
+        # XXX: What is disable_indent?
+        for start, disable_indent in lc:
+            if line_strp.startswith(start):
+                self.single_line_comment = start
+                ldiff = len(line) - len(line.lstrip())
+                p = line[:ldiff+len(start)]
+                self.required_comment_prefix = p
+                break
+
+        # Handle email-style quoting.
+        if not self.required_comment_prefix:
+            m = email_quote_pattern.match(line)
+            if m:
+                self.required_comment_prefix = m.group()
+                self.required_comment_pattern = email_quote_pattern
+                # print 'doing email style quoting'
+
+        scope_r = self.view.extract_scope(pt)
+        scope_name = self.view.scope_name(pt)
+
+        # Check for crazy C style commenting.
+        if 'comment.block.c' in scope_name:
+            first_star_prefix = None
+            lines = self.view.lines(scope_r)
+            for line_r in lines[1:-1]:
+                line = self.view.substr(line_r)
+                m = funny_c_comment_pattern.match(line)
+                if m != None:
+                    if first_star_prefix == None:
+                        first_star_prefix = m.group()
+                else:
+                    first_star_prefix = None
+                    break
+            if first_star_prefix:
+                self.required_comment_prefix = first_star_prefix
+            # Narrow the scope.
+            self.min = max(self.min, scope_r.begin())
+            self.max = min(self.max, scope_r.end())
+
+        # print 'required_comment_prefix determined to be %r' % (self.required_comment_prefix,)
+
+        # Narrow the min/max range if inside a "quoted" string.
+        if is_quoted_string(scope_r, scope_name):
+            # Narrow the range.
+            self.min = max(self.min, scope_r.begin())
+            self.max = min(self.max, scope_r.end())
+
+    def line(self, where):
+        """Get a line for a point.
+
+        :returns: A (region, str) tuple.  str has the comment prefix stripped.
+        """
+        line_r = self.view.line(where)
+        if line_r.begin() < self.min:
+            line_r = sublime.Region(self.min, line_r.end())
+        if line_r.end() > self.max:
+            line_r = sublime.Region(line_r.begin(), self.max)
+        line = self.view.substr(line_r)
+        if self.required_comment_prefix:
+            if line.startswith(self.required_comment_prefix):
+                # Check for an insufficient prefix.
+                if self.required_comment_pattern:
+                    m = self.required_comment_pattern.match(line)
+                    if m:
+                        if m.group() != self.required_comment_prefix:
+                            return None, None
+                    else:
+                        # This should never happen (matches the string but not
+                        # the regex?).
+                        return None, None
+                l = len(self.required_comment_prefix)
+                line = line[l:]
+            else:
+                return None, None
+        return line_r, line
+
+    def substr(self, r):
+        return self.view.substr(r)
+
+    def next_line(self, where):
+        l_r = self.view.line(where)
+        pt = l_r.end()+1
+        if pt >= self.max:
+            return None, None
+        return self.line(pt)
+
+    def prev_line(self, where):
+        l_r = self.view.line(where)
+        pt = l_r.begin()-1
+        if pt <= self.min:
+            return None, None
+        return self.line(pt)
 
 def OR(*args):
     return '(?:' + '|'.join(args) + ')'
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-blank_line_pattern = re.compile("^[\\t ]*\\n?$")
-sep_line_pattern = re.compile("^[\\t \\n!@#$%^&*=+`~'\":;.,?_-]*$")
+blank_line_pattern = re.compile("^[\\t \\n]*$")
+
 # This doesn't always work, but seems decent.
 numbered_list = '(?:(?:[0-9#]+[.)]?)+[\\t ])'
 lettered_list = '(?:[\w][.)][\\t ])'
-bullet_list = '(?:[*+-]+[\\t ])'
-header1 = '(:?[=#]+)'
-header2 = '(:?\\\\)'
+bullet_list = '(?:[*+#-]+[\\t ])'
+list_pattern = re.compile('^[ \\t]*' + OR(numbered_list, lettered_list, bullet_list) + '[ \\t]*')
+latex_hack = '(:?\\\\)'
 rest_directive = '(:?\\.\\.)'
-rest_field_name = '(?::)'
-# Hack for python triple quote for now.
-python_triple_quote = '(:?(:?""")|(:?\'\'\'))'
+rest_field_start = '(?::)'
 new_paragraph_pattern = re.compile('^[\\t ]*' +
-    CONCAT(OR(numbered_list, lettered_list, bullet_list, header1, header2,
-              rest_directive, python_triple_quote, rest_field_name), '.*') +
+    CONCAT(OR(numbered_list, lettered_list, bullet_list,
+              rest_field_start), '.*') +
     '$')
-standalone_pattern = re.compile('^[\\t ]*' + OR(header1, header2, rest_directive, python_triple_quote) + '.*$')
+space_prefix_pattern = re.compile('^[ \\t]*')
+# XXX: Does not handle escaped colons in field name.
+rest_field_pattern = re.compile('^([ \\t]*):[^:]+:')
 
-def is_blank_line(line):
-    """Determines if the given line is a "blank" line."""
-    return blank_line_pattern.match(line) != None or sep_line_pattern.match(line) != None
+sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
+sep_line = '[' + sep_chars + ']+[ \\t'+sep_chars+']*'
 
-def is_new_paragraph(line, required_prefix=''):
-    """Determines if the given line is the beginning of a new paragraph."""
-    if required_prefix and line.startswith(required_prefix):
-        # Trim out the required prefix.
-        line = line[len(required_prefix):]
-    return new_paragraph_pattern.match(line) != None
+# Break pattern is a little ambiguous.  Something like "# Header" could also be a list element.
+break_pattern = re.compile('^[\\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
+pure_break_pattern = re.compile('^[\\t ]*' + sep_line + '$')
 
-def is_standalone(line, required_prefix=''):
-    """Determines if the given line should be on its own (like a header)."""
-    if required_prefix and line.startswith(required_prefix):
-        # Trim out the required prefix.
-        line = line[len(required_prefix):]
-    return standalone_pattern.match(line) != None
-
-def has_prefix(view, line, prefix):
-    if not prefix:
-        return True
-
-    line_start = view.substr(sublime.Region(line.begin(),
-        line.begin() + len(prefix)))
-
-    return line_start == prefix
-
-def determine_required_prefix(view, line_begin):
-    required_prefix = None
-    (line_comments, block_comments) = comment.build_comment_data(view, line_begin)
-    #print 'line_comments=%r block_comments=%r' % (line_comments, block_comments)
-    dataStart = comment.advance_to_first_non_white_space_on_line(view, line_begin)
-    for c in line_comments:
-        (start, disable_indent) = c
-        comment_region = sublime.Region(dataStart,
-                                        dataStart + len(start))
-        if view.substr(comment_region) == start:
-            required_prefix = view.substr(sublime.Region(line_begin, comment_region.end()))
-            break
-    return required_prefix
-
-def expand_to_paragraph(view, tp):
-    """
-    Returns a region representing a "paragraph" surrounding the given text point.
-
-    An empty region indicates that there is no paragraph here.
-    """
-    sr = view.full_line(tp)
-    if is_blank_line(view.substr(sr)):
-        return sublime.Region(tp, tp)
-
-    # If the current line starts with a comment, only select lines that are
-    # also commented.
-    required_prefix = determine_required_prefix(view, sr.begin())
-    #print 'required_prefix=%r' % (required_prefix,)
-
-    # Move up until we reach a blank line, the previous paragraph, or
-    # beginning of view.
-    firstr = sr
-    def is_para_start(lr):
-        line = view.substr(lr)
-        return ((lr == None or is_new_paragraph(line, required_prefix)) or
-                is_blank_line(line) or
-                not has_prefix(view, lr, required_prefix))
-
-    if not is_para_start(firstr):
-        # print 'first line is not start of para.'
-        while True:
-            prev = previous_line(view, firstr)
-            if prev==None:
-                # print 'start of view'
-                break
-            prev_line = view.substr(prev)
-            if is_blank_line(prev_line):
-                # print 'is blank line'
-                break
-            if not has_prefix(view, prev, required_prefix):
-                # print 'does not have required prefix'
-                break
-            if is_standalone(prev_line, required_prefix):
-                # print 'is standalone'
-                break
-            firstr = prev
-            if is_new_paragraph(prev_line, required_prefix):
-                # print 'is new para'
-                break
-
-    # print 'First line of expand=%r: %r' % (firstr, view.substr(firstr))
-
-    # Move down until the end of this para.
-    last = sr.end()
-    next = sr
-    while True:
-        next = next_line(view, next)
-
-        if next != None:
-            # print 'next line=%r: %r' % (next, view.substr(next))
-            nextl = view.substr(next)
-        if (next == None or is_new_paragraph(nextl, required_prefix) or
-                is_blank_line(nextl) or
-                not has_prefix(view, next, required_prefix)):
-            break
-        else:
-            last = next.end()
-
-    return sublime.Region(firstr.begin(), last)
-
-def my_full_line(view, region):
-    # Special case scenario where you select an entire line.  The normal
-    # "full_line" function will extend it to contain the next line (because
-    # the cursor is actually at the beginning of the next line).  I would
-    # prefer it didn't do that.
-    if view.substr(region.end()-1) == '\n':
-        return view.full_line(sublime.Region(region.begin(), region.end()-1))
-    else:
-        return view.full_line(region)
-
-def all_paragraphs_intersecting_selection(view, sr):
-    """Returns a list of Regions that represent "paragraphs" based on the
-    given selection region.
-
-    Empty selection regions try to be "smart" and look up and down to
-    determine an entire paragraph.
-
-    Non-empty selection regions are hard-fixed to begin at the beggining of
-    the line (of the beginning of the selection) towards the end of the line
-    (at the end of the selection), and then try to determine if there are
-    multiple paragraphs in between (each paragraph is wrapped separately).
-    """
-    paragraphs = []
-    if sr.empty():
-        para = expand_to_paragraph(view, sr.begin())
-        if not para.empty():
-            paragraphs.append(para)
-    else:
-        # Expand the selection so the beginning starts at the start of a line
-        # and the end ends at the end of a line.
-        new_sr = my_full_line(view, sr)
-        # print 'Initial expanded selection=%r: %r' % (new_sr, view.substr(new_sr))
-        # Scanning starts at the beggining.
-        para = sublime.Region(new_sr.begin(), new_sr.begin())
-        while True:
-            if para.end() > new_sr.end():
-                # Went past the end of selection.
-                # print 'Past end of selection.'
-                break
-            # Skip "blank" lines.
-            while True:
-                line = next_line(view, para)
-                if line == None:
-                    # End of view reached.
-                    # print 'End of view while skipping blank lines.'
-                    break
-                if is_blank_line(view.substr(line)):
-                    # Move the beginning past this blank line.
-                    # print 'Skipping blank line.'
-                    if line.end() <= new_sr.end():
-                        para = sublime.Region(line.end(), line.end())
-                    else:
-                        # print 'Skipping blank line moved past selection.'
-                        break
-                else:
-                    # Paragraph begins here.
-                    para = view.full_line(para)
-                    # print 'Found non-blank line.'
-                    break
-
-            required_prefix = determine_required_prefix(view, para.begin())
-
-            # Skip till a "blank" line, or a "new paragraph" line or end of selection.
-            while True:
-                line = next_line(view, para)
-                if line == None:
-                    # End of view reached, no more new lines.
-                    # print 'no next line.'
-                    break
-                # print 'next_line=%r' % (view.substr(line))
-                if line.end() > new_sr.end():
-                    # print 'Skipping lines reached end of selection line=%r new_sr=%r.' % (line, new_sr)
-                    break
-                line_text = view.substr(line)
-                if is_blank_line(line_text):
-                    # print 'Is blank line.'
-                    break
-                if is_new_paragraph(line_text, required_prefix):
-                    # print 'Is new para.'
-                    break
-                if not has_prefix(view, line, required_prefix):
-                    # print 'Does not have prefix.'
-                    break
-                # Extend the paragraph.
-                para = sublime.Region(para.begin(), line.end())
-
-            if para.empty():
-                # print 'Empty paragraph, no paragraphs found in selection.'
-                break
-            else:
-                # print 'Adding paragraph %r: %r' % (para, view.substr(para))
-                paragraphs.append(para)
-                para = sublime.Region(para.end()+1, para.end()+1)
-
-    return paragraphs
-
+email_quote_pattern = re.compile('^[\\t ]*>[> \\t]*')
+funny_c_comment_pattern = re.compile('^[\\t ]*\* ')
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
-    # XXX
-    list_prefix_pattern = re.compile('^[ \\t]*(([\w]+[.)])+|([-+*#]+))[ \\t]*')
-    space_prefix_pattern = re.compile('^[ \\t]*')
 
-    def extract_prefix(self, sr, tab_width):
-        """Determine the initial and subsequent prefixes for the given region.
-        """
-        line_regions = self.view.split_by_newlines(sr)
-        if len(line_regions) == 0:
-            # XXX: When does this happen?
-            return None, None, ''
-
-        # If the first line starts with a line-comment, then assume all lines will be comments.
-        comment_prefix = ''
-        first_tp = line_regions[0].begin()
-        (line_comments, block_comments) = comment.build_comment_data(self.view, first_tp)
-        # print 'line_comments=%r block_comments=%r' % (line_comments, block_comments)
-        dataStart = comment.advance_to_first_non_white_space_on_line(self.view, first_tp)
-        for c in line_comments:
-            (start, disable_indent) = c
-            comment_region = sublime.Region(dataStart,
-                                            dataStart + len(start))
-            if self.view.substr(comment_region) == start:
-                comment_prefix = self.view.substr(sublime.Region(first_tp, comment_region.end()))
-                break
-        # print 'comment_prefix=%r' % (comment_prefix,)
-
-        lines = [self.view.substr(lr) for lr in line_regions]
-        if comment_prefix:
-            def filter_comment_prefix(x):
-                if x.startswith(comment_prefix):
-                    return x[len(comment_prefix):]
-                else:
-                    return x
-            lines = map(filter_comment_prefix, lines)
-
-
-        first_line = lines[0]
-
-        # If the first line starts with a list-like thing, then that will be the initial prefix.
-        list_prefix_match = self.list_prefix_pattern.match(first_line)
-        if list_prefix_match:
-            initial_prefix = first_line[0:list_prefix_match.end()]
-            # print 'List prefix match %r' % (initial_prefix,)
-            # XXX: Replace spaces with tabs when appropriate.
-            subsequent_prefix = ' '*self.width_in_spaces(initial_prefix, tab_width)
+    def _my_full_line(self, region):
+        # Special case scenario where you select an entire line.  The normal
+        # "full_line" function will extend it to contain the next line
+        # (because the cursor is actually at the beginning of the next line).
+        # I would prefer it didn't do that.
+        if self.view.substr(region.end()-1) == '\n':
+            return self.view.full_line(sublime.Region(region.begin(), region.end()-1))
         else:
-            space_prefix_match = self.space_prefix_pattern.match(first_line)
-            if space_prefix_match:
-                initial_prefix = first_line[0:space_prefix_match.end()]
-                if len(lines) > 1:
-                    subsequent_prefix_match = self.space_prefix_pattern.match(lines[1])
-                    if subsequent_prefix_match:
-                        subsequent_prefix = lines[1][0:subsequent_prefix_match.end()]
-                    else:
-                        subsequent_prefix = ''
-                else:
-                    subsequent_prefix = initial_prefix
+            return self.view.full_line(region)
+
+    def _is_paragraph_start(self, line_r, line):
+        # Certain patterns at the beginning of the line indicate this is the
+        # beginning of a paragraph.
+        return new_paragraph_pattern.match(line) != None
+
+    def _is_paragraph_break(self, line_r, line, pure=False):
+        """A paragraph "break" is something like a blank line, or a horizontal line,
+        or anything that  should not be wrapped and treated like a blank line
+        (i.e. ignored).
+        """
+        if self._is_blank_line(line): return True
+        scope_name = self.view.scope_name(line_r.begin())
+        # print 'scope_name=%r (%r)' % (scope_name, line_r)
+        if 'heading' in scope_name:
+            return True
+        if pure:
+            return pure_break_pattern.match(line) != None
+        else:
+            return break_pattern.match(line) != None
+
+    def _is_blank_line(self, line):
+        return blank_line_pattern.match(line) != None
+
+    def _find_paragraph_start(self, pt):
+        """Start at pt and move up to find where the paragraph starts.
+
+        :returns: The (line, line_region) of the start of the paragraph.
+        """
+        view = self._strip_view
+        current_line_r, current_line = view.line(pt)
+        if self._is_paragraph_break(current_line_r, current_line):
+            return current_line_r, current_line
+        while 1:
+            # Check if this line is the start of a paragraph.
+            if self._is_paragraph_start(current_line_r, current_line):
+                # print 'current_line is paragraph start: %r' % (current_line,)
+                break
+            # Check if the previous line is a "break" separator.
+            prev_line_r, prev_line = view.prev_line(current_line_r)
+            if prev_line_r == None:
+                # current_line is as far up as we're allowed to go.
+                break
+            if self._is_paragraph_break(prev_line_r, prev_line):
+                # print 'prev line %r is a paragraph break' % (prev_line,)
+                break
+            # print 'prev_line %r is part of the paragraph' % (prev_line,)
+            # Previous line is a part of this paragraph.  Add it, and loop
+            # around again.
+            current_line_r = prev_line_r
+            current_line = prev_line
+        return current_line_r, current_line
+
+    def _find_paragraphs(self, sr):
+        """Find and return a list of paragraphs as regions.
+
+        :param Region sr: The region where to look for paragraphs.  If it is
+            an empty region, "discover" where the paragraph starts and ends.
+            Otherwise, the region defines the max and min (with potentially
+            several paragraphs contained within).
+
+        :returns: A list of (region, lines, comment_prefix) of each paragraph.
+        """
+        result = []
+        # print 'find paragraphs sr=%r' % (sr,)
+        if sr.empty():
+            is_empty = True
+            min = 0
+            max = self.view.size()
+        else:
+            is_empty = False
+            full_sr = self._my_full_line(sr)
+            min = full_sr.begin()
+            max = full_sr.end()
+        self._strip_view = PrefixStrippingView(self.view, min, max)
+        view = self._strip_view
+        # Loop for each paragraph (only loops once if sr is empty).
+        paragraph_start_pt = sr.begin()
+        while 1:
+            # print 'paragraph scanning start %r.' % (paragraph_start_pt,)
+            view.set_comments(self._lc, self._bc, paragraph_start_pt)
+            lines = []
+            if is_empty:
+                # Find the beginning of this paragraph.
+                # print 'empty sel finding paragraph start.'
+                current_line_r, current_line = self._find_paragraph_start(paragraph_start_pt)
+                # print 'empty sel paragraph start determined to be %r %r' % (current_line_r, current_line)
             else:
-                return None, None, u'\n'.join(lines)
-        # print 'initial_prefix=%r subsequent_prefix=%r' % (initial_prefix, subsequent_prefix)
+                # The selection defines the beginning.
+                current_line_r, current_line = view.line(paragraph_start_pt)
+                # print 'sel beggining = %r %r' % (current_line_r, current_line)
 
-        # Fix up the lines.
-        new_lines = []
-        new_lines.append(first_line[len(initial_prefix):])
-        for line in lines[1:]:
-            if line.startswith(subsequent_prefix):
-                line = line[len(subsequent_prefix):]
-            new_lines.append(line)
+            # Skip blank and unambiguous break lines.
+            while 1:
+                if not self._is_paragraph_break(current_line_r, current_line, pure=True):
+                    break
+                if is_empty:
+                    # print 'empty sel on paragraph break %r' % (current_line,)
+                    return []
+                current_line_r, current_line = view.next_line(current_line_r)
 
-        # print 'new_lines=%r' % (new_lines,)
-        return (comment_prefix+initial_prefix,
-                comment_prefix+subsequent_prefix,
-                u'\n'.join(new_lines)
-               )
+            lines.append(current_line)
+            paragraph_start_pt = current_line_r.begin()
+            paragraph_end_pt = current_line_r.end()
+            # current_line_r now points to the beginning of the paragraph.
+            # Move down until the end of the paragraph.
+            # print 'Scan until end of paragraph.'
+            while 1:
+                current_line_r, current_line = view.next_line(current_line_r)
+                if current_line_r == None:
+                    # Line is outside of our range.
+                    # print 'Out of range, stopping.'
+                    break
+                # print 'current_line = %r %r' % (current_line_r, current_line)
+                if self._is_paragraph_break(current_line_r, current_line):
+                    # print 'current line is a break, stopping.'
+                    break
+                if self._is_paragraph_start(current_line_r, current_line):
+                    # print 'current line is a paragraph start, stopping.'
+                    break
+                lines.append(current_line)
+                paragraph_end_pt = current_line_r.end()
 
-    def width_in_spaces(self, str, tab_width):
-        sum = 0;
-        for c in str:
-            if c == '\t':
-                sum += tab_width
-            else:
-                sum += 1
-        return sum
+            paragraph_r = sublime.Region(paragraph_start_pt, paragraph_end_pt)
+            result.append((paragraph_r, lines, view.required_comment_prefix))
 
-    def run(self, edit, width=0):
-        # print '#########################################################################'
+            if is_empty:
+                break
+
+            # Skip over blank lines and break lines till the next paragraph
+            # (or end of range).
+            # print 'skip over blank lines'
+            while current_line_r != None:
+                if self._is_paragraph_start(current_line_r, current_line):
+                    break
+                if not self._is_paragraph_break(current_line_r, current_line):
+                    break
+                # It's a paragraph break, skip over it.
+                current_line_r, current_line = view.next_line(current_line_r)
+
+            if current_line_r == None:
+                break
+
+            # print 'next_paragraph_start is %r %r' % (current_line_r, current_line)
+            paragraph_start_pt = current_line_r.begin()
+            if paragraph_start_pt >= max:
+                break
+
+        return result
+
+    def _determine_width(self, width):
         if width == 0 and self.view.settings().get("wrap_width"):
             try:
                 width = int(self.view.settings().get("wrap_width"))
@@ -357,10 +333,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
+        # Value of 0 means "automatic".
         if width == 0:
             width = 78
+        self._width = width
 
-        # Make sure tabs are handled as per the current buffer
+    def _determine_tab_size(self):
         tab_width = 8
         if self.view.settings().get("tab_size"):
             try:
@@ -370,54 +348,162 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         if tab_width == 0:
             tab_width = 8
-        # print 'tab_width=%r' % (tab_width,)
+        self._tab_width = tab_width
+
+    def _determine_comment_style(self):
+        # I'm not exactly sure why this function needs a point.  It seems to
+        # return the same value regardless of location for the stuff I've
+        # tried.
+        (self._lc, self._bc) = comment.build_comment_data(self.view, 0)
+
+    def _width_in_spaces(self, text):
+        tab_count = text.count('\t')
+        return tab_count*self._tab_width + len(text)-tab_count
+
+    def _make_indent(self):
+        if self.view.settings().get('translate_tabs_to_spaces'):
+            return ' ' * self._tab_width
+        else:
+            return '\t'
+
+    def _extract_prefix(self, paragraph_r, lines, required_comment_prefix):
+        # The comment prefix has already been stripped from the lines.
+        # If the first line starts with a list-like thing, then that will be the initial prefix.
+        initial_prefix = ''
+        subsequent_prefix = ''
+        first_line = lines[0]
+        m = list_pattern.match(first_line)
+        if m:
+            initial_prefix = first_line[0:m.end()]
+            subsequent_prefix = ' '*self._width_in_spaces(initial_prefix)
+        else:
+            m = rest_field_pattern.match(first_line)
+            if m:
+                initial_prefix = m.group(1)
+                if len(lines) > 1:
+                    m = space_prefix_pattern.match(lines[1])
+                    if m:
+                        spaces = m.group(0)
+                        if self._width_in_spaces(spaces) >= self._width_in_spaces(initial_prefix)+1:
+                            subsequent_prefix = spaces
+                if not subsequent_prefix:
+                    subsequent_prefix = initial_prefix + self._make_indent()
+            else:
+                m = space_prefix_pattern.match(first_line)
+                if m:
+                    initial_prefix = first_line[0:m.end()]
+                    if len(lines) > 1:
+                        m = space_prefix_pattern.match(lines[1])
+                        if m:
+                            subsequent_prefix = lines[1][0:m.end()]
+                        else:
+                            subsequent_prefix = ''
+                    else:
+                        subsequent_prefix = initial_prefix
+                else:
+                    # Should never happen.
+                    initial_prefix = ''
+                    subsequent_prefix = ''
+
+        pt = paragraph_r.begin()
+        scope_r = self.view.extract_scope(pt)
+        scope_name = self.view.scope_name(pt)
+        if len(lines)==1 and is_quoted_string(scope_r, scope_name):
+            # A multi-line quoted string, that is currently only on one line.
+            # This is mainly for Python docstrings.  Not sure if it's a
+            # problem in other cases.
+            true_first_line_r = self.view.line(pt)
+            true_first_line = self.view.substr(true_first_line_r)
+            if true_first_line_r.begin() <= scope_r.begin():
+                m = space_prefix_pattern.match(true_first_line)
+                # print 'single line quoted string triggered'
+                if m:
+                    subsequent_prefix = m.group() + subsequent_prefix
+
+        # Remove the prefixes that are there.
+        new_lines = []
+        new_lines.append(first_line[len(initial_prefix):].strip())
+        for line in lines[1:]:
+            if line.startswith(subsequent_prefix):
+                line = line[len(subsequent_prefix):]
+            new_lines.append(line.strip())
+
+        # print 'initial_prefix=%r subsequent_prefix=%r' % (initial_prefix, subsequent_prefix)
+
+        return (required_comment_prefix+initial_prefix,
+                required_comment_prefix+subsequent_prefix,
+                new_lines)
+
+    def run(self, edit, width=0):
+        # print '#########################################################################'
+        self._determine_width(width)
+        self._determine_tab_size()
+        self._determine_comment_style()
 
         paragraphs = []
         for s in self.view.sel():
-            # print 'Determine paragraphs for %r' % (s,)
-            paragraphs.extend(all_paragraphs_intersecting_selection(self.view, s))
-        # print 'paragraphs=%r' % (paragraphs,)
-        # Good for testing selection routine.
-        #self.view.add_regions('test', paragraphs, 'comment', sublime.DRAW_EMPTY)
-        #return
+            # print 'examine %r' % s
+            paragraphs.extend(self._find_paragraphs(s))
 
-        if len(paragraphs) > 0:
+        if paragraphs:
+            # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
-            for p in paragraphs:
-                self.view.sel().add(p)
+            for r, l, p in paragraphs:
+                self.view.sel().add(r)
 
-            # This isn't an ideal way to do it, as we loose the position of the
-            # cursor within the paragraph: hence why the paragraph is selected
-            # at the end.
-            for s in self.view.sel():
+            for i, s in enumerate(self.view.sel()):
+                paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[i]
                 wrapper = textwrap.TextWrapper()
-                wrapper.expand_tabs = False
-                wrapper.width = width
-                init_prefix, subsequent_prefix, txt = self.extract_prefix(s, tab_width)
-                # print 'init_prefix=%r subsequent_prefix=%r' % (init_prefix, subsequent_prefix)
-                if init_prefix or subsequent_prefix:
+                wrapper.width = self._width
+                init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_r, paragraph_lines, required_comment_prefix)
+                orig_init_prefix = init_prefix
+                orig_subsequent_prefix = subsequent_prefix
+                if orig_init_prefix or orig_subsequent_prefix:
+                    # Textwrap is somewhat limited.  It doesn't recognize tabs
+                    # in prefixes.  Unfortunately, this means we can't easily
+                    # differentiate between the initial and subsequent.  This
+                    # is a workaround.
+                    init_prefix = orig_init_prefix.expandtabs(self._tab_width)
+                    subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
                     wrapper.initial_indent = init_prefix
                     wrapper.subsequent_indent = subsequent_prefix
-                    # XXX: Handle tabs.
-                    #wrapper.width -= self.width_in_spaces(init_prefix, tab_width)
 
-                if wrapper.width < 0:
-                    continue
+                wrapper.expand_tabs = False
 
-                #txt = self.view.substr(s)
-                #if prefix:
-                #    txt = txt.replace(prefix, u"")
+                txt = '\n'.join(paragraph_lines)
+                txt = txt.expandtabs(self._tab_width)
+                txt = wrapper.fill(txt)
 
-                # XXX: Need to think about this.
-                txt = string.expandtabs(txt, tab_width)
+                # Put the tabs back to the prefixes.
+                if orig_init_prefix or orig_subsequent_prefix:
+                    if init_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
+                        lines = txt.splitlines()
+                        if init_prefix != orig_init_prefix:
+                            # print 'fix tabs %r' % lines[0]
+                            lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
+                            # print 'new line is %r' % lines[0]
+                        if subsequent_prefix != orig_subsequent_prefix:
+                            for i, line in enumerate(lines[1:]):
+                                lines[i+1] = orig_subsequent_prefix + lines[i+1][len(subsequent_prefix):]
+                        txt = '\n'.join(lines)
 
-                # print 'wrapping %r, init=%r, subseq=%r width=%r' % (txt, wrapper.initial_indent, wrapper.subsequent_indent, wrapper.width)
-                txt = wrapper.fill(txt) + u"\n"
                 replaced_txt = self.view.substr(s)
-                if txt != replaced_txt:
-                    self.view.replace(edit, s, txt)
+                # I can't decide if I prefer it to not make the modification
+                # if there is no change (and thus don't mark an unmodified
+                # file as modified), or if it's better to include a "non-
+                # change" in the undo stack.
+                self.view.replace(edit, s, txt)
+                if replaced_txt != txt:
+                    # print 'replaced text not the same:\noriginal=%r\nnew=%r' % (replaced_txt, txt)
+                else:
+                    # print 'replaced text is the same'
 
-            # Move cursor below the last paragraph.
-            end = self.view.sel()[-1].end()
-            self.view.sel().clear()
-            self.view.sel().add(sublime.Region(end))
+        # Move cursor below the last paragraph.
+        end = self.view.sel()[-1].end()
+        line = self.view.line(end)
+        end = min(self.view.size(), line.end()+1)
+        self.view.sel().clear()
+        r = sublime.Region(end)
+        self.view.sel().add(r)
+        self.view.show(r)
+

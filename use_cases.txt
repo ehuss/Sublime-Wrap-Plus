@@ -286,3 +286,7 @@ These only apply to their respective syntax modes.
 Selections that span both comment and non-comment lines should treat them as
 paragraph boundaries, although this is a silly use case, and probably is OK if
 it doesn't work.
+
+Hyphens
+-------
+This is long line to be wrapped with a hyphenated word to illustrate the word-hyphenation bug.
