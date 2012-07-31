@@ -66,16 +66,16 @@ class PrefixStrippingView(object):
             if first_star_prefix:
                 self.required_comment_prefix = first_star_prefix
             # Narrow the scope.
-            self.min = max(self.min, scope_r.begin())
-            self.max = min(self.max, scope_r.end())
+            self.min = max(self.min, self.view.line(scope_r.begin()).begin())
+            self.max = min(self.max, self.view.line(scope_r.end()).end())
 
         # print 'required_comment_prefix determined to be %r' % (self.required_comment_prefix,)
 
         # Narrow the min/max range if inside a "quoted" string.
         if is_quoted_string(scope_r, scope_name):
             # Narrow the range.
-            self.min = max(self.min, scope_r.begin())
-            self.max = min(self.max, scope_r.end())
+            self.min = max(self.min, self.view.line(scope_r.begin()).begin())
+            self.max = min(self.max, self.view.line(scope_r.end()).end())
 
     def line(self, where):
         """Get a line for a point.
@@ -437,6 +437,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def run(self, edit, width=0):
         # print '#########################################################################'
         self._determine_width(width)
+        # print 'determined width to be %r' % self._width
         self._determine_tab_size()
         self._determine_comment_style()
 
@@ -493,9 +494,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # file as modified), or if it's better to include a "non-
                 # change" in the undo stack.
                 self.view.replace(edit, s, txt)
-                if replaced_txt != txt:
+                # if replaced_txt != txt:
                     # print 'replaced text not the same:\noriginal=%r\nnew=%r' % (replaced_txt, txt)
-                else:
+                # else:
                     # print 'replaced text is the same'
 
         # Move cursor below the last paragraph.
