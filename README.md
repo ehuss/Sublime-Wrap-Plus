@@ -59,7 +59,7 @@ Lines with subsequent indents should maintain their indent:
 <pre>
 	:param cupcake: Cupcake ipsum dolor sit amet marzipan faworki.
 		Wafer I love croissant. Tart carrot cake pastry applicake
-		lollipop I love  cotton brownie.
+		lollipop I love cotton brownie.
 </pre>
 
 ### Comment Lines ###
@@ -79,6 +79,20 @@ If you use block-style comments in C or C++, it will restrict the wrapping to on
      * This is a multiline C-style comment.  The asterisk characters on the
      * left should be preserved (when in C or C++ mode), if they are already
      * there.
+     */
+</pre>
+
+In addition, JavaDoc or JsDoc style documentation should work, too:
+
+<pre>
+    /**
+     * Sample function description.  Just in case the description is very long.
+     * Cupcake ipsum dolor sit amet marzipan faworki. Wafer I love croissant. Tart
+     * carrot cake pastry applicake lollipop I love cotton brownie.
+     * @param {string} paramname Multi-line parameter description (or any javadoc
+     *     tag) should indent with 4 spaces.  Cupcake ipsum dolor sit amet
+     *     marzipan faworki. Wafer I love croissant. Tart carrot cake pastry
+     *     applicake lollipop I love cotton brownie.
      */
 </pre>
 

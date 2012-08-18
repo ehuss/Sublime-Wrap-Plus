@@ -16,6 +16,16 @@ class PrefixStrippingView(object):
         self.min = min
         self.max = max
 
+    def _is_c_comment(self, scope_name):
+        if not 'comment' in scope_name:
+            return False
+        for start, end, disable_indent in self.bc:
+            if start == '/*' and end == '*/':
+                break
+        else:
+            return False
+        return True
+
     def set_comments(self, lc, bc, pt):
         self.lc = lc
         self.bc = bc
@@ -51,7 +61,7 @@ class PrefixStrippingView(object):
         scope_name = self.view.scope_name(pt)
 
         # Check for crazy C style commenting.
-        if 'comment.block.c' in scope_name:
+        if self._is_c_comment(scope_name):
             first_star_prefix = None
             lines = self.view.lines(scope_r)
             for line_r in lines[1:-1]:
@@ -137,14 +147,15 @@ bullet_list = '(?:[*+#-]+[\\t ])'
 list_pattern = re.compile('^[ \\t]*' + OR(numbered_list, lettered_list, bullet_list) + '[ \\t]*')
 latex_hack = '(:?\\\\)'
 rest_directive = '(:?\\.\\.)'
-rest_field_start = '(?::)'
+field_start = '(?:[:@])'  # rest, javadoc, jsdoc, etc.
 new_paragraph_pattern = re.compile('^[\\t ]*' +
     CONCAT(OR(numbered_list, lettered_list, bullet_list,
-              rest_field_start), '.*') +
+              field_start), '.*') +
     '$')
 space_prefix_pattern = re.compile('^[ \\t]*')
 # XXX: Does not handle escaped colons in field name.
-rest_field_pattern = re.compile('^([ \\t]*):[^:]+:')
+fields = OR(':[^:]+:', '@[a-zA-Z]+ ')
+field_pattern = re.compile('^([ \\t]*)'+fields)  # rest, javadoc, jsdoc, etc
 
 sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
 sep_line = '[' + sep_chars + ']+[ \\t'+sep_chars+']*'
@@ -154,7 +165,7 @@ break_pattern = re.compile('^[\\t ]*' + OR(sep_line, OR(latex_hack, rest_directi
 pure_break_pattern = re.compile('^[\\t ]*' + sep_line + '$')
 
 email_quote_pattern = re.compile('^[\\t ]*>[> \\t]*')
-funny_c_comment_pattern = re.compile('^[\\t ]*\* ')
+funny_c_comment_pattern = re.compile('^[\\t ]*\*(?: |$)')
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
@@ -361,10 +372,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         return tab_count*self._tab_width + len(text)-tab_count
 
     def _make_indent(self):
-        if self.view.settings().get('translate_tabs_to_spaces'):
-            return ' ' * self._tab_width
-        else:
-            return '\t'
+        # This is suboptimal.
+        return ' '*4
+        # if self.view.settings().get('translate_tabs_to_spaces'):
+        #     return ' ' * self._tab_width
+        # else:
+        #     return '\t'
 
     def _extract_prefix(self, paragraph_r, lines, required_comment_prefix):
         # The comment prefix has already been stripped from the lines.
@@ -377,16 +390,21 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             initial_prefix = first_line[0:m.end()]
             subsequent_prefix = ' '*self._width_in_spaces(initial_prefix)
         else:
-            m = rest_field_pattern.match(first_line)
+            m = field_pattern.match(first_line)
             if m:
+                # The spaces in front of the field start.
                 initial_prefix = m.group(1)
                 if len(lines) > 1:
+                    # How to handle subsequent lines.
                     m = space_prefix_pattern.match(lines[1])
                     if m:
+                        # It's already indented, keep this indent level
+                        # (unless it is less than where the field started).
                         spaces = m.group(0)
                         if self._width_in_spaces(spaces) >= self._width_in_spaces(initial_prefix)+1:
                             subsequent_prefix = spaces
                 if not subsequent_prefix:
+                    # Not already indented, make an indent.
                     subsequent_prefix = initial_prefix + self._make_indent()
             else:
                 m = space_prefix_pattern.match(first_line)
