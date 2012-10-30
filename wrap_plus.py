@@ -50,12 +50,12 @@ class PrefixStrippingView(object):
                 break
 
         # Handle email-style quoting.
-        if not self.required_comment_prefix:
-            m = email_quote_pattern.match(line)
-            if m:
-                self.required_comment_prefix = m.group()
-                self.required_comment_pattern = email_quote_pattern
-                # print 'doing email style quoting'
+        email_quote_pattern = re.compile('^' + self.required_comment_prefix + email_quote)
+        m = email_quote_pattern.match(line)
+        if m:
+            self.required_comment_prefix = m.group()
+            self.required_comment_pattern = email_quote_pattern
+            # print 'doing email style quoting'
 
         scope_r = self.view.extract_scope(pt)
         scope_name = self.view.scope_name(pt)
@@ -105,6 +105,10 @@ class PrefixStrippingView(object):
                     m = self.required_comment_pattern.match(line)
                     if m:
                         if m.group() != self.required_comment_prefix:
+                            # This might happen, if for example with an email
+                            # comment, we go from one comment level to a
+                            # deeper one (the regex matched more > characters
+                            # than are in required_comment_pattern).
                             return None, None
                     else:
                         # This should never happen (matches the string but not
@@ -164,7 +168,7 @@ sep_line = '[' + sep_chars + ']+[ \\t'+sep_chars+']*'
 break_pattern = re.compile('^[\\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
 pure_break_pattern = re.compile('^[\\t ]*' + sep_line + '$')
 
-email_quote_pattern = re.compile('^[\\t ]*>[> \\t]*')
+email_quote = '[\\t ]*>[> \\t]*'
 funny_c_comment_pattern = re.compile('^[\\t ]*\*(?: |$)')
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
