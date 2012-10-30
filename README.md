@@ -33,6 +33,24 @@ If you want to use a different keystroke, go to "Preferences" then "Key Bindings
 
 Do not include the trailing comma if it is the last entry.
 
+There are a few settings you can tweak if you so desire.  You can set them in Preferences / Settings-User.  They are:
+
+<table>
+  <tr>
+    <th>Name</th><th>Default</th><th>Description</th>
+  </tr>
+  <tr>
+    <td>"WrapPlus.break_long_words"</td>
+    <td>true</td>
+    <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
+  </tr>
+  <tr>
+    <td>"WrapPlus.break_on_hyphens"</td>
+    <td>true</td>
+    <td>Whether or not to break lines on hyphens.</td>
+  </tr>
+</table>
+
 ## Using ##
 Whenever the cursor is anywhere within a paragraph, hitting the Wrap Plus keystroke will cause it to try to discover where the paragraph starts and where it ends.  It will then wrap all of those lines according to the wrap width you currently have set (View/Word Wrap Column).
 

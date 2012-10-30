@@ -59,6 +59,11 @@ foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo 
 :bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
 ::baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz
 
+The following url should be really long (http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long (http://www.this.is.long.com/foo/bar/thing#where-it-is).
+
+
     Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
 Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
 Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.

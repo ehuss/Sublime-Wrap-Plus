@@ -497,7 +497,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             for i, s in enumerate(self.view.sel()):
                 paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[i]
-                wrapper = textwrap.TextWrapper()
+                break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
+                break_on_hyphens = self.view.settings().get('WrapPlus.break_on_hyphens', True)
+                wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
+                                               break_on_hyphens=break_on_hyphens)
                 wrapper.width = self._width
                 init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_r, paragraph_lines, required_comment_prefix)
                 orig_init_prefix = init_prefix
