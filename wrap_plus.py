@@ -7,7 +7,19 @@ def is_quoted_string(scope_r, scope_name):
     return 'quoted' in scope_name
 
 class PrefixStrippingView(object):
-    single_line_comment = ''
+    """View that strips out prefix characters, like comments.
+
+    :ivar str required_comment_prefix: When inside a line comment, we want to
+        restrict wrapping to just the comment section, and also retain the
+        comment characters and any initial indentation.  This string is the
+        set of prefix characters a line must have to be a candidate for
+        wrapping in that case (otherwise it is typically the empty string).
+
+    :ivar Pattern required_comment_pattern: Regular expression required for
+        matching.  The pattern is already included from the first line in
+        `required_comment_prefix`.  This pattern is set to check if subsequent
+        lines have longer matches (in which case `line` will stop reading).
+    """
     required_comment_prefix = ''
     required_comment_pattern = None
 
@@ -42,8 +54,8 @@ class PrefixStrippingView(object):
             return
         # XXX: What is disable_indent?
         for start, disable_indent in lc:
+            start = start.rstrip()
             if line_strp.startswith(start):
-                self.single_line_comment = start
                 ldiff = len(line) - len(line.lstrip())
                 p = line[:ldiff+len(start)]
                 self.required_comment_prefix = p
@@ -94,11 +106,15 @@ class PrefixStrippingView(object):
         """
         line_r = self.view.line(where)
         if line_r.begin() < self.min:
+            # print 'line min increased'
             line_r = sublime.Region(self.min, line_r.end())
         if line_r.end() > self.max:
+            # print 'line max lowered'
             line_r = sublime.Region(line_r.begin(), self.max)
         line = self.view.substr(line_r)
+        # print 'line=%r' % line
         if self.required_comment_prefix:
+            # print 'checking required comment prefix %r' % self.required_comment_prefix
             if line.startswith(self.required_comment_prefix):
                 # Check for an insufficient prefix.
                 if self.required_comment_pattern:
@@ -125,8 +141,10 @@ class PrefixStrippingView(object):
 
     def next_line(self, where):
         l_r = self.view.line(where)
+        # print 'next line region=%r' % l_r
         pt = l_r.end()+1
         if pt >= self.max:
+            # print 'past max at %r' % self.max
             return None, None
         return self.line(pt)
 
@@ -276,7 +294,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             # Skip blank and unambiguous break lines.
             while 1:
+                # print 'skip blank line'
                 if not self._is_paragraph_break(current_line_r, current_line, pure=True):
+                    # print 'not paragraph break'
                     break
                 if is_empty:
                     # print 'empty sel on paragraph break %r' % (current_line,)
@@ -290,6 +310,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # Move down until the end of the paragraph.
             # print 'Scan until end of paragraph.'
             while 1:
+                # print 'current_line_r=%r max=%r' % (current_line_r, view.max)
                 current_line_r, current_line = view.next_line(current_line_r)
                 if current_line_r == None:
                     # Line is outside of our range.
