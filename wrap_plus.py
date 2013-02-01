@@ -1,7 +1,10 @@
 import sublime, sublime_plugin
 import textwrap
 import re
-import comment
+try:
+    import Default.comment as comment
+except ImportError:
+    import comment
 
 def is_quoted_string(scope_r, scope_name):
     return 'quoted' in scope_name
@@ -484,6 +487,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         self._determine_tab_size()
         self._determine_comment_style()
 
+        # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
         for s in self.view.sel():
             # print 'examine %r' % s
@@ -495,6 +499,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             for r, l, p in paragraphs:
                 self.view.sel().add(r)
 
+            # Regions fetched from view.sel() will shift appropriately with
+            # the calls to replace().
             for i, s in enumerate(self.view.sel()):
                 paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[i]
                 break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
@@ -546,7 +552,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     # print 'replaced text is the same'
 
         # Move cursor below the last paragraph.
-        end = self.view.sel()[-1].end()
+        s = self.view.sel()
+        end = s[len(s)-1].end()
         line = self.view.line(end)
         end = min(self.view.size(), line.end()+1)
         self.view.sel().clear()
