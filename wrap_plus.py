@@ -1,4 +1,3 @@
-from __future__ import print_function
 import sublime, sublime_plugin
 import textwrap
 import re
@@ -407,6 +406,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # Value of 0 means "automatic".
         if width == 0:
             width = 78
+        else:
+            width -= self.view.settings().get("WrapPlus.wrap_col_diff", 0)
+        debug('width is %i', width)
+
         self._width = width
 
     def _determine_tab_size(self):
