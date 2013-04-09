@@ -391,14 +391,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def _determine_width(self, width):
         if width == 0 and self.view.settings().get("wrap_width"):
             try:
-                width = int(self.view.settings().get("wrap_width"))
+                width = max(int(self.view.settings().get("wrap_width")) - 1, 0)
             except TypeError:
                 pass
 
         if width == 0 and self.view.settings().get("rulers"):
             # try and guess the wrap width from the ruler, if any
             try:
-                width = int(self.view.settings().get("rulers")[0])
+                width = max(int(self.view.settings().get("rulers")[0]) - 1, 0)
             except ValueError:
                 pass
             except TypeError:
