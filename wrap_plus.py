@@ -389,6 +389,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         return result
 
     def _determine_width(self, width):
+        if width == 0 and self.view.settings().get("WrapPlus.wrap_width"):
+            try:
+                width = int(self.view.settings().get("WrapPlus.wrap_width"))
+            except TypeError:
+                pass
+
         if width == 0 and self.view.settings().get("wrap_width"):
             try:
                 width = int(self.view.settings().get("wrap_width"))
