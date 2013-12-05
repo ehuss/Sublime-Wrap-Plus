@@ -605,3 +605,53 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         self.view.show(r)
         debug_end()
 
+class WrapplusSetwidth(sublime_plugin.WindowCommand):
+    def run(self, **args):
+        self.view = self.window.active_view()
+        width = args.get('width', '')
+
+        # If we have a width parameter, use it right now
+        if width:
+            self.set_width(width)
+            return
+
+        # otherwise, show the list of the predefined user width
+        self.wrap_width_custom_list = self.view.settings().get("WrapPlus.wrap_width_custom_list")
+        if not self.wrap_width_custom_list:
+            self.show_message('can not display predefined wrap width list, your \"WrapPlus.wrap_width_custom_list\" setting looks empty')
+            return
+
+        def show_quick_panel():
+            self.window.show_quick_panel(self.wrap_width_custom_list, self.on_done)
+
+        sublime.set_timeout(show_quick_panel, 10)
+
+    def show_message(self, msg):
+        print('Wrap Plus: ' + msg)
+        self.view.set_status('WrapPlus', 'Wrap Plus: ' + msg)
+        sublime.set_timeout(self.clear, 10000)
+
+    def clear(self):
+        self.view.erase_status('WrapPlus')
+
+    def set_width(self, width):
+        """
+        Change the wrap width for the current view only
+        """
+        self.view.settings().set('WrapPlus.wrap_width', width)
+        self.show_message('Setting wrap width to ' + width)
+
+    def on_done(self, picked):
+        """
+        Quick panel user selection handler - select a width among user defined width
+
+        :param picked:
+            An integer of the 0-based wrap width index from the presented list.
+            -1 means the user cancelled.
+        """
+
+        if picked == -1:
+            return
+        width = self.wrap_width_custom_list[picked]
+
+        self.set_width(width)

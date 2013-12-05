@@ -1,0 +1,11 @@
+[
+    {
+        "caption": "Wrap Plus: Use wrap width custom list",
+        "command": "wrapplus_setwidth"
+    },
+    {
+        "caption": "Wrap Plus: Set width for git commit messages",
+        "command": "wrapplus_setwidth",
+        "args": {"width": "72"}
+    }
+]
