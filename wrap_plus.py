@@ -609,17 +609,32 @@ class WrapplusSetwidth(sublime_plugin.WindowCommand):
     def run(self, **args):
         self.view = self.window.active_view()
         width = args.get('width', '')
+        source_list = args.get('source_list', '')
 
         # If we have a width parameter, use it right now
         if width:
             self.set_width(width)
             return
 
-        # otherwise, show the list of the predefined user width
-        self.wrap_width_custom_list = self.view.settings().get("WrapPlus.wrap_width_custom_list")
-        if not self.wrap_width_custom_list:
-            self.show_message('can not display predefined wrap width list, your \"WrapPlus.wrap_width_custom_list\" setting looks empty')
-            return
+        # show the list of the predefined user width
+        if source_list == 'wrap_width_custom_list':
+            self.wrap_width_custom_list = self.view.settings().get("WrapPlus.wrap_width_custom_list")
+            if not self.wrap_width_custom_list:
+                self.show_message('can not display predefined wrap width list, your \"WrapPlus.wrap_width_custom_list\" setting looks empty')
+                return
+
+        # show the list from rulers
+        elif source_list == 'rulers':
+            if self.view.settings().get("rulers"):
+                try:
+                    self.wrap_width_custom_list = [str(w) for w in self.view.settings().get("rulers")]
+                except ValueError:
+                    pass
+                except TypeError:
+                    pass
+            if not self.wrap_width_custom_list:
+                self.show_message('can not display rulers wrap width list')
+                return
 
         def show_quick_panel():
             self.window.show_quick_panel(self.wrap_width_custom_list, self.on_done)
