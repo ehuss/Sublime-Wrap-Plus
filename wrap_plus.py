@@ -616,6 +616,8 @@ class WrapplusSetwidth(sublime_plugin.WindowCommand):
             self.set_width(width)
             return
 
+        self.wrap_width_custom_list = []
+
         # show the list of the predefined user width
         if source_list == 'wrap_width_custom_list':
             self.wrap_width_custom_list = self.view.settings().get("WrapPlus.wrap_width_custom_list")
@@ -635,6 +637,10 @@ class WrapplusSetwidth(sublime_plugin.WindowCommand):
             if not self.wrap_width_custom_list:
                 self.show_message('can not display rulers wrap width list')
                 return
+
+        if not self.wrap_width_custom_list:
+            self.show_message('Invalid command argument source_list="%r"' % source_list)
+            return
 
         def show_quick_panel():
             self.window.show_quick_panel(self.wrap_width_custom_list, self.on_done)
