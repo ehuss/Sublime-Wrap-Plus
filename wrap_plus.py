@@ -25,7 +25,7 @@ def debug(msg, *args):
         global last_time
         t = time.time()
         d = t-time_start
-        print('%.3f (+%.3f)' % (d, t-last_time), end='')
+        print('%.3f (+%.3f) ' % (d, t-last_time), end='')
         last_time = t
         print(msg % args)
 
@@ -144,9 +144,9 @@ class PrefixStrippingView(object):
             debug('line max lowered')
             line_r = sublime.Region(line_r.begin(), self.max)
         line = self.view.substr(line_r)
-        debug('line=%r' % line)
+        debug('line=%r', line)
         if self.required_comment_prefix:
-            debug('checking required comment prefix %r' % self.required_comment_prefix)
+            debug('checking required comment prefix %r', self.required_comment_prefix)
             if line.startswith(self.required_comment_prefix):
                 # Check for an insufficient prefix.
                 if self.required_comment_pattern:
@@ -173,10 +173,10 @@ class PrefixStrippingView(object):
 
     def next_line(self, where):
         l_r = self.view.line(where)
-        debug('next line region=%r' % l_r)
+        debug('next line region=%r', l_r)
         pt = l_r.end()+1
         if pt >= self.max:
-            debug('past max at %r' % self.max)
+            debug('past max at %r', self.max)
             return None, None
         return self.line(pt)
 
@@ -520,14 +520,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         debug_start()
         debug('#########################################################################')
         self._determine_width(width)
-        debug('determined width to be %r' % self._width)
+        debug('determined width to be %r', self._width)
         self._determine_tab_size()
         self._determine_comment_style()
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
         for s in self.view.sel():
-            debug('examine %r' % s)
+            debug('examine %r', s)
             paragraphs.extend(self._find_paragraphs(s))
 
         if paragraphs:
@@ -569,9 +569,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     if init_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
                         lines = txt.splitlines()
                         if init_prefix != orig_init_prefix:
-                            debug('fix tabs %r' % lines[0])
+                            debug('fix tabs %r', lines[0])
                             lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
-                            debug('new line is %r' % lines[0])
+                            debug('new line is %r', lines[0])
                         if subsequent_prefix != orig_subsequent_prefix:
                             for i, line in enumerate(lines[1:]):
                                 lines[i+1] = orig_subsequent_prefix + lines[i+1][len(subsequent_prefix):]
