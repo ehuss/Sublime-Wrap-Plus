@@ -1,12 +1,12 @@
 # Sublime Wrap Plus #
-Enhanced "wrap lines" command for Sublime Text 2.  This is for the *manual* hard line wrap command (Alt-Q in Windows, Command-Alt-Q in OS X).  It does not affect the automatic soft line wrapping.
+Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (Alt-Q in Windows, Command-Alt-Q in OS X).  It does not affect the automatic soft line wrapping.
 
 ## Downloading ##
 The best way to download and install Sublime Wrap Plus is to use the Package Control plugin.  If you do not already have it installed, it's really the best way to manage your packages.
 
 For users new to the package manager:
 * Go to http://wbond.net/sublime_packages/package_control and install Package Control.
-* Restart Sublime Text 2.
+* Restart Sublime Text.
 
 Install Sublime Wrap Plus:
 * Bring up the Command Palette (`Command+Shift+P` on OS X, `Control+Shift+P` on Linux/Windows).
