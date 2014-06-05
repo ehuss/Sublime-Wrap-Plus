@@ -1,0 +1,17 @@
+[
+    {
+        "caption": "Wrap Plus: Use rulers width list",
+        "command": "wrapplus_setwidth",
+        "args": {"source_list": "rulers"}
+    },
+    {
+        "caption": "Wrap Plus: Use wrap width custom list",
+        "command": "wrapplus_setwidth",
+        "args": {"source_list": "wrap_width_custom_list"}
+    },
+    {
+        "caption": "Wrap Plus: Set width for git commit messages",
+        "command": "wrapplus_setwidth",
+        "args": {"width": "72"}
+    }
+]

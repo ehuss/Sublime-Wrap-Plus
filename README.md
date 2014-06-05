@@ -49,6 +49,16 @@ There are a few settings you can tweak if you so desire.  You can set them in Pr
     <td>true</td>
     <td>Whether or not to break lines on hyphens.</td>
   </tr>
+  <tr>
+    <td>"WrapPlus.wrap_width"</td>
+    <td>80</td>
+    <td>Specify the width where to wrap lines. This is optional. If not specified, it will use either "wrap_width" or "rulers" settings.</td>
+  </tr>
+  <tr>
+    <td>"WrapPlus.wrap_width_custom_list"</td>
+    <td>["72", "80", "100", "120"]</td>
+    <td>Specify predefined custom width. You can switch to one of them using the "Wrap Plus: Use wrap width custom list" command from the Command Palette.</td>
+  </tr>
 </table>
 
 ## Using ##
