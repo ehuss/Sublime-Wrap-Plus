@@ -29,9 +29,11 @@ No need to configure anything.  By default it uses the default keystroke for wra
 
 If you want to use a different keystroke, go to "Preferences" then "Key Bindings - User", and add an entry like this:
 
-	{ "keys": ["alt+q"], "command": "wrap_lines_plus" },
+	{ "keys": ["alt+q"], "command": "wrap_lines_plus" }
 
-Do not include the trailing comma if it is the last entry.
+If you want to, you can add keystrokes that use specific wrap sizes:
+
+  { "keys": ["alt+q", "7"], "command": "wrap_lines_plus", "args": {"width": 70}}
 
 There are a few settings you can tweak if you so desire.  You can set them in Preferences / Settings-User.  They are:
 
@@ -49,7 +51,25 @@ There are a few settings you can tweak if you so desire.  You can set them in Pr
     <td>true</td>
     <td>Whether or not to break lines on hyphens.</td>
   </tr>
+  <tr>
+    <td>"WrapPlus.include_line_endings"</td>
+    <td>"auto"</td>
+    <td>Determines whether or not line endings are included in the line size:
+    <ul>
+    <li>true: Always included.
+    <li>false: Never included.
+    <li>"auto": Included only if Sublime's "word_wrap" is enabled (View → Word Wrap) and Sublime's wrap column is not 0 (View → Word Wrap Column → Automatic).
+    </ul>
+  </tr>
 </table>
+
+### Advanced Configuration ###
+Sublime supports placing configuration options in a variety of places.  You can put any of these settings in one of the following files (last file wins):
+
+1. Packages/User/Preferences.sublime-settings
+2. Project Settings (The "settings" key inside your project file.)
+3. Packages/User/*SyntaxName*.sublime-settings
+4. Packages/User/Distraction Free.sublime-settings
 
 ## Using ##
 Whenever the cursor is anywhere within a paragraph, hitting the Wrap Plus keystroke will cause it to try to discover where the paragraph starts and where it ends.  It will then wrap all of those lines according to the wrap width you currently have set (View/Word Wrap Column).

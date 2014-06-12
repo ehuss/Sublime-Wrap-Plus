@@ -438,6 +438,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         return result
 
     def _determine_width(self, width):
+        """Determine the maximum line width.
+
+        :param Int width: The width specified by the command.  Normally 0
+            which means "figure it out".
+
+        :returns: The maximum line width.
+        """
         if width == 0 and self.view.settings().get('wrap_width'):
             try:
                 width = int(self.view.settings().get('wrap_width'))
@@ -456,11 +463,31 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # Value of 0 means 'automatic'.
         if width == 0:
             width = 78
-        else:
-            width -= self.view.settings().get('WrapPlus.wrap_col_diff', 0)
-        debug('width is %i', width)
+        # else:
+        #     # Deprecated: An older, undocumented feature.
+        #     width -= self.view.settings().get('WrapPlus.wrap_col_diff', 0)
 
-        self._width = width
+        ile = self.view.settings().get('WrapPlus.include_line_endings', 'auto')
+        if ile == True:
+            width -= self._determine_line_ending_size()
+        elif ile == 'auto':
+            if self._auto_word_wrap_enabled() and self.view.settings().get('wrap_width', 0) != 0:
+                width -= self._determine_line_ending_size()
+
+        return width
+
+    def _determine_line_ending_size(self):
+        etypes = {
+            'windows': 2,
+            'unix': 1,
+            'cr': 1,
+        }
+        return etypes.get(self.view.line_endings().lower(), 1)
+
+    def _auto_word_wrap_enabled(self):
+        ww = self.view.settings().get('word_wrap')
+        return (ww == True or
+                (ww == 'auto' and self.view.score_selector(0, 'text')))
 
     def _determine_tab_size(self):
         tab_width = 8
@@ -568,8 +595,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def run(self, edit, width=0):
         debug_start()
         debug('#########################################################################')
-        self._determine_width(width)
-        debug('determined width to be %r', self._width)
+        self._width = self._determine_width(width)
+        debug('wrap width = %r', self._width)
         self._determine_tab_size()
         self._determine_comment_style()
 
