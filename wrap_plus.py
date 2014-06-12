@@ -198,33 +198,33 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-blank_line_pattern = re.compile("^[\\t \\n]*$")
+blank_line_pattern = re.compile(r'^[\t \n]*$')
 
 # This doesn't always work, but seems decent.
-numbered_list = '(?:(?:[0-9#]+[.)])+[\\t ])'
-lettered_list = '(?:[\w][.)][\\t ])'
-bullet_list = '(?:[*+#-]+[\\t ])'
-list_pattern = re.compile('^[ \\t]*' + OR(numbered_list, lettered_list, bullet_list) + '[ \\t]*')
-latex_hack = '(:?\\\\)'
-rest_directive = '(:?\\.\\.)'
-field_start = '(?:[:@])'  # rest, javadoc, jsdoc, etc.
-new_paragraph_pattern = re.compile('^[\\t ]*' +
+numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
+lettered_list = r'(?:[\w][.)][\t ])'
+bullet_list = r'(?:[*+#-]+[\t ])'
+list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_list) + r'[ \t]*')
+latex_hack = r'(:?\\)'
+rest_directive = r'(:?\.\.)'
+field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
+new_paragraph_pattern = re.compile(r'^[\t ]*' +
     OR(numbered_list, lettered_list, bullet_list,
               field_start))
-space_prefix_pattern = re.compile('^[ \\t]*')
+space_prefix_pattern = re.compile(r'^[ \t]*')
 # XXX: Does not handle escaped colons in field name.
-fields = OR(':[^:]+:', '@[a-zA-Z]+ ')
-field_pattern = re.compile('^([ \\t]*)'+fields)  # rest, javadoc, jsdoc, etc
+fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
+field_pattern = re.compile(r'^([ \t]*)'+fields)  # rest, javadoc, jsdoc, etc
 
 sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
-sep_line = '[' + sep_chars + ']+[ \\t'+sep_chars+']*'
+sep_line = '[' + sep_chars + r']+[ \t'+sep_chars+']*'
 
 # Break pattern is a little ambiguous.  Something like "# Header" could also be a list element.
-break_pattern = re.compile('^[\\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
-pure_break_pattern = re.compile('^[\\t ]*' + sep_line + '$')
+break_pattern = re.compile(r'^[\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
+pure_break_pattern = re.compile(r'^[\t ]*' + sep_line + '$')
 
-email_quote = '[\\t ]*>[> \\t]*'
-funny_c_comment_pattern = re.compile('^[\\t ]*\*(?: |$)')
+email_quote = r'[\t ]*>[> \t]*'
+funny_c_comment_pattern = re.compile(r'^[\t ]*\*(?: |$)')
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
@@ -438,35 +438,35 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         return result
 
     def _determine_width(self, width):
-        if width == 0 and self.view.settings().get("wrap_width"):
+        if width == 0 and self.view.settings().get('wrap_width'):
             try:
-                width = int(self.view.settings().get("wrap_width"))
+                width = int(self.view.settings().get('wrap_width'))
             except TypeError:
                 pass
 
-        if width == 0 and self.view.settings().get("rulers"):
+        if width == 0 and self.view.settings().get('rulers'):
             # try and guess the wrap width from the ruler, if any
             try:
-                width = int(self.view.settings().get("rulers")[0])
+                width = int(self.view.settings().get('rulers')[0])
             except ValueError:
                 pass
             except TypeError:
                 pass
 
-        # Value of 0 means "automatic".
+        # Value of 0 means 'automatic'.
         if width == 0:
             width = 78
         else:
-            width -= self.view.settings().get("WrapPlus.wrap_col_diff", 0)
+            width -= self.view.settings().get('WrapPlus.wrap_col_diff', 0)
         debug('width is %i', width)
 
         self._width = width
 
     def _determine_tab_size(self):
         tab_width = 8
-        if self.view.settings().get("tab_size"):
+        if self.view.settings().get('tab_size'):
             try:
-                tab_width = int(self.view.settings().get("tab_size"))
+                tab_width = int(self.view.settings().get('tab_size'))
             except TypeError:
                 pass
 
