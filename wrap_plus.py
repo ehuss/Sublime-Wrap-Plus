@@ -476,6 +476,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         return width
 
     def _determine_line_ending_size(self):
+        # Sublime always uses 1, regardless of the file type/OS.
+        return 1
         etypes = {
             'windows': 2,
             'unix': 1,
