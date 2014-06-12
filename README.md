@@ -42,6 +42,22 @@ There are a few settings you can tweak if you so desire.  You can set them in Pr
     <th>Name</th><th>Default</th><th>Description</th>
   </tr>
   <tr>
+    <td>"wrap_width"</td>
+    <td>0</td>
+    <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via View → Word Wrap Column.</td>
+  </tr>
+  <tr>
+    <td>"WrapPlus.wrap_width"</td>
+    <td></td>
+    <td>If set, this will override Sublime's "wrap_width" setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
+    </td>
+  </tr>
+  <tr>
+    <td>"word_wrap"</td>
+    <td>"auto"</td>
+    <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be true, false, or "auto" where it will be disabled for source code.  Also toggled via View → Word Wrap.</td>
+  </tr>
+  <tr>
     <td>"WrapPlus.break_long_words"</td>
     <td>true</td>
     <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>

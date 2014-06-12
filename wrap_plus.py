@@ -460,12 +460,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
+        width = self.view.settings().get('WrapPlus.wrap_width', width)
+
         # Value of 0 means 'automatic'.
         if width == 0:
             width = 78
-        # else:
-        #     # Deprecated: An older, undocumented feature.
-        #     width -= self.view.settings().get('WrapPlus.wrap_col_diff', 0)
 
         ile = self.view.settings().get('WrapPlus.include_line_endings', 'auto')
         if ile == True:
