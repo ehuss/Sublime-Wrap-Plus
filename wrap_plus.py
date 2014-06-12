@@ -206,6 +206,7 @@ lettered_list = '(?:[\w][.)][\\t ])'
 bullet_list = '(?:[*+#-]+[\\t ])'
 list_pattern = re.compile('^[ \\t]*' + OR(numbered_list, lettered_list, bullet_list) + '[ \\t]*')
 latex_hack = '(:?\\\\)'
+latex_hack2 = '(:?%)'
 rest_directive = '(:?\\.\\.)'
 field_start = '(?:[:@])'  # rest, javadoc, jsdoc, etc.
 new_paragraph_pattern = re.compile('^[\\t ]*' +
@@ -220,7 +221,7 @@ sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
 sep_line = '[' + sep_chars + ']+[ \\t'+sep_chars+']*'
 
 # Break pattern is a little ambiguous.  Something like "# Header" could also be a list element.
-break_pattern = re.compile('^[\\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
+break_pattern = re.compile('^[\\t ]*' + OR(sep_line, OR(latex_hack, latex_hack2, rest_directive) + '.*') + '$')
 pure_break_pattern = re.compile('^[\\t ]*' + sep_line + '$')
 
 email_quote = '[\\t ]*>[> \\t]*'
