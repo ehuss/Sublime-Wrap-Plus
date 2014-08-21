@@ -14,9 +14,10 @@ def is_quoted_string(scope_r, scope_name):
 debug_enabled = False
 time_start = 0
 last_time = 0
-def debug_start():
+def debug_start(enabled):
+    global debug_enabled, time_start, last_time
+    debug_enabled = enabled
     if debug_enabled:
-        global time_start, last_time
         time_start = time.time()
         last_time = time_start
 
@@ -594,7 +595,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 new_lines)
 
     def run(self, edit, width=0):
-        debug_start()
+        debug_start(self.view.settings().get('WrapPlus.debug', False))
         debug('#########################################################################')
         self._width = self._determine_width(width)
         debug('wrap width = %r', self._width)
