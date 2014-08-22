@@ -225,7 +225,7 @@ break_pattern = re.compile(r'^[\t ]*' + OR(sep_line, OR(latex_hack, rest_directi
 pure_break_pattern = re.compile(r'^[\t ]*' + sep_line + '$')
 
 email_quote = r'[\t ]*>[> \t]*'
-funny_c_comment_pattern = re.compile(r'^[\t ]*\*(?: |$)')
+funny_c_comment_pattern = re.compile(r'^[\t ]*\*')
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
