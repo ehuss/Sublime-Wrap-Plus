@@ -171,6 +171,7 @@ class PrefixStrippingView(object):
                         return None, None
                 l = len(self.required_comment_prefix)
                 line = line[l:]
+                # XXX: Should this also update line_r?
             else:
                 return None, None
         return line_r, line
@@ -269,7 +270,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         """
         view = self._strip_view
         current_line_r, current_line = view.line(pt)
-        started_in_comment = bool(self.view.score_selector(pt, 'comment'))
+        started_in_comment = self._started_in_comment(pt)
 
         debug('is_paragraph_break?')
         if self._is_paragraph_break(current_line_r, current_line):
@@ -328,7 +329,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             full_sr = self._my_full_line(sr)
             view_min = full_sr.begin()
             view_max = full_sr.end()
-        started_in_comment = bool(self.view.score_selector(sr.begin(), 'comment'))
+        started_in_comment = self._started_in_comment(sr.begin())
         self._strip_view = PrefixStrippingView(self.view, view_min, view_max)
         view = self._strip_view
         # Loop for each paragraph (only loops once if sr is empty).
@@ -384,9 +385,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     m = re.search('([ \t]+$)', subline)
                     if m:
                         end_pt -= len(m.group(1))
-                    # Check for a bare comment line.
-                    if not subline.strip():
-                        break
                     debug('non-comment contents are: %r', subline)
                     paragraph_end_pt = end_pt
                     lines.append(subline)
@@ -509,6 +507,20 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # tried.
         (self._lc, self._bc) = comment.build_comment_data(self.view, 0)
 
+    def _started_in_comment(self, point):
+        if self.view.score_selector(point, 'comment'):
+            return True
+        # Check for case where only whitespace is before a comment.
+        line_r = self.view.line(point)
+        if self.view.score_selector(line_r.end(), 'comment'):
+            line = self.view.substr(line_r)
+            m = re.search('(^[ \t]+)', line)
+            if m:
+                pt_past_space = line_r.begin() + len(m.group(1))
+                if self.view.score_selector(pt_past_space, 'comment'):
+                    return True
+        return False
+
     def _width_in_spaces(self, text):
         tab_count = text.count('\t')
         return tab_count*self._tab_width + len(text)-tab_count
@@ -608,6 +620,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             debug('examine %r', s)
             paragraphs.extend(self._find_paragraphs(s))
 
+        debug('paragraphs is %r', paragraphs)
+
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -676,4 +690,3 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         self.view.sel().add(r)
         self.view.show(r)
         debug_end()
-
