@@ -1,14 +1,16 @@
 # Sublime Wrap Plus #
-  Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (<kbd>Alt</kbd><kbd>Q</kbd> in Windows and Linux, <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd> in OS X).  It does not affect the automatic soft line wrapping.
+Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (<kbd>Alt</kbd><kbd>Q</kbd> in Windows and Linux, <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd> in OS X).  It does not affect the automatic soft line wrapping.
 
 ## Downloading ##
 The best way to download and install Sublime Wrap Plus is to use the [Package Control](https://packagecontrol.io) plugin.  If you do not already have it installed, it's really the best way to manage your packages.
 
 For users new to the package manager:
+
 * Go to https://packagecontrol.io/installation and install Package Control.
 * Restart Sublime Text.
 
 Install Sublime Wrap Plus:
+
 * Bring up the Command Palette (<kbd>Command</kbd><kbd>Shift</kbd><kbd>P</kbd> on OS X, <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>P</kbd> on Linux/Windows).
 * Select ***`Package Control: Install Package`*** and wait while Package Control fetches the latest package list.
 * Select Wrap Plus when the list appears.
@@ -44,46 +46,46 @@ If you want to, you can add keystrokes that use specific wrap sizes:
 There are a few settings you can tweak if you so desire.  You can set them in **`Preferences → Settings — User`**.  They are:
 
 <table>
-  <tr>
-    <th>Name</th><th>Default</th><th>Description</th>
-  </tr>
-  <tr>
-    <td><code>"wrap_width"</code></td>
-    <td>0</td>
-    <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via <b><code>View → Word Wrap Column</code></b>.</td>
-  </tr>
-  <tr>
-    <td><code>"WrapPlus.wrap_width"</code></td>
-    <td></td>
-    <td>If set, this will override Sublime's <code>"wrap_width"</code> setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
-    </td>
-  </tr>
-  <tr>
-    <td><code>"word_wrap"</code></td>
-    <td><code>"auto"</code></td>
-    <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be <code>true</code>, <code>false</code>, or <code>"auto"</code> where it will be disabled for source code.  Also toggled via <b><code>View → Word Wrap</code></b>.</td>
-  </tr>
-  <tr>
-    <td><code>"WrapPlus.break_long_words"</code></td>
-    <td><code>true</code></td>
-    <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
-  </tr>
-  <tr>
-    <td><code>"WrapPlus.break_on_hyphens"</code></td>
-    <td><code>true</code></td>
-    <td>Whether or not to break lines on hyphens.</td>
-  </tr>
-  <tr>
-    <td><code>"WrapPlus.include_line_endings"</code></td>
-    <td><code>"auto"</code></td>
-    <td>Determines whether or not line endings are included in the line size:
-    <ul>
-    <li><code>true</code>: Always included.
-    <li><code>false</code>: Never included.
-    <li><code>"auto"</code>: Included only if Sublime's <code>"word_wrap"</code> is enabled (<b><code>View → Word Wrap</code></b>) and Sublime's wrap column is not 0 (<b><code>View → Word Wrap Column → Automatic</code></b>).
-    </ul>
-    </td>
-  </tr>
+    <tr>
+        <th>Name</th><th>Default</th><th>Description</th>
+    </tr>
+    <tr>
+        <td><code>"wrap_width"</code></td>
+        <td>0</td>
+        <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via <b><code>View → Word Wrap Column</code></b>.</td>
+    </tr>
+    <tr>
+        <td><code>"WrapPlus.wrap_width"</code></td>
+        <td></td>
+        <td>If set, this will override Sublime's <code>"wrap_width"</code> setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
+        </td>
+    </tr>
+    <tr>
+        <td><code>"word_wrap"</code></td>
+        <td><code>"auto"</code></td>
+        <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be <code>true</code>, <code>false</code>, or <code>"auto"</code> where it will be disabled for source code.  Also toggled via <b><code>View → Word Wrap</code></b>.</td>
+    </tr>
+    <tr>
+        <td><code>"WrapPlus.break_long_words"</code></td>
+        <td><code>true</code></td>
+        <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
+    </tr>
+    <tr>
+        <td><code>"WrapPlus.break_on_hyphens"</code></td>
+        <td><code>true</code></td>
+        <td>Whether or not to break lines on hyphens.</td>
+    </tr>
+    <tr>
+        <td><code>"WrapPlus.include_line_endings"</code></td>
+        <td><code>"auto"</code></td>
+        <td>Determines whether or not line endings are included in the line size:
+            <ul>
+                <li><code>true</code>: Always included.
+                <li><code>false</code>: Never included.
+                <li><code>"auto"</code>: Included only if Sublime's <code>"word_wrap"</code> is enabled (<b><code>View → Word Wrap</code></b>) and Sublime's wrap column is not 0 (<b><code>View → Word Wrap Column → Automatic</code></b>).
+            </ul>
+        </td>
+    </tr>
 </table>
 
 ### Advanced Configuration ###
@@ -100,27 +102,27 @@ Whenever the cursor is anywhere within a paragraph, hitting the Wrap Plus keystr
 ### Lists ###
 It handles a variety of lists, like bulleted lists or numbered lists. They should line up nicely:
 
-<pre>
-    - Kielbasa beef andouille chuck short loin, filet mignon jerky
-      tail fatback ball tip meatloaf sausage spare ribs bresaola
-      rump.
-    * Shankle shoulder ham, strip steak pastrami ground round shank
-      sausage tail corned beef drumstick boudin bacon prosciutto
-      turkey.
-    1. Jerky prosciutto pork loin shankle, corned beef capicola
-       pork pastrami fatback short loin ground round.
+```
+- Kielbasa beef andouille chuck short loin, filet mignon jerky
+    tail fatback ball tip meatloaf sausage spare ribs bresaola
+    rump.
+* Shankle shoulder ham, strip steak pastrami ground round shank
+    sausage tail corned beef drumstick boudin bacon prosciutto
+    turkey.
+1. Jerky prosciutto pork loin shankle, corned beef capicola
+     pork pastrami fatback short loin ground round.
         a. Sirloin fatback pancetta pork belly ham hock strip
-           steak chuck, drumstick brisket chicken corned
-           beef speck pig kielbasa short loin.
-</pre>
+             steak chuck, drumstick brisket chicken corned
+             beef speck pig kielbasa short loin.
+```
 
 ### Subsequent Indents ###
 Lines with subsequent indents should maintain their indent:
 
 ```rst
 :param cupcake: Cupcake ipsum dolor sit amet marzipan faworki.
-    Wafer I love croissant. Tart carrot cake pastry applicake
-    lollipop I love cotton brownie.
+        Wafer I love croissant. Tart carrot cake pastry applicake
+        lollipop I love cotton brownie.
 ```
 
 ### Comment Lines ###
@@ -163,20 +165,20 @@ When wrapping inside a Python triple quoted string, wrapping will be constrained
 
 ```python
 def foo():
-    """Pressing the wrap lines character while inside this string should wrap it
-    nicely, without affecting the def foo line.
-    """
+        """Pressing the wrap lines character while inside this string should wrap it
+        nicely, without affecting the def foo line.
+        """
 ```
 
 ### Email Quotes ###
 Lines with email-style quoting should be handled.  Nested quotes should be treated as separate paragraphs.
 
-<pre>
-&gt; This is a quoted paragraph.
-&gt; &gt; This is a nested quoted paragraph.  Wrapping the first paragraph won't
-&gt; &gt; touch this paragraph.
-&gt; And continuing with a third paragraph.
-</pre>
+```
+> This is a quoted paragraph.
+> > This is a nested quoted paragraph.  Wrapping the first paragraph won't
+> > touch this paragraph.
+> And continuing with a third paragraph.
+```
 
 ### Selection Wrapping ###
 If you select a range of characters, *only* the lines that are selected will be wrapped (the stock Sublime wrap lines extends the selection to what it thinks is a paragraph).  I find this behavior preferable to give me more control.
