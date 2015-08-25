@@ -1,39 +1,39 @@
 # Sublime Wrap Plus #
-Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (Alt-Q in Windows, Command-Alt-Q in OS X).  It does not affect the automatic soft line wrapping.
+  Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (<kbd>Alt</kbd><kbd>Q</kbd> in Windows and Linux, <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd> in OS X).  It does not affect the automatic soft line wrapping.
 
 ## Downloading ##
-The best way to download and install Sublime Wrap Plus is to use the Package Control plugin.  If you do not already have it installed, it's really the best way to manage your packages.
+The best way to download and install Sublime Wrap Plus is to use the [Package Control](https://packagecontrol.io) plugin.  If you do not already have it installed, it's really the best way to manage your packages.
 
 For users new to the package manager:
-* Go to http://wbond.net/sublime_packages/package_control and install Package Control.
+* Go to https://packagecontrol.io/installation and install Package Control.
 * Restart Sublime Text.
 
 Install Sublime Wrap Plus:
-* Bring up the Command Palette (`Command+Shift+P` on OS X, `Control+Shift+P` on Linux/Windows).
-* Select "Package Control: Install Package" and wait while Package Control fetches the latest package list.
+* Bring up the Command Palette (<kbd>Command</kbd><kbd>Shift</kbd><kbd>P</kbd> on OS X, <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>P</kbd> on Linux/Windows).
+* Select ***`Package Control: Install Package`*** and wait while Package Control fetches the latest package list.
 * Select Wrap Plus when the list appears.
 
 Package Control will handle automatically updating your packages.
 
-Alternatively, you can fetch from github:
+Alternatively, you can fetch from Github:
 
-	git clone git://github.com/ehuss/Sublime-Wrap-Plus.git
+    git clone git://github.com/ehuss/Sublime-Wrap-Plus.git
 
-and place it in your packages directory.
+and place it in your Packages directory, which can be found by selecting **`Preferences → Browse Packages...`**.
 
 ## Configuring ##
 No need to configure anything.  By default it uses the default keystroke for wrap lines:
 
-* Windows/Linux: Alt+Q
-* OS X: Super+Alt+Q
+* Windows/Linux: <kbd>Alt</kbd><kbd>Q</kbd>
+* OS X: <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd>
 
-If you want to use a different keystroke, go to "Preferences" then "Key Bindings - User", and add an entry like this:
+If you want to use a different keystroke, go to **`Preferences → Key Bindings - User`**, and add an entry like this:
 
-	{ "keys": ["alt+q"], "command": "wrap_lines_plus" }
+    { "keys": ["alt+q"], "command": "wrap_lines_plus" }
 
 If you want to, you can add keystrokes that use specific wrap sizes:
 
-  { "keys": ["alt+q", "7"], "command": "wrap_lines_plus", "args": {"width": 70}}
+    { "keys": ["alt+q", "7"], "command": "wrap_lines_plus", "args": {"width": 70}}
 
 There are a few settings you can tweak if you so desire.  You can set them in Preferences / Settings-User.  They are:
 
@@ -42,39 +42,39 @@ There are a few settings you can tweak if you so desire.  You can set them in Pr
     <th>Name</th><th>Default</th><th>Description</th>
   </tr>
   <tr>
-    <td>"wrap_width"</td>
+    <td>`"wrap_width"`</td>
     <td>0</td>
-    <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via View → Word Wrap Column.</td>
+    <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via **`View → Word Wrap Column`**.</td>
   </tr>
   <tr>
-    <td>"WrapPlus.wrap_width"</td>
+    <td>`"WrapPlus.wrap_width"`</td>
     <td></td>
-    <td>If set, this will override Sublime's "wrap_width" setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
+    <td>If set, this will override Sublime's `"wrap_width"` setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
     </td>
   </tr>
   <tr>
-    <td>"word_wrap"</td>
-    <td>"auto"</td>
-    <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be true, false, or "auto" where it will be disabled for source code.  Also toggled via View → Word Wrap.</td>
+    <td>`"word_wrap"`</td>
+    <td>`"auto"`</td>
+    <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be `true`, `false`, or `"auto"` where it will be disabled for source code.  Also toggled via **`View → Word Wrap`**.</td>
   </tr>
   <tr>
-    <td>"WrapPlus.break_long_words"</td>
-    <td>true</td>
+    <td>`"WrapPlus.break_long_words"`</td>
+    <td>`true`</td>
     <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
   </tr>
   <tr>
-    <td>"WrapPlus.break_on_hyphens"</td>
-    <td>true</td>
+    <td>`"WrapPlus.break_on_hyphens"`</td>
+    <td>`true`</td>
     <td>Whether or not to break lines on hyphens.</td>
   </tr>
   <tr>
-    <td>"WrapPlus.include_line_endings"</td>
-    <td>"auto"</td>
+    <td>`"WrapPlus.include_line_endings"`</td>
+    <td>`"auto"`</td>
     <td>Determines whether or not line endings are included in the line size:
     <ul>
-    <li>true: Always included.
-    <li>false: Never included.
-    <li>"auto": Included only if Sublime's "word_wrap" is enabled (View → Word Wrap) and Sublime's wrap column is not 0 (View → Word Wrap Column → Automatic).
+    <li>`true`: Always included.
+    <li>`false`: Never included.
+    <li>`"auto"`: Included only if Sublime's `"word_wrap"` is enabled (**`View → Word Wrap`**) and Sublime's wrap column is not 0 (**`View → Word Wrap Column → Automatic`**).
     </ul>
   </tr>
 </table>
@@ -88,7 +88,7 @@ Sublime supports placing configuration options in a variety of places.  You can 
 4. Packages/User/Distraction Free.sublime-settings
 
 ## Using ##
-Whenever the cursor is anywhere within a paragraph, hitting the Wrap Plus keystroke will cause it to try to discover where the paragraph starts and where it ends.  It will then wrap all of those lines according to the wrap width you currently have set (View/Word Wrap Column).
+Whenever the cursor is anywhere within a paragraph, hitting the Wrap Plus keystroke will cause it to try to discover where the paragraph starts and where it ends.  It will then wrap all of those lines according to the wrap width you currently have set (**`View → Word Wrap Column`**).
 
 ### Lists ###
 It handles a variety of lists, like bulleted lists or numbered lists. They should line up nicely:
@@ -174,4 +174,4 @@ Lines with email-style quoting should be handled.  Nested quotes should be treat
 If you select a range of characters, *only* the lines that are selected will be wrapped (the stock Sublime wrap lines extends the selection to what it thinks is a paragraph).  I find this behavior preferable to give me more control.
 
 ## Epilogue ##
-Wrap Plus handles a lot of situations that the stock Sublime word wrapper doesn't handle, but it's likely there are many situations where it doesn't work quite right.  If you come across a problem, the immediate solution is to manually select the lines you want to wrap (this will constrain wrapping to just those lines).  If you'd like, feel free to post an issue on the github page: https://github.com/ehuss/Sublime-Wrap-Plus
+Wrap Plus handles a lot of situations that the stock Sublime word wrapper doesn't handle, but it's likely there are many situations where it doesn't work quite right.  If you come across a problem, the immediate solution is to manually select the lines you want to wrap (this will constrain wrapping to just those lines).  If you'd like, feel free to post an [issue](https://github.com/ehuss/Sublime-Wrap-Plus/issues) on the Github page.
