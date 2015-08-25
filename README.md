@@ -42,39 +42,39 @@ There are a few settings you can tweak if you so desire.  You can set them in Pr
     <th>Name</th><th>Default</th><th>Description</th>
   </tr>
   <tr>
-    <td>`"wrap_width"`</td>
+    <td><pre>"wrap_width"</pre></td>
     <td>0</td>
-    <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via **`View → Word Wrap Column`**.</td>
+    <td>The maximum line width.  If 0, defaults to the first ruler, or 78.  Also set via <b><pre>View → Word Wrap Column</pre></b>.</td>
   </tr>
   <tr>
-    <td>`"WrapPlus.wrap_width"`</td>
+    <td><pre>"WrapPlus.wrap_width"</pre></td>
     <td></td>
-    <td>If set, this will override Sublime's `"wrap_width"` setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
+    <td>If set, this will override Sublime's <pre>"wrap_width"</pre> setting.  You might want to use this if you have automatic soft word wrapping enabled, but want hard wraps at a different width.
     </td>
   </tr>
   <tr>
-    <td>`"word_wrap"`</td>
-    <td>`"auto"`</td>
-    <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be `true`, `false`, or `"auto"` where it will be disabled for source code.  Also toggled via **`View → Word Wrap`**.</td>
+    <td><pre>"word_wrap"</pre></td>
+    <td><pre>"auto"</pre></td>
+    <td>This disables horizontal scrolling (*soft* or *automatic* word wrapping).  May be <pre>true</pre>, <pre>false</pre>, or <pre>"auto"</pre> where it will be disabled for source code.  Also toggled via <b><pre>View → Word Wrap</pre></b>.</td>
   </tr>
   <tr>
-    <td>`"WrapPlus.break_long_words"`</td>
-    <td>`true`</td>
+    <td><pre>"WrapPlus.break_long_words"</pre></td>
+    <td><pre>true</pre></td>
     <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
   </tr>
   <tr>
-    <td>`"WrapPlus.break_on_hyphens"`</td>
-    <td>`true`</td>
+    <td><pre>"WrapPlus.break_on_hyphens"</pre></td>
+    <td><pre>true</pre></td>
     <td>Whether or not to break lines on hyphens.</td>
   </tr>
   <tr>
-    <td>`"WrapPlus.include_line_endings"`</td>
-    <td>`"auto"`</td>
+    <td><pre>"WrapPlus.include_line_endings"</pre></td>
+    <td><pre>"auto"</pre></td>
     <td>Determines whether or not line endings are included in the line size:
     <ul>
-    <li>`true`: Always included.
-    <li>`false`: Never included.
-    <li>`"auto"`: Included only if Sublime's `"word_wrap"` is enabled (**`View → Word Wrap`**) and Sublime's wrap column is not 0 (**`View → Word Wrap Column → Automatic`**).
+    <li><pre>true</pre>: Always included.
+    <li><pre>false</pre>: Never included.
+    <li><pre>"auto"</pre>: Included only if Sublime's <pre>"word_wrap"</pre> is enabled (<b><pre>View → Word Wrap</pre></b>) and Sublime's wrap column is not 0 (<b><pre>View → Word Wrap Column → Automatic</pre></b>).
     </ul>
   </tr>
 </table>
