@@ -17,7 +17,9 @@ Package Control will handle automatically updating your packages.
 
 Alternatively, you can fetch from Github:
 
-    git clone git://github.com/ehuss/Sublime-Wrap-Plus.git
+```
+git clone git://github.com/ehuss/Sublime-Wrap-Plus.git
+```
 
 and place it in your Packages directory, which can be found by selecting **`Preferences → Browse Packages...`**.
 
