@@ -210,9 +210,9 @@ list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_l
 latex_hack = r'(:?\\)'
 rest_directive = r'(:?\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
+note_start = r'(?:[A-Z]+(?:\(.*?\))?:)'  # TODO(me), BUG(me), NOTE(me), etc.
 new_paragraph_pattern = re.compile(r'^[\t ]*' +
-    OR(numbered_list, lettered_list, bullet_list,
-              field_start))
+    OR(numbered_list, lettered_list, bullet_list, field_start, note_start))
 space_prefix_pattern = re.compile(r'^[ \t]*')
 # XXX: Does not handle escaped colons in field name.
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
