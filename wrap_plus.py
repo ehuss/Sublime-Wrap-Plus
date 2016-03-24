@@ -622,6 +622,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         debug('paragraphs is %r', paragraphs)
 
+        # Clone all the regions in view.sel() and put them in a list called
+        # old_selection to maybe be restored later below
+        old_selection = []
+        for region in self.view.sel():
+            old_selection.append(region)
+
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -680,13 +686,20 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 else:
                     debug('replaced text is the same')
 
-        # Move cursor below the last paragraph.
-        s = self.view.sel()
-        end = s[len(s)-1].end()
-        line = self.view.line(end)
-        end = min(self.view.size(), line.end()+1)
-        self.view.sel().clear()
-        r = sublime.Region(end)
-        self.view.sel().add(r)
-        self.view.show(r)
+        keep_selection = self.view.settings().get('WrapPlus.keep_selection', True)
+        if keep_selection:
+            # Restore old selection
+            self.view.sel().clear()
+            for region in old_selection:
+                self.view.sel().add(region)
+        else:
+            # Move cursor below the last paragraph.
+            s = self.view.sel()
+            end = s[len(s)-1].end()
+            line = self.view.line(end)
+            end = min(self.view.size(), line.end()+1)
+            self.view.sel().clear()
+            r = sublime.Region(end)
+            self.view.sel().add(r)
+            self.view.show(r)
         debug_end()

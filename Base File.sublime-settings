@@ -10,7 +10,10 @@
     // - "auto": Included only if Sublime's "word_wrap" is enabled (View ->
     //   Word Wrap) and Sublime's wrap column is not 0 (View -> Word Wrap
     //   Column -> Automatic).
-    "WrapPlus.include_line_endings": "auto"
+    "WrapPlus.include_line_endings": "auto",
     // Set the wrap column, overriding Sublime's "wrap_width" if not 0.
     //"WrapPlus.wrap_width": 78
+    // If true, the selection won't change after a wrap. Otherwise the cursor
+    // will be positioned below the last paragraph being wrapped
+    "WrapPlus.keep_selection": true
 }
