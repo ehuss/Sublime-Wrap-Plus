@@ -8,6 +8,7 @@ try:
 except ImportError:
     import comment
 
+
 def is_quoted_string(scope_r, scope_name):
     return 'quoted' in scope_name
 
@@ -89,8 +90,9 @@ class PrefixStrippingView(object):
             if line_strp.startswith(start):
                 ldiff = len(line) - len(line.lstrip())
                 p = line[:ldiff+len(start)]
-                self.required_comment_prefix = p
-                break
+                if self.required_comment_prefix is None or \
+                   len(self.required_comment_prefix) < len(p):
+                    self.required_comment_prefix = p
 
         # TODO: re.escape required_comment_prefix.
 
