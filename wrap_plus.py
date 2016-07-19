@@ -544,7 +544,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         m = list_pattern.match(first_line)
         if m:
             initial_prefix = first_line[0:m.end()]
-            subsequent_prefix = ' '*self._width_in_spaces(initial_prefix)
+            stripped_prefix = initial_prefix.lstrip()
+            leading_whitespace = initial_prefix[:len(initial_prefix)-len(stripped_prefix)]
+            subsequent_prefix = leading_whitespace+' '*self._width_in_spaces(stripped_prefix)
         else:
             m = field_pattern.match(first_line)
             if m:
