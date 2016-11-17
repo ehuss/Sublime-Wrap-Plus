@@ -209,8 +209,8 @@ numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
 lettered_list = r'(?:[\w][.)][\t ])'
 bullet_list = r'(?:[*+#-]+[\t ])'
 list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_list) + r'[ \t]*')
-latex_hack = r'(:?\\)'
-rest_directive = r'(:?\.\.)'
+latex_hack = r'(?:\\)'
+rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
 new_paragraph_pattern = re.compile(r'^[\t ]*' +
     OR(numbered_list, lettered_list, bullet_list,
