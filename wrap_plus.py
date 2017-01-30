@@ -10,7 +10,12 @@ except ImportError:
 
 
 def is_quoted_string(scope_r, scope_name):
-    return 'quoted' in scope_name
+    # string.quoted.double.block.python
+    # string.quoted.single.block.python
+    # string.quoted.double.single-line.python
+    # string.quoted.single.single-line.python
+    # comment.block.documentation.python
+    return 'quoted' in scope_name or 'comment.block.documentation' in scope_name
 
 debug_enabled = False
 time_start = 0
