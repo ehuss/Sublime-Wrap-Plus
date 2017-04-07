@@ -86,6 +86,12 @@ There are a few settings you can tweak if you so desire.  You can set them in **
             </ul>
         </td>
     </tr>
+    <tr>
+        <td><code>"WrapPlus.keep_selection"</code></td>
+        <td><code>true</code></td>
+        <td>Whether or not to keep the current selection after a wrap. If not the cursor will be positioned below the last wrapped paragraph.</td>
+    </tr>
+
 </table>
 
 ### Advanced Configuration ###
