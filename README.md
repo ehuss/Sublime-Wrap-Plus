@@ -185,3 +185,17 @@ If you select a range of characters, *only* the lines that are selected will be 
 
 ## Epilogue ##
 Wrap Plus handles a lot of situations that the stock Sublime word wrapper doesn't handle, but it's likely there are many situations where it doesn't work quite right.  If you come across a problem, the immediate solution is to manually select the lines you want to wrap (this will constrain wrapping to just those lines).  If you'd like, feel free to post an [issue](https://github.com/ehuss/Sublime-Wrap-Plus/issues) on the Github page.
+
+
+
+# Wrap Plus Enhanced
+
+
+The file `wrap_lines_enhancement.py` is a wrapper around the default command `wrap_lines_plus` which
+does add the following fix from the issue:
+
+(Wrap without loosing cursor position)
+https://github.com/ehuss/Sublime-Wrap-Plus/issues/19
+
+
+
