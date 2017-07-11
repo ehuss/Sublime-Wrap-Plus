@@ -198,4 +198,7 @@ does add the following fix from the issue:
 https://github.com/ehuss/Sublime-Wrap-Plus/issues/19
 
 
+## License
+
+See the `LICENSE.txt` file under this repository.
 
