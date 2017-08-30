@@ -209,7 +209,7 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-blank_line_pattern = re.compile(r'^[\t \n]*$')
+blank_line_pattern = re.compile(r'^[\t \{\}\[\]\(\)\n]*$')
 
 # This doesn't always work, but seems decent.
 numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
