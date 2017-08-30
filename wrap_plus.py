@@ -219,10 +219,13 @@ list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_l
 latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*TeX)'
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
-new_paragraph_pattern = re.compile(r'^[\t ]*' +
-    OR(numbered_list, lettered_list, bullet_list,
-              field_start))
+
+new_paragraph_pattern_string = r'^[\t ]*' + OR(numbered_list, lettered_list, bullet_list, field_start, r'\{', r'\[', r'\(')
+# print( "pattern: " + new_paragraph_pattern_string )
+
+new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
 space_prefix_pattern = re.compile(r'^[ \t]*')
+
 # XXX: Does not handle escaped colons in field name.
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)'+fields)  # rest, javadoc, jsdoc, etc
@@ -252,6 +255,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def _is_paragraph_start(self, line_r, line):
         # Certain patterns at the beginning of the line indicate this is the
         # beginning of a paragraph.
+
+        # print( "line: " + str( line ) )
+        # print( "new_paragraph_pattern.match(line): " + str( new_paragraph_pattern.match(line) ) )
         return new_paragraph_pattern.match(line) != None
 
     def _is_paragraph_break(self, line_r, line, pure=False):
