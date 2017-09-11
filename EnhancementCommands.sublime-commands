@@ -1,6 +1,0 @@
-[
-    { "caption": "Wrap Plus: Wrap Lines at 65 chars", "command": "wrap_lines_enhancement", "args": { "width": 65 } },
-    { "caption": "Wrap Plus: Wrap Lines at 70 chars", "command": "wrap_lines_enhancement", "args": { "width": 70 } },
-    { "caption": "Wrap Plus: Wrap Lines at 72 chars", "command": "wrap_lines_enhancement", "args": { "width": 72 } },
-    { "caption": "Wrap Plus: Wrap Lines at 80 chars", "command": "wrap_lines_enhancement", "args": { "width": 80 } },
-]

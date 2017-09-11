@@ -474,7 +474,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
-        width = self.view.settings().get('WrapPlus.wrap_width', width)
+        if width == 0:
+            width = self.view.settings().get('WrapPlus.wrap_width', width)
 
         # Value of 0 means 'automatic'.
         if width == 0:
