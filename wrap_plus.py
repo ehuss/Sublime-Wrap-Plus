@@ -459,12 +459,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         :returns: The maximum line width.
         """
+        # print( "Here1, width: " + str( width ) )
         if width == 0 and self.view.settings().get('wrap_width'):
             try:
                 width = int(self.view.settings().get('wrap_width'))
             except TypeError:
                 pass
 
+        # print( "Here1, width: " + str( width ) )
         if width == 0 and self.view.settings().get('rulers'):
             # try and guess the wrap width from the ruler, if any
             try:
@@ -474,6 +476,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
+        # print( "Here1, width: " + str( width ) )
         if width == 0:
             width = self.view.settings().get('WrapPlus.wrap_width', width)
 
@@ -628,7 +631,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         debug_start(self.view.settings().get('WrapPlus.debug', False))
         debug('#########################################################################')
         self._width = self._determine_width(width)
-        debug('wrap width = %r', self._width)
+
+        # print('wrap width = %r', self._width)
         self._determine_tab_size()
         self._determine_comment_style()
 
