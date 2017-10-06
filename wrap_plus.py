@@ -18,12 +18,13 @@ def is_quoted_string(scope_r, scope_name):
     return 'quoted' in scope_name or 'comment.block.documentation' in scope_name
 
 debug_enabled = False
+# debug_enabled = True
+
 time_start = 0
 last_time = 0
 def debug_start(enabled):
-    global debug_enabled, time_start, last_time
-    debug_enabled = enabled
-    if debug_enabled:
+    global time_start, last_time
+    if debug_enabled or enabled:
         time_start = time.time()
         last_time = time_start
 
@@ -209,7 +210,7 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-blank_line_pattern = re.compile(r'^[\t \{\}\[\]\(\)\n]*$')
+blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
 
 # This doesn't always work, but seems decent.
 numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
@@ -220,7 +221,7 @@ latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*T
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
 
-new_paragraph_pattern_string = r'^[\t ]*' + OR(numbered_list, lettered_list, bullet_list, field_start, r'\{', r'\[', r'\(')
+new_paragraph_pattern_string = r'^[\t ]*' + OR(numbered_list, lettered_list, bullet_list, field_start, r'\{')
 # print( "pattern: " + new_paragraph_pattern_string )
 
 new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
@@ -629,7 +630,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, width=0):
         debug_start(self.view.settings().get('WrapPlus.debug', False))
-        debug('#########################################################################')
+        debug('\n\n#########################################################################')
         self._width = self._determine_width(width)
 
         # print('wrap width = %r', self._width)
