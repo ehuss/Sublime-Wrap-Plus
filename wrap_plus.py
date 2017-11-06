@@ -648,6 +648,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
         break_on_hyphens = self.view.settings().get('WrapPlus.break_on_hyphens', True)
 
+        wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
+                                       break_on_hyphens=break_on_hyphens)
+        wrapper.width = self._width
+        wrapper.expand_tabs = False
+
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -658,12 +663,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
                 paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[index]
-                wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
-                                               break_on_hyphens=break_on_hyphens)
-                wrapper.width = self._width
                 init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_r, paragraph_lines, required_comment_prefix)
                 orig_init_prefix = init_prefix
                 orig_subsequent_prefix = subsequent_prefix
+
                 if orig_init_prefix or orig_subsequent_prefix:
                     # Textwrap is somewhat limited.  It doesn't recognize tabs
                     # in prefixes.  Unfortunately, this means we can't easily
@@ -673,8 +676,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
                     wrapper.initial_indent = init_prefix
                     wrapper.subsequent_indent = subsequent_prefix
-
-                wrapper.expand_tabs = False
 
                 txt = '\n'.join(paragraph_lines)
                 txt = txt.expandtabs(self._tab_width)
