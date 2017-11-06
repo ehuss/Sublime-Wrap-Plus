@@ -645,6 +645,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         debug('paragraphs is %r', paragraphs)
 
+        break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
+        break_on_hyphens = self.view.settings().get('WrapPlus.break_on_hyphens', True)
+
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -655,8 +658,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for i, s in enumerate(self.view.sel()):
                 paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[i]
-                break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
-                break_on_hyphens = self.view.settings().get('WrapPlus.break_on_hyphens', True)
                 wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                                break_on_hyphens=break_on_hyphens)
                 wrapper.width = self._width
