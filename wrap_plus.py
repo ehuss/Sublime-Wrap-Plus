@@ -3,6 +3,7 @@ import sublime, sublime_plugin
 import textwrap
 import re
 import time
+import unittest
 try:
     import Default.comment as comment
 except ImportError:
@@ -210,7 +211,12 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
+max_words_in_comma_separated_list = 4
+list_of_words_pattern = re.compile(r'(?:^|\s)+\w+\s*(?!\w+)', re.MULTILINE)
+
 blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
+whitespace_character = (" ", "\t")
+word_separator_characters = ( ",", "." )
 
 # This doesn't always work, but seems decent.
 numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
@@ -663,7 +669,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
                 paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
-                text = self.hard_wrap_text(wrapper, paragraph_region, paragraph_lines, required_comment_prefix)
+                init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
+
+                # text = self.hard_wrap_text(wrapper, paragraph_lines, init_prefix, subsequent_prefix)
+                text = self.semantic_line_wrap(paragraph_lines, init_prefix, subsequent_prefix)
 
                 # I can't decide if I prefer it to not make the modification
                 # if there is no change (and thus don't mark an unmodified
@@ -674,8 +683,117 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         self.move_cursor_below_the_last_paragraph()
 
-    def hard_wrap_text(self, wrapper, paragraph_region, paragraph_lines, required_comment_prefix):
-        init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
+    def semantic_line_wrap(self, paragraph_lines, init_prefix, subsequent_prefix):
+        new_text = [init_prefix]
+
+        is_allowed_to_wrap = False
+        is_possible_space = False
+
+        text = ' '.join(paragraph_lines)
+        text_length = len(text)
+        accumulated_line = ""
+
+        for index, character in enumerate(text):
+
+            if is_possible_space and character in whitespace_character:
+                continue
+
+            else:
+                is_possible_space = False
+
+            accumulated_line_length = len( accumulated_line )
+
+            if accumulated_line_length > 10:
+                is_allowed_to_wrap = True
+
+            if character in word_separator_characters and is_allowed_to_wrap \
+                    or accumulated_line_length >= self._width:
+
+                if index + 2 < text_length:
+
+                    if not self.is_comma_separated_list(text, index):
+
+                        new_text.append(accumulated_line + character + "\n" + subsequent_prefix)
+                        accumulated_line  = ""
+
+                        is_possible_space  = True
+                        is_allowed_to_wrap = False
+
+                    else:
+                        accumulated_line += character
+
+                else:
+                    accumulated_line += character
+
+            else:
+                accumulated_line += character
+
+        if len( accumulated_line ):
+            new_text.append(accumulated_line)
+            accumulated_line  = ""
+
+        return "".join(new_text)
+
+    def is_comma_separated_list(self, text, index):
+        is_followed_by_space = text[index+1] in whitespace_character
+
+        if is_followed_by_space:
+            text_length   = len( text )
+            current_index = index
+
+            if self._is_comma_separated( text, index, False ):
+                return True
+
+            if self._is_comma_separated( text, index, True ):
+                return True
+
+        return False
+
+    def _is_comma_separated(self, text, index, is_forward_search, recursive_level=1):
+        # print( "index: %d, is_forward_search: %s, recursive_level: %d" % ( index, str( is_forward_search ), recursive_level ) )
+
+        current_index = index
+        text_length   = len( text ) - 1
+
+        if is_forward_search:
+
+            def cut_out_comma_section():
+                return text[ current_index:index+1 ]
+
+            def next_element_condition():
+                return index < text_length
+
+        else:
+
+            def cut_out_comma_section():
+                return text[ index:current_index+1 ]
+
+            def next_element_condition():
+                return index > 0
+
+        while next_element_condition():
+            index     = index + 1 if is_forward_search else index - 1
+            character = text[index]
+            # print( "character: " + str( character ) )
+
+            if character in word_separator_characters:
+                # print( "1text:    " + cut_out_comma_section() )
+
+                # # Check whether there is a next comma which can a sequence on the list
+                # if recursive_level > 0:
+
+                #     if not self._is_comma_separated(text, index, is_forward_search, 0):
+                #         return False
+
+                results = list_of_words_pattern.findall( cut_out_comma_section() )
+                # print( "1results: " + str( results ) )
+
+                if 0 < len( results ) < max_words_in_comma_separated_list:
+                    return True
+
+        return False
+
+    def hard_wrap_text(self, wrapper, paragraph_lines, init_prefix, subsequent_prefix):
         orig_init_prefix = init_prefix
         orig_subsequent_prefix = subsequent_prefix
 
@@ -731,3 +849,83 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, text)
         else:
             debug('replaced text is the same')
+
+
+def plugin_loaded():
+    main()
+    pass
+
+
+def main():
+    runner = unittest.TextTestRunner()
+    runner.run( suite() )
+
+
+def suite():
+    """
+        Problem with sys.argv[1] when unittest module is in a script
+        https://stackoverflow.com/questions/2812218/problem-with-sys-argv1-when-unittest-module-is-in-a-script
+
+        Is there a way to loop through and execute all of the functions in a Python class?
+        https://stackoverflow.com/questions/2597827/is-there-a-way-to-loop-through-and-execute-all-of-the-functions
+
+        looping over all member variables of a class in python
+        https://stackoverflow.com/questions/1398022/looping-over-all-member-variables-of-a-class-in-python
+    """
+    suite   = unittest.TestSuite()
+    classes = [ WrapPlusUnitTests ]
+
+    for _class in classes:
+        _object = _class()
+
+        for methode_name in dir( _object ):
+
+            if methode_name.lower().startswith( "test" ):
+                suite.addTest( WrapPlusUnitTests( methode_name ) )
+
+    return suite
+
+
+class WrapPlusUnitTests(unittest.TestCase):
+
+    def test_is_command_separated_list(self):
+        self.assertEqual( ['1', ' 2', ' 3', ' 4'], list_of_words_pattern.findall( "1, 2, 3, 4" ) )
+
+    def test_is_command_separated_list(self):
+        self.is_command_separated_list( "_, 1 2 3 4_ 5", 1, False )
+        self.is_command_separated_list( "1, 2, 3, 4, 5", 1, True )
+        self.is_command_separated_list( "1, 2, 3, 4, 5", 4, True )
+
+        self.is_command_separated_list( "1 2, 3, 4 5", 3, True )
+        self.is_command_separated_list( "1 2, 3, 4 5", 6, True )
+        self.is_command_separated_list( "1 2, 3_ 4 5", 3, False )
+
+        self.is_command_separated_list( "1 2, 3 4, 5", 3, True )
+        self.is_command_separated_list( "1 2, 3 4, 5", 8, True )
+
+    def test_is_command_separated_list_upperbound(self):
+        self.is_command_separated_list( "1 2, 3 4 5 6, 7",  3, False )
+        self.is_command_separated_list( "1 2, 3 4 5 6, 7", 12, False )
+
+        self.is_command_separated_list( "1 2, 3 4_5 6_ 7",  3, False )
+        self.is_command_separated_list( "1 2, 3 4 5 6_ 7",  3, False )
+
+        self.is_command_separated_list( "1 2_ 3 4_5 6, 7", 12, False )
+        self.is_command_separated_list( "1 2_ 3 4 5 6, 7", 12, False )
+
+    def test_is_command_separated_list_lowerbound(self):
+        self.is_command_separated_list( "1 2, 3 4_5 6, 7",  3, True )
+        self.is_command_separated_list( "1 2, 3 4_5 6, 7", 12, True )
+
+        self.is_command_separated_list( "1 2, 3_4_5 6, 7",  3, True )
+        self.is_command_separated_list( "1 2, 3_4_5 6, 7", 12, True )
+
+        self.is_command_separated_list( "1 2, 3_4_5_6, 7",  3, True )
+        self.is_command_separated_list( "1 2, 3_4_5_6, 7", 12, True )
+
+    def is_command_separated_list(self, text, index, goal):
+        wrap_plus = WrapLinesPlusCommand( None )
+        self.assertTrue( text[index] in word_separator_characters )
+        self.assertEqual( goal, wrap_plus.is_comma_separated_list( text, index ) )
+
+
