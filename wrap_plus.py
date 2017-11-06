@@ -711,7 +711,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 if index + 2 < text_length:
 
-                    if not self.is_comma_separated_list(text, index):
+                    if not self.is_comma_separated_list(text, index, True):
 
                         new_text.append(accumulated_line + character + "\n" + subsequent_prefix)
                         accumulated_line  = ""
@@ -734,23 +734,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return "".join(new_text)
 
-    def is_comma_separated_list(self, text, index):
+    def is_comma_separated_list(self, text, index, is_forward_search, recursive_level=1):
         is_followed_by_space = text[index+1] in whitespace_character
 
-        if is_followed_by_space:
-            text_length   = len( text )
-            current_index = index
+        # print( "index: %3d, recursive_level: %3d, is_forward_search: %5s, is_followed_by_space: %5s"
+        #         % ( index, recursive_level, str( is_forward_search ), str( is_followed_by_space ) ) )
 
-            if self._is_comma_separated( text, index, False ):
-                return True
-
-            if self._is_comma_separated( text, index, True ):
-                return True
-
-        return False
-
-    def _is_comma_separated(self, text, index, is_forward_search, recursive_level=1):
-        # print( "index: %d, is_forward_search: %s, recursive_level: %d" % ( index, str( is_forward_search ), recursive_level ) )
+        if not is_followed_by_space:
+            return False
 
         current_index = index
         text_length   = len( text ) - 1
@@ -763,6 +754,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             def next_element_condition():
                 return index < text_length
 
+            def next_element_index():
+                return index + 1
+
         else:
 
             def cut_out_comma_section():
@@ -771,8 +765,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             def next_element_condition():
                 return index > 0
 
+            def next_element_index():
+                return index - 1
+
         while next_element_condition():
-            index     = index + 1 if is_forward_search else index - 1
+            index     = next_element_index()
             character = text[index]
             # print( "character: " + str( character ) )
 
@@ -782,7 +779,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # # Check whether there is a next comma which can a sequence on the list
                 # if recursive_level > 0:
 
-                #     if not self._is_comma_separated(text, index, is_forward_search, 0):
+                #     if not self.is_comma_separated_list(text, index, is_forward_search, 0):
                 #         return False
 
                 results = list_of_words_pattern.findall( cut_out_comma_section() )
@@ -888,44 +885,60 @@ def suite():
 
 class WrapPlusUnitTests(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(self):
+        self.wrap_plus = WrapLinesPlusCommand( None )
+        self.wrap_plus._width = 80
+
     def test_is_command_separated_list(self):
         self.assertEqual( ['1', ' 2', ' 3', ' 4'], list_of_words_pattern.findall( "1, 2, 3, 4" ) )
 
     def test_is_command_separated_list(self):
-        self.is_command_separated_list( "_, 1 2 3 4_ 5", 1, False )
-        self.is_command_separated_list( "1, 2, 3, 4, 5", 1, True )
-        self.is_command_separated_list( "1, 2, 3, 4, 5", 4, True )
+        self.is_comma_separated_list( "_, 1 2 3 4_ 5", 1, False )
+        self.is_comma_separated_list( "1, 2, 3, 4, 5", 1, True )
+        self.is_comma_separated_list( "1, 2, 3, 4, 5", 4, True )
 
-        self.is_command_separated_list( "1 2, 3, 4 5", 3, True )
-        self.is_command_separated_list( "1 2, 3, 4 5", 6, True )
-        self.is_command_separated_list( "1 2, 3_ 4 5", 3, False )
+        self.is_comma_separated_list( "1 2, 3, 4 5", 3, True )
+        self.is_comma_separated_list( "1 2, 3, 4 5", 6, True )
+        self.is_comma_separated_list( "1 2, 3_ 4 5", 3, False )
 
-        self.is_command_separated_list( "1 2, 3 4, 5", 3, True )
-        self.is_command_separated_list( "1 2, 3 4, 5", 8, True )
+        self.is_comma_separated_list( "1 2, 3 4, 5", 3, True )
+        self.is_comma_separated_list( "1 2, 3 4, 5", 8, True )
 
     def test_is_command_separated_list_upperbound(self):
-        self.is_command_separated_list( "1 2, 3 4 5 6, 7",  3, False )
-        self.is_command_separated_list( "1 2, 3 4 5 6, 7", 12, False )
+        self.is_comma_separated_list( "1 2, 3 4 5 6, 7",  3, False )
+        self.is_comma_separated_list( "1 2, 3 4 5 6, 7", 12, False )
 
-        self.is_command_separated_list( "1 2, 3 4_5 6_ 7",  3, False )
-        self.is_command_separated_list( "1 2, 3 4 5 6_ 7",  3, False )
+        self.is_comma_separated_list( "1 2, 3 4_5 6_ 7",  3, False )
+        self.is_comma_separated_list( "1 2, 3 4 5 6_ 7",  3, False )
 
-        self.is_command_separated_list( "1 2_ 3 4_5 6, 7", 12, False )
-        self.is_command_separated_list( "1 2_ 3 4 5 6, 7", 12, False )
+        self.is_comma_separated_list( "1 2_ 3 4_5 6, 7", 12, False )
+        self.is_comma_separated_list( "1 2_ 3 4 5 6, 7", 12, False )
 
     def test_is_command_separated_list_lowerbound(self):
-        self.is_command_separated_list( "1 2, 3 4_5 6, 7",  3, True )
-        self.is_command_separated_list( "1 2, 3 4_5 6, 7", 12, True )
+        self.is_comma_separated_list( "1 2, 3 4_5 6, 7",  3, True )
+        self.is_comma_separated_list( "1 2, 3 4_5 6, 7", 12, True )
 
-        self.is_command_separated_list( "1 2, 3_4_5 6, 7",  3, True )
-        self.is_command_separated_list( "1 2, 3_4_5 6, 7", 12, True )
+        self.is_comma_separated_list( "1 2, 3_4_5 6, 7",  3, True )
+        self.is_comma_separated_list( "1 2, 3_4_5 6, 7", 12, True )
 
-        self.is_command_separated_list( "1 2, 3_4_5_6, 7",  3, True )
-        self.is_command_separated_list( "1 2, 3_4_5_6, 7", 12, True )
+        self.is_comma_separated_list( "1 2, 3_4_5_6, 7",  3, True )
+        self.is_comma_separated_list( "1 2, 3_4_5_6, 7", 12, True )
 
-    def is_command_separated_list(self, text, index, goal):
-        wrap_plus = WrapLinesPlusCommand( None )
+    def is_comma_separated_list(self, text, index, goal):
         self.assertTrue( text[index] in word_separator_characters )
-        self.assertEqual( goal, wrap_plus.is_comma_separated_list( text, index ) )
+        self.assertEqual( goal, self.wrap_plus.is_comma_separated_list( text, index, True )
+            or self.wrap_plus.is_comma_separated_list( text, index, False ) )
+
+    def test_semantic_line_wrap(self):
+        self.semantic_line_wrap( "1", "1" )
+        self.semantic_line_wrap( "which will take, you quite some time",
+        "which will take,\nyou quite some time" )
+
+        self.semantic_line_wrap( "which will take, you, quite some time",
+        "which will take, you,\nquite some time" )
+
+    def semantic_line_wrap(self, initial_text, goal):
+        self.assertEqual( self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ), goal )
 
 
