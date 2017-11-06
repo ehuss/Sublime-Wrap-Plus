@@ -651,13 +651,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
-            for r, l, p in paragraphs:
-                self.view.sel().add(r)
+            for region, lines, comment_prefix in paragraphs:
+                self.view.sel().add(region)
 
             # Regions fetched from view.sel() will shift appropriately with
             # the calls to replace().
-            for i, s in enumerate(self.view.sel()):
-                paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[i]
+            for index, selection in enumerate(self.view.sel()):
+                paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[index]
                 wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                                break_on_hyphens=break_on_hyphens)
                 wrapper.width = self._width
@@ -689,28 +689,28 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
                             debug('new line is %r', lines[0])
                         if subsequent_prefix != orig_subsequent_prefix:
-                            for i, line in enumerate(lines[1:]):
-                                lines[i+1] = orig_subsequent_prefix + lines[i+1][len(subsequent_prefix):]
+                            for index, line in enumerate(lines[1:]):
+                                lines[index+1] = orig_subsequent_prefix + lines[index+1][len(subsequent_prefix):]
                         txt = '\n'.join(lines)
 
-                replaced_txt = self.view.substr(s)
+                replaced_txt = self.view.substr(selection)
                 # I can't decide if I prefer it to not make the modification
                 # if there is no change (and thus don't mark an unmodified
                 # file as modified), or if it's better to include a "non-
                 # change" in the undo stack.
-                self.view.replace(edit, s, txt)
+                self.view.replace(edit, selection, txt)
                 if replaced_txt != txt:
                     debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, txt)
                 else:
                     debug('replaced text is the same')
 
         # Move cursor below the last paragraph.
-        s = self.view.sel()
-        end = s[len(s)-1].end()
+        selection = self.view.sel()
+        end = selection[len(selection)-1].end()
         line = self.view.line(end)
         end = min(self.view.size(), line.end()+1)
         self.view.sel().clear()
-        r = sublime.Region(end)
-        self.view.sel().add(r)
-        self.view.show(r)
+        region = sublime.Region(end)
+        self.view.sel().add(region)
+        self.view.show(region)
         debug_end()
