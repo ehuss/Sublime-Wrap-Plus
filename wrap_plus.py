@@ -425,8 +425,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     break
 
 
-            paragraph_r = sublime.Region(paragraph_start_pt, paragraph_end_pt)
-            result.append((paragraph_r, lines, view.required_comment_prefix))
+            paragraph_region = sublime.Region(paragraph_start_pt, paragraph_end_pt)
+            result.append((paragraph_region, lines, view.required_comment_prefix))
 
             if is_empty:
                 break
@@ -553,7 +553,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # else:
         #     return '\t'
 
-    def _extract_prefix(self, paragraph_r, lines, required_comment_prefix):
+    def _extract_prefix(self, paragraph_region, lines, required_comment_prefix):
         # The comment prefix has already been stripped from the lines.
         # If the first line starts with a list-like thing, then that will be the initial prefix.
         initial_prefix = ''
@@ -599,7 +599,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     initial_prefix = ''
                     subsequent_prefix = ''
 
-        pt = paragraph_r.begin()
+        pt = paragraph_region.begin()
         scope_r = self.view.extract_scope(pt)
         scope_name = self.view.scope_name(pt)
         if len(lines)==1 and is_quoted_string(scope_r, scope_name):
@@ -662,50 +662,56 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # Regions fetched from view.sel() will shift appropriately with
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
-                paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[index]
-                init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_r, paragraph_lines, required_comment_prefix)
-                orig_init_prefix = init_prefix
-                orig_subsequent_prefix = subsequent_prefix
+                paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
+                text = self.hard_wrap_text(wrapper, paragraph_region, paragraph_lines, required_comment_prefix)
 
-                if orig_init_prefix or orig_subsequent_prefix:
-                    # Textwrap is somewhat limited.  It doesn't recognize tabs
-                    # in prefixes.  Unfortunately, this means we can't easily
-                    # differentiate between the initial and subsequent.  This
-                    # is a workaround.
-                    init_prefix = orig_init_prefix.expandtabs(self._tab_width)
-                    subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
-                    wrapper.initial_indent = init_prefix
-                    wrapper.subsequent_indent = subsequent_prefix
-
-                txt = '\n'.join(paragraph_lines)
-                txt = txt.expandtabs(self._tab_width)
-                txt = wrapper.fill(txt)
-
-                # Put the tabs back to the prefixes.
-                if orig_init_prefix or orig_subsequent_prefix:
-                    if init_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
-                        lines = txt.splitlines()
-                        if init_prefix != orig_init_prefix:
-                            debug('fix tabs %r', lines[0])
-                            lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
-                            debug('new line is %r', lines[0])
-                        if subsequent_prefix != orig_subsequent_prefix:
-                            for index, line in enumerate(lines[1:]):
-                                lines[index+1] = orig_subsequent_prefix + lines[index+1][len(subsequent_prefix):]
-                        txt = '\n'.join(lines)
-
-                replaced_txt = self.view.substr(selection)
                 # I can't decide if I prefer it to not make the modification
                 # if there is no change (and thus don't mark an unmodified
                 # file as modified), or if it's better to include a "non-
                 # change" in the undo stack.
-                self.view.replace(edit, selection, txt)
-                if replaced_txt != txt:
-                    debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, txt)
-                else:
-                    debug('replaced text is the same')
+                self.view.replace(edit, selection, text)
+                self.print_text_replacements(text, selection)
 
         self.move_cursor_below_the_last_paragraph()
+
+    def hard_wrap_text(self, wrapper, paragraph_region, paragraph_lines, required_comment_prefix):
+        init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
+        orig_init_prefix = init_prefix
+        orig_subsequent_prefix = subsequent_prefix
+
+        if orig_init_prefix or orig_subsequent_prefix:
+            # Textwrap is somewhat limited.  It doesn't recognize tabs
+            # in prefixes.  Unfortunately, this means we can't easily
+            # differentiate between the initial and subsequent.  This
+            # is a workaround.
+            init_prefix = orig_init_prefix.expandtabs(self._tab_width)
+            subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
+            wrapper.initial_indent = init_prefix
+            wrapper.subsequent_indent = subsequent_prefix
+
+        text = '\n'.join(paragraph_lines)
+        text = text.expandtabs(self._tab_width)
+        text = wrapper.fill(text)
+
+        # Put the tabs back to the prefixes.
+        if orig_init_prefix or orig_subsequent_prefix:
+
+            if init_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
+                lines = text.splitlines()
+
+                if init_prefix != orig_init_prefix:
+                    debug('fix tabs %r', lines[0])
+                    lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
+                    debug('new line is %r', lines[0])
+
+                if subsequent_prefix != orig_subsequent_prefix:
+
+                    for index, line in enumerate(lines[1:]):
+                        lines[index+1] = orig_subsequent_prefix + lines[index+1][len(subsequent_prefix):]
+
+                text = '\n'.join(lines)
+
+        return text
 
     def move_cursor_below_the_last_paragraph(self):
         selection = self.view.sel()
@@ -717,3 +723,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         self.view.sel().add(region)
         self.view.show(region)
         debug_end()
+
+    def print_text_replacements(self, text, selection):
+        replaced_txt = self.view.substr(selection)
+
+        if replaced_txt != text:
+            debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, text)
+        else:
+            debug('replaced text is the same')
