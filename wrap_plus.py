@@ -704,7 +704,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 else:
                     debug('replaced text is the same')
 
-        # Move cursor below the last paragraph.
+        self.move_cursor_below_the_last_paragraph()
+
+    def move_cursor_below_the_last_paragraph(self):
         selection = self.view.sel()
         end = selection[len(selection)-1].end()
         line = self.view.line(end)
