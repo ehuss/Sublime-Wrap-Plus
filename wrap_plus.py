@@ -689,11 +689,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         new_text = [init_prefix]
         init_prefix_length = len( init_prefix )
 
-        is_allowed_to_wrap       = False
         is_possible_space        = False
         is_flushing_comma_list   = False
         is_comma_separated_list  = False
-        is_to_force_flush_output = False
+        is_flushing_accumalated_line = False
 
         text        = ' '.join(paragraph_lines)
         text_length = len(text)
@@ -717,56 +716,60 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # be immediately flushed
             if comma_list_end_point > 0:
                 comma_list_end_point  -= 1
-                is_flushing_comma_list = True
 
                 comma_list_size     = index - line_start_index
-                line_remaining_size = self._width - 1 - comma_list_size
+                line_remaining_size = self._width - comma_list_size
 
-                # print( "is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, line_remaining_size, comma_list_end_point, character ) )
+                # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, line_remaining_size, comma_list_end_point, character ) )
 
-                if not is_to_force_flush_output:
+                if not is_flushing_accumalated_line:
 
-                    if accumulated_line_length + next_word_length + init_prefix_length >= self._width - 1:
-                        # print( "Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
-                        is_to_force_flush_output = True
+                    if accumulated_line_length + next_word_length + init_prefix_length > self._width:
+                        # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
+                        is_flushing_accumalated_line = True
 
                         # Current character is a whitespace, but it must the the next, so fix the index
                         index -= 1
 
                     else:
                         accumulated_line += character
+
+                        is_flushing_comma_list = True
                         continue
 
             else:
                 is_flushing_comma_list  = False
                 is_comma_separated_list = False
 
-            if accumulated_line_length > 10:
-                is_allowed_to_wrap = True
+            if not is_flushing_accumalated_line \
+                    and accumulated_line_length + next_word_length + init_prefix_length > self._width:
 
-            if accumulated_line_length + next_word_length + init_prefix_length >= self._width - 1:
-                is_to_force_flush_output = True
+                # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
+                is_flushing_accumalated_line = True
 
                 # Current character is a whitespace, but it must the the next, so fix the index
                 index -= 1
 
-            if ( character in word_separator_characters \
-                    and is_allowed_to_wrap ) \
-                    or is_to_force_flush_output:
+            # print( "semantic_line_wrap, character: %s " % ( character ) )
+
+            if character in word_separator_characters \
+                    or is_flushing_accumalated_line:
 
                 if index + 2 < text_length:
                     is_followed_by_space = text[index+1] in whitespace_character
 
                     if is_followed_by_space:
 
-                        if not is_flushing_comma_list:
+                        if character in word_separator_characters \
+                                and not is_flushing_comma_list:
+
                             is_comma_separated_list, comma_list_end_point = self.is_comma_separated_list(text, index, line_start_index)
                             comma_list_end_point -= index - line_start_index + 3
 
                         if ( comma_list_end_point > 0 \
                                 and not is_flushing_comma_list ) \
                                 or not is_comma_separated_list \
-                                or is_to_force_flush_output:
+                                or is_flushing_accumalated_line:
 
                             # It is not the first line anymore, now we need to care about the `subsequent_prefix` length
                             init_prefix_length = len( subsequent_prefix )
@@ -779,8 +782,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             line_start_index = index + 1
 
                             is_possible_space        = True
-                            is_allowed_to_wrap       = False
-                            is_to_force_flush_output = False
+                            is_flushing_accumalated_line = False
 
                     else:
                         accumulated_line += character
@@ -794,7 +796,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        # print( "new_text: " + str( new_text ) )
+        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
         return "".join(new_text)
 
     def peek_next_word_length(self, index, text):
@@ -822,17 +824,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if index + 1 < text_length:
                 next_character = text[index+1]
 
-            # print( "character: %s, next_character: %s" % ( character, next_character ) )
+            # print( "is_comma_separated_list, character: %s, next_character: %s" % ( character, next_character ) )
 
             if character in word_separator_characters and next_character in whitespace_character \
                     or index >= text_length:
 
                 comma_section = text[ slice_start_index+1:index+1 ]
-                # print( "text:    " + comma_section )
+                # print( "is_comma_separated_list, text:    " + comma_section )
 
                 results       = list_of_words_pattern.findall( comma_section )
                 results_count = len( results )
-                # print( "results: " + str( results ) )
+                # print( "is_comma_separated_list, results: " + str( results ) )
 
                 if 0 < results_count < max_words_in_comma_separated_list:
 
@@ -845,18 +847,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                     # `line_start_index` always greater than `index`, like 50 - 20 = 30
                     # 50, 20 = 30, 80 - 30 = 50, 50 - 10 = 40
-                    line_remaining_size = self._width - 1 - ( index - line_start_index ) - match_end
+                    line_remaining_size = self._width - ( index - line_start_index ) - match_end
 
-                    # print( "line_remaining_size: " + str( line_remaining_size ) )
-                    # print( "match_end:           " + str( match_end ) )
+                    # print( "is_comma_separated_list, line_remaining_size: " + str( line_remaining_size ) )
+                    # print( "is_comma_separated_list, match_end:           " + str( match_end ) )
 
                     is_there_new_commas, possible_match_end = self.is_comma_separated_list(text, index, line_start_index + match_end)
-                    # print( "possible_match_end:  " + str( possible_match_end ) )
+                    # print( "is_comma_separated_list, possible_match_end:  " + str( possible_match_end ) )
 
                     if possible_match_end > 0:
                         return True, possible_match_end + match_end
 
-                    # print( "slice_start_index - line_start_index + match_end: " + str( slice_start_index - line_start_index + match_end ) )
+                    # print( "is_comma_separated_list, slice_start_index - line_start_index + match_end: " + str( slice_start_index - line_start_index + match_end ) )
                     return True, slice_start_index - line_start_index + match_end
 
                 else:
@@ -925,18 +927,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 def plugin_loaded():
     pass
     print( "\n\n" )
-    # main()
+    main()
 
-    wrap_plus = WrapLinesPlusCommand( None )
-    wrap_plus._width = 80
+    # wrap_plus = WrapLinesPlusCommand( None )
+    # wrap_plus._width = 80
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "which will not more take, you quite oh the time, some time, more time, the time, per time" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "few languages closely related. On this case, C, C++, Java, Pawn, etc. more over break this line" ], "", "" )
-    # wrap_plus.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Java, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line" ], "", "" )
+    # wrap_plus.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" ], "", "" )
-    # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, which will be certainly limited and still need to configure all over again." ], "    ", "    " )
-    wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, which will be certainly limited and still need to configure all over again." ], "    ", "    " )
+    # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, which" ], "    ", "    " )
 
 
 def main():
@@ -1028,25 +1029,33 @@ class WrapPlusUnitTests(unittest.TestCase):
                 "formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/"
                 "questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}",
 
-                "For all other languages you still need to find out another source "
-                "code\nformatter tool,\nwhich will be certainly\nlimited\\footnote{\\url{https://stackoverflow.com/"
+                "For all other languages you still need to find out another source code "
+                "formatter\ntool,\nwhich will be certainly\nlimited\\footnote{\\url{https://stackoverflow.com/"
                 "questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" )
 
+    def test_semantic_line_wrap_with_80_characters(self):
+        self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
+            "few languages close related.\nOn this case, C, C++, Javas, Pawn, if, you, already, had, written, the, program,\nassure, everything, is, under, versioning, control, system, and, broke,\neverything, etc.\nmore over break this line" )
+
+    def test_semantic_line_wrap_with_79_characters(self):
+        self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Java, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
+            "few languages close related.\nOn this case, C, C++, Java, Pawn, if, you, already, had, written, the, program,\nassure, everything, is, under, versioning, control, system, and, broke,\neverything, etc.\nmore over break this line" )
+
+    def test_semantic_line_wrap_with_81_characters(self):
+        self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawns, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
+            "few languages close related.\nOn this case, C, C++, Javas, Pawns, if, you, already, had, written, the,\nprogram, assure, everything, is, under, versioning, control, system, and, broke,\neverything, etc.\nmore over break this line" )
+
+    def test_semantic_line_wrap_with_81_characters_on_list_flusing(self):
+        self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawns, if, you, already, had, written, the, programs, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
+            "few languages close related.\nOn this case, C, C++, Javas, Pawns, if, you, already, had, written, the,\nprograms, assure, everything, is, under, versioning, control, system, and,\nbroke, everything, etc.\nmore over break this line" )
+
     def test_semantic_line_wrap_with_initial_indentation(self):
         self.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, "
                 "which will be certainly limited and still need to configure all over again.", "    ", "    " ],
 
                 "    For all other languages you still need to find out another source code f\n"
-                "    tool, which will be certainly limited and still need to configure all over\n"
-                "    again." )
-
-    def test_semantic_line_wrap_with_initial_indentation(self):
-        self.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, "
-                "which will be certainly limited and still need to configure all over again.", "    ", "    " ],
-
-                "    For all other languages you still need to find out another source code f\n"
-                "    tool, which will be certainly limited and still need to configure all over\n"
-                "    again." )
+                "    tool,\n"
+                "    which will be certainly limited and still need to configure all over again." )
 
     def semantic_line_wrap(self, initial_text, goal):
 
