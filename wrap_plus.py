@@ -717,10 +717,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if comma_list_end_point > 0:
                 comma_list_end_point  -= 1
 
-                comma_list_size     = index - line_start_index
-                line_remaining_size = self._width - comma_list_size
-
-                # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, line_remaining_size, comma_list_end_point, character ) )
+                # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, index - line_start_index, self._width - index - line_start_index, comma_list_end_point, character ) )
 
                 if not is_flushing_accumalated_line:
 
@@ -805,7 +802,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if match:
             next_word = match.group(0)
 
-            # print( "next_word: %s" % next_word )
+            # print( "peek_next_word_length: %s" % next_word )
             return len( next_word )
 
         return 0
@@ -826,7 +823,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             # print( "is_comma_separated_list, character: %s, next_character: %s" % ( character, next_character ) )
 
-            if character in word_separator_characters and next_character in whitespace_character \
+            if ( character in word_separator_characters \
+                    and next_character in whitespace_character ) \
                     or index >= text_length:
 
                 comma_section = text[ slice_start_index+1:index+1 ]
@@ -847,12 +845,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                     # `line_start_index` always greater than `index`, like 50 - 20 = 30
                     # 50, 20 = 30, 80 - 30 = 50, 50 - 10 = 40
-                    line_remaining_size = self._width - ( index - line_start_index ) - match_end
-
-                    # print( "is_comma_separated_list, line_remaining_size: " + str( line_remaining_size ) )
+                    # print( "is_comma_separated_list, line_remaining_size: " + str( self._width - ( index - line_start_index ) - match_end ) )
                     # print( "is_comma_separated_list, match_end:           " + str( match_end ) )
 
-                    is_there_new_commas, possible_match_end = self.is_comma_separated_list(text, index, line_start_index + match_end)
+                    is_there_new_commas, possible_match_end = self.is_comma_separated_list( text, index, line_start_index + match_end )
                     # print( "is_comma_separated_list, possible_match_end:  " + str( possible_match_end ) )
 
                     if possible_match_end > 0:
@@ -926,8 +922,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
 def plugin_loaded():
     pass
-    print( "\n\n" )
-    main()
+    # print( "\n\n" )
+    # main()
 
     # wrap_plus = WrapLinesPlusCommand( None )
     # wrap_plus._width = 80
@@ -1023,6 +1019,10 @@ class WrapPlusUnitTests(unittest.TestCase):
     def test_semantic_line_wrap_with_comma_list_on_the_end(self):
         self.semantic_line_wrap( "few languages close related. On this case, C, C++, Java, Pawn, etc. more over break this line",
         "few languages close related.\nOn this case, C, C++, Java, Pawn, etc.\nmore over break this line" )
+
+    def test_semantic_line_wrap_with_numeric_comma_list_on_the_end(self):
+        self.semantic_line_wrap( "1 2 3 4. 5 6 7, 1, 2, 3, 4, 5. 6 7 8 9 1",
+        "1 2 3 4.\n5 6 7, 1, 2, 3, 4, 5.\n6 7 8 9 1" )
 
     def test_semantic_line_wrap_with_long_word_at_comma_list_end(self):
         self.semantic_line_wrap( "For all other languages you still need to find out another source code "
