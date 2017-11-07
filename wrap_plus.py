@@ -651,10 +651,21 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             debug('examine %r', s)
             paragraphs.extend(self._find_paragraphs(s))
 
+        view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
 
-        break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
-        break_on_hyphens = self.view.settings().get('WrapPlus.break_on_hyphens', True)
+        break_long_words = view_settings.get('WrapPlus.break_long_words', True)
+        break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
+
+        if view_settings.get('WrapPlus.semantic_line_wrap', False):
+
+            def line_wrapper_type():
+                return self.semantic_line_wrap(paragraph_lines, init_prefix, subsequent_prefix)
+
+        else:
+
+            def line_wrapper_type():
+                return self.classic_wrap_text(wrapper, paragraph_lines, init_prefix, subsequent_prefix)
 
         wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                        break_on_hyphens=break_on_hyphens)
@@ -673,8 +684,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
                 init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
 
-                # text = self.hard_wrap_text(wrapper, paragraph_lines, init_prefix, subsequent_prefix)
-                text = self.semantic_line_wrap(paragraph_lines, init_prefix, subsequent_prefix)
+                text = line_wrapper_type()
 
                 # I can't decide if I prefer it to not make the modification
                 # if there is no change (and thus don't mark an unmodified
@@ -862,7 +872,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return False, 0
 
-    def hard_wrap_text(self, wrapper, paragraph_lines, init_prefix, subsequent_prefix):
+    def classic_wrap_text(self, wrapper, paragraph_lines, init_prefix, subsequent_prefix):
         orig_init_prefix = init_prefix
         orig_subsequent_prefix = subsequent_prefix
 

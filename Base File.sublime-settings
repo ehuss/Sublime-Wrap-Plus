@@ -1,10 +1,14 @@
 {
     // If true, words longer than the wrap width will be split to ensure lines
     // are not longer than the wrap width.
-	"WrapPlus.break_long_words": false,
+    "WrapPlus.break_long_words": false,
 
     // If true, will break on hyphens in compound words.
-	"WrapPlus.break_on_hyphens": false,
+    "WrapPlus.break_on_hyphens": false,
+
+    // If true, the semantic linewrap also know as semantic linefeed will be used. See the following
+    // address for more descriptions: http://rhodesmill.org/brandon/2012/one-sentence-per-line/
+    "WrapPlus.semantic_line_wrap": false,
 
     // Determines whether or not line endings are included in the line size:
     // - true: Always included.
