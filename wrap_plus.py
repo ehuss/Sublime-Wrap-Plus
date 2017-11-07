@@ -211,10 +211,12 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-max_words_in_comma_separated_list = 4
-list_of_words_pattern = re.compile(r'(?:^|\s)+\w+\s*(?!\w+)', re.MULTILINE)
-
 blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
+max_words_in_comma_separated_list = 4
+
+list_of_words_pattern = re.compile(r'(?:^|\s)+[^ ]+', re.MULTILINE)
+next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
+
 whitespace_character = (" ", "\t")
 word_separator_characters = ( ",", ".", "?", "!", ":", ";" )
 
@@ -700,6 +702,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         comma_list_end_point = 0
 
         for index, character in enumerate(text):
+            accumulated_line_length = len( accumulated_line )
+            next_word_length = self.peek_next_word_length( index, text )
 
             if is_possible_space and character in whitespace_character:
                 continue
@@ -715,29 +719,39 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 is_flushing_comma_list = True
 
                 comma_list_size     = index - line_start_index
-                line_remaining_size = self._width - comma_list_size
+                line_remaining_size = self._width - 1 - comma_list_size
 
-                # print( "is_flushing, index: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, comma_list_size, line_remaining_size, comma_list_end_point, character ) )
+                # print( "is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, line_remaining_size, comma_list_end_point, character ) )
 
                 if not is_to_force_flush_output:
-                    accumulated_line += character
 
-                    if comma_list_size >= self._width:
+                    if accumulated_line_length + next_word_length >= self._width - 1:
+                        # print( "Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                         is_to_force_flush_output = True
 
-                    continue
+                        # Current character is a whitespace, but it must the the next, so fix the index
+                        index -= 1
+
+                    else:
+                        accumulated_line += character
+                        continue
 
             else:
                 is_flushing_comma_list  = False
                 is_comma_separated_list = False
 
-            accumulated_line_length = len( accumulated_line )
-
             if accumulated_line_length > 10:
                 is_allowed_to_wrap = True
 
-            if character in word_separator_characters and is_allowed_to_wrap \
-                    or accumulated_line_length >= self._width:
+            if accumulated_line_length + next_word_length >= self._width - 1:
+                is_to_force_flush_output = True
+
+                # Current character is a whitespace, but it must the the next, so fix the index
+                index -= 1
+
+            if ( character in word_separator_characters \
+                    and is_allowed_to_wrap ) \
+                    or is_to_force_flush_output:
 
                 if index + 2 < text_length:
                     is_followed_by_space = text[index+1] in whitespace_character
@@ -750,8 +764,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                         if ( comma_list_end_point > 0 \
                                 and not is_flushing_comma_list ) \
-                                    or not is_comma_separated_list \
-                                    or is_to_force_flush_output:
+                                or not is_comma_separated_list \
+                                or is_to_force_flush_output:
+
+                            if character in whitespace_character:
+                                character = ""
 
                             new_text.append( accumulated_line + character + "\n" + subsequent_prefix )
                             accumulated_line = ""
@@ -776,21 +793,37 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # print( "new_text: " + str( new_text ) )
         return "".join(new_text)
 
+    def peek_next_word_length(self, index, text):
+        match = next_word_pattern.match( text, index )
+
+        if match:
+            next_word = match.group(0)
+
+            # print( "next_word: %s" % next_word )
+            return len( next_word )
+
+        return 0
+
     def is_comma_separated_list(self, text, index, line_start_index=0):
         # print( "is_comma_separated_list, index: %3d, line_start_index: %d" % ( index, line_start_index ) )
 
+        next_character    = " "
         text_length       = len( text ) - 1
         slice_start_index = index
 
         while index < text_length:
             index     = index + 1
             character = text[index]
-            # print( "character: " + str( character ) )
 
-            if character in word_separator_characters \
+            if index + 1 < text_length:
+                next_character = text[index+1]
+
+            # print( "character: %s, next_character: %s" % ( character, next_character ) )
+
+            if character in word_separator_characters and next_character in whitespace_character \
                     or index >= text_length:
 
-                comma_section = text[ slice_start_index:index+1 ]
+                comma_section = text[ slice_start_index+1:index+1 ]
                 # print( "text:    " + comma_section )
 
                 results       = list_of_words_pattern.findall( comma_section )
@@ -808,7 +841,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                     # `line_start_index` always greater than `index`, like 50 - 20 = 30
                     # 50, 20 = 30, 80 - 30 = 50, 50 - 10 = 40
-                    line_remaining_size = self._width - ( index - line_start_index ) - match_end
+                    line_remaining_size = self._width - 1 - ( index - line_start_index ) - match_end
 
                     # print( "line_remaining_size: " + str( line_remaining_size ) )
                     # print( "match_end:           " + str( match_end ) )
@@ -887,16 +920,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
 def plugin_loaded():
     pass
-    # print( "\n\n" )
-    # main()
+    print( "\n\n" )
+    main()
 
-    # wrap_plus = WrapLinesPlusCommand( None )
-    # wrap_plus._width = 80
+    wrap_plus = WrapLinesPlusCommand( None )
+    wrap_plus._width = 80
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "which will not more take, you quite oh the time, some time, more time, the time, per time" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "few languages closely related. On this case, C, C++, Java, Pawn, etc. more over break this line" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Java, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line" ], "", "" )
+    # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" ], "", "" )
 
 
 def main():
@@ -981,6 +1015,15 @@ class WrapPlusUnitTests(unittest.TestCase):
     def test_semantic_line_wrap_with_comma_list_on_the_end(self):
         self.semantic_line_wrap( "few languages close related. On this case, C, C++, Java, Pawn, etc. more over break this line",
         "few languages close related.\nOn this case, C, C++, Java, Pawn, etc.\nmore over break this line" )
+
+    def test_semantic_line_wrap_with_long_word_at_comma_list_end(self):
+        self.semantic_line_wrap( "For all other languages you still need to find out another source code "
+                "formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/"
+                "questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}",
+
+                "For all other languages you still need to find out another source "
+                "code\nformatter tool,\nwhich will be certainly\nlimited\\footnote{\\url{https://stackoverflow.com/"
+                "questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" )
 
     def semantic_line_wrap(self, initial_text, goal):
         self.assertEqual( goal, self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) )
