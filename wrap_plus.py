@@ -710,8 +710,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     or accumulated_line_length >= self._width:
 
                 if index + 2 < text_length:
+                    is_followed_by_space = text[index+1] in whitespace_character
 
-                    if not self.is_comma_separated_list(text, index, True):
+                    if is_followed_by_space \
+                            and not self.is_comma_separated_list(text, index, True):
 
                         new_text.append(accumulated_line + character + "\n" + subsequent_prefix)
                         accumulated_line  = ""
@@ -730,18 +732,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         if len( accumulated_line ):
             new_text.append(accumulated_line)
-            accumulated_line  = ""
 
+        # print( "new_text: " + str( new_text ) )
         return "".join(new_text)
 
     def is_comma_separated_list(self, text, index, is_forward_search, recursive_level=1):
-        is_followed_by_space = text[index+1] in whitespace_character
-
-        # print( "index: %3d, recursive_level: %3d, is_forward_search: %5s, is_followed_by_space: %5s"
-        #         % ( index, recursive_level, str( is_forward_search ), str( is_followed_by_space ) ) )
-
-        if not is_followed_by_space:
-            return False
+        # print( "index: %3d, recursive_level: %3d, is_forward_search: %5s"
+        #         % ( index, recursive_level, str( is_forward_search ) ) )
 
         current_index = index
         text_length   = len( text ) - 1
@@ -937,6 +934,9 @@ class WrapPlusUnitTests(unittest.TestCase):
 
         self.semantic_line_wrap( "which will take, you, quite some time",
         "which will take, you,\nquite some time" )
+
+        self.semantic_line_wrap( "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime",
+        "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime" )
 
     def semantic_line_wrap(self, initial_text, goal):
         self.assertEqual( self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ), goal )
