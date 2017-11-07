@@ -687,6 +687,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
     def semantic_line_wrap(self, paragraph_lines, init_prefix, subsequent_prefix):
         new_text = [init_prefix]
+        init_prefix_length = len( init_prefix )
 
         is_allowed_to_wrap       = False
         is_possible_space        = False
@@ -725,7 +726,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 if not is_to_force_flush_output:
 
-                    if accumulated_line_length + next_word_length >= self._width - 1:
+                    if accumulated_line_length + next_word_length + init_prefix_length >= self._width - 1:
                         # print( "Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                         is_to_force_flush_output = True
 
@@ -743,7 +744,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if accumulated_line_length > 10:
                 is_allowed_to_wrap = True
 
-            if accumulated_line_length + next_word_length >= self._width - 1:
+            if accumulated_line_length + next_word_length + init_prefix_length >= self._width - 1:
                 is_to_force_flush_output = True
 
                 # Current character is a whitespace, but it must the the next, so fix the index
@@ -766,6 +767,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                                 and not is_flushing_comma_list ) \
                                 or not is_comma_separated_list \
                                 or is_to_force_flush_output:
+
+                            # It is not the first line anymore, now we need to care about the `subsequent_prefix` length
+                            init_prefix_length = len( subsequent_prefix )
 
                             if character in whitespace_character:
                                 character = ""
@@ -921,7 +925,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 def plugin_loaded():
     pass
     print( "\n\n" )
-    main()
+    # main()
 
     wrap_plus = WrapLinesPlusCommand( None )
     wrap_plus._width = 80
@@ -931,6 +935,8 @@ def plugin_loaded():
     # wrap_plus.semantic_line_wrap( [ "few languages closely related. On this case, C, C++, Java, Pawn, etc. more over break this line" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Java, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" ], "", "" )
+    # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, which will be certainly limited and still need to configure all over again." ], "    ", "    " )
+    wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, which will be certainly limited and still need to configure all over again." ], "    ", "    " )
 
 
 def main():
@@ -967,6 +973,7 @@ class WrapPlusUnitTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
+        self.maxDiff = None
         self.wrap_plus = WrapLinesPlusCommand( None )
         self.wrap_plus._width = 80
 
@@ -1025,7 +1032,28 @@ class WrapPlusUnitTests(unittest.TestCase):
                 "code\nformatter tool,\nwhich will be certainly\nlimited\\footnote{\\url{https://stackoverflow.com/"
                 "questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" )
 
+    def test_semantic_line_wrap_with_initial_indentation(self):
+        self.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, "
+                "which will be certainly limited and still need to configure all over again.", "    ", "    " ],
+
+                "    For all other languages you still need to find out another source code f\n"
+                "    tool, which will be certainly limited and still need to configure all over\n"
+                "    again." )
+
+    def test_semantic_line_wrap_with_initial_indentation(self):
+        self.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, "
+                "which will be certainly limited and still need to configure all over again.", "    ", "    " ],
+
+                "    For all other languages you still need to find out another source code f\n"
+                "    tool, which will be certainly limited and still need to configure all over\n"
+                "    again." )
+
     def semantic_line_wrap(self, initial_text, goal):
-        self.assertEqual( goal, self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) )
+
+        if isinstance( initial_text, list ):
+            self.assertEqual( goal, self.wrap_plus.semantic_line_wrap( [initial_text[0]], initial_text[1], initial_text[2] ) )
+
+        else:
+            self.assertEqual( goal, self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) )
 
 
