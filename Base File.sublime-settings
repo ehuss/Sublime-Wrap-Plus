@@ -11,6 +11,20 @@
     // http://rhodesmill.org/brandon/2012/one-sentence-per-line/
     "WrapPlus.semantic_line_wrap": false,
 
+    // Balance the text between lines equally when a line wrapped due reaching the
+    // maximum wrap width. For example, if the maximum is 49 characters, the line:
+    //
+    // This is my very long line which will wrap near its
+    // end,
+    //
+    // Will become something like:
+    //
+    // This is my very long line which
+    // will wrap near its end,
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.balance_characters_between_line_wraps": true,
+
     // The minimum of the percentage of the current maximum line width a line can have.
     // For example, if you `wrap_width` is set to 100, and you set this to `0.2`, it
     // means that the minimum acceptable line length is 20 characters. Therefore if
@@ -21,13 +35,16 @@
     // despite their size.
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    // If the setting `WrapPlus.balance_characters_between_line_wraps` is enabled,
+    // the this will be ignored.
     "WrapPlus.minimum_line_size_percent": 0.2,
 
     // The `semantic_line_wrap` detects the maximum line width and uses it to
     // limite/delimite the maximum line width. If you line your lines only to be
     // wrapped by delimiter characters, you can set this to true.
     //
-    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled,
+    // and when `WrapPlus.balance_characters_between_line_wraps` is disabled.
     "WrapPlus.disable_line_wrapping_by_maximum_width": false,
 
     // Determines whether or not line endings are included in the line size:
