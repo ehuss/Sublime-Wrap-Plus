@@ -654,14 +654,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
 
-        break_long_words          = view_settings.get('WrapPlus.break_long_words', True)
-        break_on_hyphens          = view_settings.get('WrapPlus.break_on_hyphens', True)
-        minimum_line_size_percent = view_settings.get('WrapPlus.minimum_line_size_percent', 0.2)
+        break_long_words = view_settings.get('WrapPlus.break_long_words', True)
+        break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
 
+        minimum_line_size_percent              = view_settings.get('WrapPlus.minimum_line_size_percent', 0.2)
+        disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.disable_line_wrapping_by_maximum_width', False)
+
+        # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
         if view_settings.get('WrapPlus.semantic_line_wrap', False):
 
             def line_wrapper_type():
-                return self.semantic_line_wrap(paragraph_lines, init_prefix, subsequent_prefix, minimum_line_size_percent)
+                return self.semantic_line_wrap(paragraph_lines, init_prefix, subsequent_prefix,
+                        minimum_line_size_percent, disable_line_wrapping_by_maximum_width)
 
         else:
 
@@ -698,7 +702,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         self.move_cursor_below_the_last_paragraph()
 
-    def semantic_line_wrap(self, paragraph_lines, init_prefix, subsequent_prefix, minimum_line_size_percent=0.0):
+    def semantic_line_wrap(self, paragraph_lines, init_prefix, subsequent_prefix,
+                minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False):
         new_text = [init_prefix]
         init_prefix_length = len( init_prefix )
 
@@ -712,6 +717,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         text_length = len(text)
 
         minimum_line_size = int( self._width * minimum_line_size_percent )
+        # print( "minimum_line_size: %s" % ( minimum_line_size ) )
 
         accumulated_line     = ""
         line_start_index     = 0
@@ -737,7 +743,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 if not is_flushing_accumalated_line:
 
-                    if accumulated_line_length + next_word_length + init_prefix_length > self._width:
+                    if not disable_line_wrapping_by_maximum_width \
+                            and accumulated_line_length + next_word_length + init_prefix_length > self._width:
+
                         # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                         is_flushing_accumalated_line = True
 
@@ -754,7 +762,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 is_flushing_comma_list  = False
                 is_comma_separated_list = False
 
-            if not is_flushing_accumalated_line \
+            # print( "semantic_line_wrap, character: %s " % ( character ) )
+            if not disable_line_wrapping_by_maximum_width \
+                    and not is_flushing_accumalated_line \
                     and accumulated_line_length + next_word_length + init_prefix_length > self._width:
 
                 # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
@@ -762,8 +772,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 # Current character is a whitespace, but it must the the next, so fix the index
                 index -= 1
-
-            # print( "semantic_line_wrap, character: %s " % ( character ) )
 
             if accumulated_line_length > minimum_line_size:
                 is_allowed_to_wrap = True
@@ -842,7 +850,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 next_character = text[index+1]
 
             # print( "is_comma_separated_list, character: %s, next_character: %s" % ( character, next_character ) )
-
             if ( character in word_separator_characters \
                     and next_character in whitespace_character ) \
                     or index >= text_length:

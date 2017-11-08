@@ -6,17 +6,29 @@
     // If true, will break on hyphens in compound words.
     "WrapPlus.break_on_hyphens": false,
 
-    // If true, the semantic linewrap also know as semantic linefeed will be used. See the following
-    // address for more descriptions: http://rhodesmill.org/brandon/2012/one-sentence-per-line/
+    // If true, the semantic linewrap also know as semantic linefeed will be used.
+    // See the following address for more descriptions:
+    // http://rhodesmill.org/brandon/2012/one-sentence-per-line/
     "WrapPlus.semantic_line_wrap": false,
 
-    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
     // The minimum of the percentage of the current maximum line width a line can have.
     // For example, if you `wrap_width` is set to 100, and you set this to `0.2`, it
     // means that the minimum acceptable line length is 20 characters. Therefore if
     // some line has less than 20 characters, it will not be wrapped and will be
     // continued by the next sentence without wrapping.
-    "WrapPlus.minminimum_line_size_percent": 0.2,
+    //
+    // You can set this to 0 to disable the minimum width and always wrap the lines
+    // despite their size.
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.minimum_line_size_percent": 0.2,
+
+    // The `semantic_line_wrap` detects the maximum line width and uses it to
+    // limite/delimite the maximum line width. If you line your lines only to be
+    // wrapped by delimiter characters, you can set this to true.
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.disable_line_wrapping_by_maximum_width": false,
 
     // Determines whether or not line endings are included in the line size:
     // - true: Always included.
@@ -27,5 +39,5 @@
     "WrapPlus.include_line_endings": "auto"
 
     // Set the wrap column, overriding Sublime's "wrap_width" if not 0.
-    //"WrapPlus.wrap_width": 78
+    // "WrapPlus.wrap_width": 78
 }
