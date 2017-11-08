@@ -2,6 +2,7 @@ from __future__ import print_function
 import sublime, sublime_plugin
 import textwrap
 import re
+import math
 import time
 import unittest
 try:
@@ -658,27 +659,37 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
 
         minimum_line_size_percent              = view_settings.get('WrapPlus.minimum_line_size_percent', 0.2)
+        balance_characters_between_line_wraps  = view_settings.get('WrapPlus.balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.disable_line_wrapping_by_maximum_width', False)
-
-        # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
-        if view_settings.get('WrapPlus.semantic_line_wrap', False):
-
-            def line_wrapper_type():
-                return self.semantic_line_wrap(paragraph_lines, init_prefix, subsequent_prefix,
-                        minimum_line_size_percent, disable_line_wrapping_by_maximum_width)
-
-        else:
-
-            def line_wrapper_type():
-                return self.classic_wrap_text(wrapper, paragraph_lines, init_prefix, subsequent_prefix)
 
         wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                        break_on_hyphens=break_on_hyphens)
         wrapper.width = self._width
         wrapper.expand_tabs = False
 
-        # print( "self._width: " + str( self._width ) )
+        # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
+        if view_settings.get( 'WrapPlus.semantic_line_wrap', False ):
 
+            def line_wrapper_type():
+                if balance_characters_between_line_wraps:
+                    minimum_line_size_percent = 0.0
+                    disable_line_wrapping_by_maximum_width = True
+
+                text = self.semantic_line_wrap( paragraph_lines, initial_prefix, subsequent_prefix,
+                        minimum_line_size_percent, disable_line_wrapping_by_maximum_width )
+
+                if balance_characters_between_line_wraps:
+                    wrapper.subsequent_indent = subsequent_prefix
+                    text = self.balance_characters_between_line_wraps( wrapper, text )
+
+                return "".join( text )
+
+        else:
+
+            def line_wrapper_type():
+                return self.classic_wrap_text(wrapper, paragraph_lines, initial_prefix, subsequent_prefix)
+
+        # print( "self._width: " + str( self._width ) )
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -689,7 +700,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
                 paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
-                init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
+                initial_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
 
                 text = line_wrapper_type()
 
@@ -702,10 +713,72 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         self.move_cursor_below_the_last_paragraph()
 
-    def semantic_line_wrap(self, paragraph_lines, init_prefix, subsequent_prefix,
+    def balance_characters_between_line_wraps(self, wrapper, text_lines):
+        new_text  = []
+        new_lines = self._split_lines( wrapper, text_lines, self._width )
+
+        for index, new_line in enumerate( new_lines ):
+            lines           = new_line.split("\n")
+            lines_count     = len( lines )
+            lines_new_count = lines_count
+
+            # When there are more than 2 lines, we can get a situation like this:
+            # lines: ['    This is my very long line\n    which will wrap near its\n    end,']
+            if lines_count > 2:
+                lengths = [ len( line ) for line in lines ]
+
+                if lengths[-1] < lengths[-2] / 2:
+                    increment_percent = 1.1
+
+                    # safe guard to not attempt to fix it indefinitely, try until it reaches the maximum width
+                    steps_taken = math.ceil( 2 / math.log( increment_percent, 2 ) )
+
+                    # Try to increase the maximum width until the trailing line vanishes
+                    while lines_count == lines_new_count \
+                            and steps_taken > 0:
+
+                        steps_taken -= 1
+                        lines = self._split_lines( wrapper, [text_lines[index]], self._width, increment_percent )[0].split("\n")
+
+                        lines_new_count    = len( lines )
+                        increment_percent += increment_percent * 1.1
+
+            new_text.extend( lines )
+
+        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        return new_text
+
+    def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
+        """
+            (input)  text_lines: ['    This is my very long line which will wrap near its end,']
+            (output) new_lines:  ['    This is my very long line\n    which will wrap near its\n    end,\n']
+        """
+        new_lines = []
+
+        for line in text_lines:
+            line_length = len( line )
+            lines_count = math.ceil( line_length / maximum_line_width ) + 1
+
+            for step in range( 1, lines_count ):
+                line_length = math.ceil( line_length / step )
+
+                if line_length > maximum_line_width:
+                    continue
+
+                else:
+                    break
+
+            # print( "line_length: %d, lines_count: %d, maximum_line_width: %d, new_width: %d (%f)" % ( line_length, lines_count, maximum_line_width, math.ceil( line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
+            wrapper.width = math.ceil( line_length * middle_of_the_line_increment_percent )
+            new_lines.append( wrapper.fill( line ) )
+
+        print( "_split_lines, new_lines: " + str( new_lines ) )
+        return new_lines
+
+    def semantic_line_wrap(self, paragraph_lines, initial_prefix, subsequent_prefix,
                 minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False):
-        new_text = [init_prefix]
-        init_prefix_length = len( init_prefix )
+        new_text = [initial_prefix]
+        initial_prefix_length = len( initial_prefix )
 
         is_allowed_to_wrap           = False
         is_possible_space            = False
@@ -723,7 +796,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         line_start_index     = 0
         comma_list_end_point = 0
 
-        for index, character in enumerate(text):
+        for index, character in enumerate( text ):
             accumulated_line_length = len( accumulated_line )
             next_word_length        = self.peek_next_word_length( index, text )
 
@@ -744,7 +817,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if not is_flushing_accumalated_line:
 
                     if not disable_line_wrapping_by_maximum_width \
-                            and accumulated_line_length + next_word_length + init_prefix_length > self._width:
+                            and accumulated_line_length + next_word_length + initial_prefix_length > self._width:
 
                         # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                         is_flushing_accumalated_line = True
@@ -765,7 +838,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # print( "semantic_line_wrap, character: %s " % ( character ) )
             if not disable_line_wrapping_by_maximum_width \
                     and not is_flushing_accumalated_line \
-                    and accumulated_line_length + next_word_length + init_prefix_length > self._width:
+                    and accumulated_line_length + next_word_length + initial_prefix_length > self._width:
 
                 # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                 is_flushing_accumalated_line = True
@@ -796,7 +869,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                                 or is_flushing_accumalated_line:
 
                             # It is not the first line anymore, now we need to care about the `subsequent_prefix` length
-                            init_prefix_length = len( subsequent_prefix )
+                            initial_prefix_length = len( subsequent_prefix )
 
                             if character in whitespace_character:
                                 character = ""
@@ -821,8 +894,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
-        return "".join(new_text)
+        print( "semantic_line_wrap, new_text: " + str( new_text ) )
+        return new_text
 
     def peek_next_word_length(self, index, text):
         match = next_word_pattern.match( text, index )
@@ -889,18 +962,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return False, 0
 
-    def classic_wrap_text(self, wrapper, paragraph_lines, init_prefix, subsequent_prefix):
-        orig_init_prefix = init_prefix
+    def classic_wrap_text(self, wrapper, paragraph_lines, initial_prefix, subsequent_prefix):
+        orig_initial_prefix = initial_prefix
         orig_subsequent_prefix = subsequent_prefix
 
-        if orig_init_prefix or orig_subsequent_prefix:
+        if orig_initial_prefix or orig_subsequent_prefix:
             # Textwrap is somewhat limited.  It doesn't recognize tabs
             # in prefixes.  Unfortunately, this means we can't easily
             # differentiate between the initial and subsequent.  This
             # is a workaround.
-            init_prefix = orig_init_prefix.expandtabs(self._tab_width)
+            initial_prefix = orig_initial_prefix.expandtabs(self._tab_width)
             subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
-            wrapper.initial_indent = init_prefix
+            wrapper.initial_indent = initial_prefix
             wrapper.subsequent_indent = subsequent_prefix
 
         text = '\n'.join(paragraph_lines)
@@ -908,14 +981,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         text = wrapper.fill(text)
 
         # Put the tabs back to the prefixes.
-        if orig_init_prefix or orig_subsequent_prefix:
+        if orig_initial_prefix or orig_subsequent_prefix:
 
-            if init_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
+            if initial_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
                 lines = text.splitlines()
 
-                if init_prefix != orig_init_prefix:
+                if initial_prefix != orig_initial_prefix:
                     debug('fix tabs %r', lines[0])
-                    lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
+                    lines[0] = orig_initial_prefix + lines[0][len(initial_prefix):]
                     debug('new line is %r', lines[0])
 
                 if subsequent_prefix != orig_subsequent_prefix:
@@ -949,11 +1022,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
 def plugin_loaded():
     pass
-    # print( "\n\n" )
-    # main()
+    print( "\n\n" )
+    # run_unit_tests()
 
-    # wrap_plus = WrapLinesPlusCommand( None )
-    # wrap_plus._width = 80
+    wrap_plus = WrapLinesPlusCommand( None )
+    wrap_plus._width = 80
+
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "which will not more take, you quite oh the time, some time, more time, the time, per time" ], "", "" )
@@ -962,11 +1036,19 @@ def plugin_loaded():
     # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/questions/31438377/how-can-i-get-eclipse-to-wrap-lines-after-a-period-instead-of-before}}" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, which" ], "    ", "    " )
 
+    wrapper   = textwrap.TextWrapper(break_long_words=False, break_on_hyphens=False)
+    wrap_plus = WrapLinesPlusCommand( None )
+    wrap_plus._width          = 50
+    wrapper.expand_tabs       = False
+    wrapper.subsequent_indent = "    "
 
-def main():
+    # wrap_plus._split_lines( wrapper, ["    This is my very long line which will wrap near its end,"], 50 )
+    wrap_plus.balance_characters_between_line_wraps( wrapper, ["    This is my very long line which will wrap near its end,"])
+
+
+def run_unit_tests():
     runner = unittest.TextTestRunner()
     runner.run( suite() )
-
 
 def suite():
     """
@@ -980,7 +1062,11 @@ def suite():
         https://stackoverflow.com/questions/1398022/looping-over-all-member-variables-of-a-class-in-python
     """
     suite   = unittest.TestSuite()
-    classes = [ WrapPlusUnitTests ]
+    classes = \
+    [
+        SemanticLineWrapUnitTests,
+        LineBalancingUnitTests,
+    ]
 
     for _class in classes:
         _object = _class()
@@ -988,12 +1074,33 @@ def suite():
         for methode_name in dir( _object ):
 
             if methode_name.lower().startswith( "test" ):
-                suite.addTest( WrapPlusUnitTests( methode_name ) )
+                suite.addTest( _class( methode_name ) )
 
     return suite
 
 
-class WrapPlusUnitTests(unittest.TestCase):
+class LineBalancingUnitTests(unittest.TestCase):
+
+    @classmethod
+    def setUp(self):
+        self.maxDiff = None
+        self.wrap_plus = WrapLinesPlusCommand( None )
+        self.wrap_plus._width = 50
+
+        self.wrapper = textwrap.TextWrapper(break_long_words=False, break_on_hyphens=False)
+        self.wrapper.subsequent_indent = "    "
+        self.wrapper.expand_tabs = False
+
+    def test_split_lines(self):
+        self.assertEqual( ['    This is my very long line\n    which will wrap near its\n    end,'],
+                self.wrap_plus._split_lines( self.wrapper, ["    This is my very long line which will wrap near its end,"], 50 ) )
+
+    def test_balance_characters_between_line_wraps(self):
+        self.assertEqual( ['    This is my very long line', '    which will wrap near its end,'],
+                self.wrap_plus.balance_characters_between_line_wraps(
+                self.wrapper, ["    This is my very long line which will wrap near its end,"] ) )
+
+class SemanticLineWrapUnitTests(unittest.TestCase):
 
     @classmethod
     def setUp(self):
@@ -1086,9 +1193,9 @@ class WrapPlusUnitTests(unittest.TestCase):
     def semantic_line_wrap(self, initial_text, goal):
 
         if isinstance( initial_text, list ):
-            self.assertEqual( goal, self.wrap_plus.semantic_line_wrap( [initial_text[0]], initial_text[1], initial_text[2] ) )
+            self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap( [initial_text[0]], initial_text[1], initial_text[2] ) ) )
 
         else:
-            self.assertEqual( goal, self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) )
+            self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) ) )
 
 
