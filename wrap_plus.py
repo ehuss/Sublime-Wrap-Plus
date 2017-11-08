@@ -676,11 +676,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     disable_line_wrapping_by_maximum_width = True
 
                 text = self.semantic_line_wrap( paragraph_lines, initial_prefix, subsequent_prefix,
-                        minimum_line_size_percent, disable_line_wrapping_by_maximum_width )
+                        minimum_line_size_percent, disable_line_wrapping_by_maximum_width,
+                        balance_characters_between_line_wraps )
 
                 if balance_characters_between_line_wraps:
-                    wrapper.subsequent_indent = subsequent_prefix
-                    text = self.balance_characters_between_line_wraps( wrapper, text )
+                    text = self.balance_characters_between_line_wraps( wrapper, text, initial_prefix, subsequent_prefix )
 
                 return "".join( text )
 
@@ -713,45 +713,49 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         self.move_cursor_below_the_last_paragraph()
 
-    def balance_characters_between_line_wraps(self, wrapper, text_lines):
-        new_text  = []
-        new_lines = self._split_lines( wrapper, text_lines, self._width )
+    def balance_characters_between_line_wraps(self, wrapper, text_lines, initial_prefix, subsequent_prefix):
+        """
+            input:  ['This is my very long line which will wrap near its end,']
+            output: ['    ', 'This is my very long line which\n    ', 'will wrap near its end,']
+        """
+        wrapper.initial_prefix    = ""
+        wrapper.subsequent_indent = subsequent_prefix
 
-        for index, new_line in enumerate( new_lines ):
-            lines           = new_line.split("\n")
-            lines_count     = len( lines )
-            lines_new_count = lines_count
+        new_text      = [initial_prefix]
+        splited_lines = self._split_lines( wrapper, text_lines, self._width, subsequent_prefix )
+
+        for index, new_lines in enumerate( splited_lines ):
+            lines_count       = len( new_lines )
+            first_lines_count = lines_count
 
             # When there are more than 2 lines, we can get a situation like this:
-            # lines: ['    This is my very long line\n    which will wrap near its\n    end,']
+            # new_lines: ['    This is my very long line\n    which will wrap near its\n    end,']
             if lines_count > 2:
-                lengths = [ len( line ) for line in lines ]
 
-                if lengths[-1] < lengths[-2] / 2:
+                if len( new_lines[-1] ) < math.ceil( len( new_lines[-2] ) / 2 ):
                     increment_percent = 1.1
 
-                    # safe guard to not attempt to fix it indefinitely, try until it reaches the maximum width
-                    steps_taken = math.ceil( 2 / math.log( increment_percent, 2 ) )
-
                     # Try to increase the maximum width until the trailing line vanishes
-                    while lines_count == lines_new_count \
-                            and steps_taken > 0:
+                    while lines_count == first_lines_count \
+                            and increment_percent < 2:
 
-                        steps_taken -= 1
-                        lines = self._split_lines( wrapper, [text_lines[index]], self._width, increment_percent )[0].split("\n")
+                        new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, subsequent_prefix, increment_percent )[0]
 
-                        lines_new_count    = len( lines )
-                        increment_percent += increment_percent * 1.1
+                        first_lines_count    = len( new_lines )
+                        increment_percent *= 1.1
 
-            new_text.extend( lines )
+            new_text.extend( new_lines )
 
-        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        # The first line need to be manually fixed by removing the fist indentation
+        new_text[1] = new_text[1].lstrip()
+
+        print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
         return new_text
 
-    def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
+    def _split_lines(self, wrapper, text_lines, maximum_line_width, subsequent_prefix, middle_of_the_line_increment_percent=1):
         """
-            (input)  text_lines: ['    This is my very long line which will wrap near its end,']
-            (output) new_lines:  ['    This is my very long line\n    which will wrap near its\n    end,\n']
+            (input)  text_lines: ['This is my very long line which will wrap near its end,\n']
+            (output) new_lines:  [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
         """
         new_lines = []
 
@@ -770,15 +774,43 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             # print( "line_length: %d, lines_count: %d, maximum_line_width: %d, new_width: %d (%f)" % ( line_length, lines_count, maximum_line_width, math.ceil( line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
             wrapper.width = math.ceil( line_length * middle_of_the_line_increment_percent )
-            new_lines.append( wrapper.fill( line ) )
+            wrapped_line  = wrapper.fill( line )
+            wrapped_lines = wrapped_line.split( "\n" )
+
+            # Add again the removed `\n` character due the `split` statement
+            fixed_wrapped_lines = []
+
+            for _wrapped_line in wrapped_lines:
+                fixed_wrapped_lines.append( _wrapped_line + "\n" )
+
+            # The first line need to be manually fixed by adding the fist indentation
+            fixed_wrapped_lines[0]  = subsequent_prefix + fixed_wrapped_lines[0]
+
+            # The last line need to be manually fixed by removing the trailing last time, if not existent on the original
+            if line[-1] != "\n":
+                fixed_wrapped_lines[-1] = fixed_wrapped_lines[-1][0:-1]
+
+            new_lines.append( fixed_wrapped_lines )
 
         print( "_split_lines, new_lines: " + str( new_lines ) )
         return new_lines
 
     def semantic_line_wrap(self, paragraph_lines, initial_prefix, subsequent_prefix,
-                minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False):
-        new_text = [initial_prefix]
-        initial_prefix_length = len( initial_prefix )
+                minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False,
+                balance_characters_between_line_wraps=False):
+        """
+            input: ['This is my very long line which will wrap near its', 'end,']
+            if balance_characters_between_line_wraps:
+                output: ['This is my very long line which will wrap near its end,']
+            else:
+                output: ['    ', 'This is my very long line which will wrap near its\n    ', 'end,']
+        """
+        new_text = []
+        initial_prefix_length    = len( initial_prefix )
+        subsequent_prefix_length = len( subsequent_prefix )
+
+        if not balance_characters_between_line_wraps:
+            new_text.append( initial_prefix )
 
         is_allowed_to_wrap           = False
         is_possible_space            = False
@@ -868,13 +900,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                                 or not is_comma_separated_list \
                                 or is_flushing_accumalated_line:
 
-                            # It is not the first line anymore, now we need to care about the `subsequent_prefix` length
-                            initial_prefix_length = len( subsequent_prefix )
+                            # It is not the first line anymore, now we need to use the `subsequent_prefix_length`
+                            initial_prefix_length = subsequent_prefix_length
 
                             if character in whitespace_character:
                                 character = ""
 
-                            new_text.append( accumulated_line + character + "\n" + subsequent_prefix )
+                            accumulated_line = "".join( [accumulated_line, character, "\n",
+                                    ( "" if balance_characters_between_line_wraps else subsequent_prefix ) ] )
+
+                            # print( "semantic_line_wrap, accumulated_line flush: %s" % accumulated_line )
+                            new_text.append( accumulated_line )
+
                             accumulated_line = ""
                             line_start_index = index + 1
 
@@ -891,6 +928,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             else:
                 accumulated_line += character
 
+        # Flush out any remaining text
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
@@ -1022,12 +1060,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
 def plugin_loaded():
     pass
-    print( "\n\n" )
+    # print( "\n\n" )
     # run_unit_tests()
 
     wrap_plus = WrapLinesPlusCommand( None )
     wrap_plus._width = 80
 
+    # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "", balance_characters_between_line_wraps=True )
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime" ], "", "" )
     # wrap_plus.semantic_line_wrap( [ "which will not more take, you quite oh the time, some time, more time, the time, per time" ], "", "" )
@@ -1042,41 +1081,24 @@ def plugin_loaded():
     wrapper.expand_tabs       = False
     wrapper.subsequent_indent = "    "
 
-    # wrap_plus._split_lines( wrapper, ["    This is my very long line which will wrap near its end,"], 50 )
-    wrap_plus.balance_characters_between_line_wraps( wrapper, ["    This is my very long line which will wrap near its end,"])
+    # wrap_plus._split_lines( wrapper, ["This is my very long line which will wrap near its end,\n"], 50, "    " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, ["This is my very long line which will wrap near its end,\n"], "    ", "    " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, ["This is my very long line which will wrap near its end,", "This is my very long line which will wrap near its end," ], "    ", "    " )
 
 
 def run_unit_tests():
     runner = unittest.TextTestRunner()
-    runner.run( suite() )
 
-def suite():
-    """
-        Problem with sys.argv[1] when unittest module is in a script
-        https://stackoverflow.com/questions/2812218/problem-with-sys-argv1-when-unittest-module-is-in-a-script
-
-        Is there a way to loop through and execute all of the functions in a Python class?
-        https://stackoverflow.com/questions/2597827/is-there-a-way-to-loop-through-and-execute-all-of-the-functions
-
-        looping over all member variables of a class in python
-        https://stackoverflow.com/questions/1398022/looping-over-all-member-variables-of-a-class-in-python
-    """
-    suite   = unittest.TestSuite()
-    classes = \
+    # Comment all tests on this list to run all Unit Tests
+    unit_tests_to_run = \
     [
-        SemanticLineWrapUnitTests,
-        LineBalancingUnitTests,
+        # "test_split_lines_with_trailing_new_line",
+        # "test_split_lines_without_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_with_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_without_trailing_new_line",
     ]
 
-    for _class in classes:
-        _object = _class()
-
-        for methode_name in dir( _object ):
-
-            if methode_name.lower().startswith( "test" ):
-                suite.addTest( _class( methode_name ) )
-
-    return suite
+    runner.run( suite( unit_tests_to_run ) )
 
 
 class LineBalancingUnitTests(unittest.TestCase):
@@ -1091,14 +1113,26 @@ class LineBalancingUnitTests(unittest.TestCase):
         self.wrapper.subsequent_indent = "    "
         self.wrapper.expand_tabs = False
 
-    def test_split_lines(self):
-        self.assertEqual( ['    This is my very long line\n    which will wrap near its\n    end,'],
-                self.wrap_plus._split_lines( self.wrapper, ["    This is my very long line which will wrap near its end,"], 50 ) )
+    def test_split_lines_without_trailing_new_line(self):
+        self.assertEqual( [['    This is my very long line\n', '    which will wrap near its\n', '    end,']],
+                self.wrap_plus._split_lines(
+                self.wrapper, ["This is my very long line which will wrap near its end,"], 50, "    " ) )
 
-    def test_balance_characters_between_line_wraps(self):
-        self.assertEqual( ['    This is my very long line', '    which will wrap near its end,'],
+    def test_split_lines_with_trailing_new_line(self):
+        self.assertEqual( [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']],
+                self.wrap_plus._split_lines(
+                self.wrapper, ["This is my very long line which will wrap near its end,\n"], 50, "    " ) )
+
+    def test_balance_characters_between_line_wraps_with_trailing_new_line(self):
+        self.assertEqual( ['    ', 'This is my very long line which\n', '    will wrap near its end,\n'],
                 self.wrap_plus.balance_characters_between_line_wraps(
-                self.wrapper, ["    This is my very long line which will wrap near its end,"] ) )
+                self.wrapper, ["This is my very long line which will wrap near its end,\n"], "    ", "    " ) )
+
+    def test_balance_characters_between_line_wraps_without_trailing_new_line(self):
+        self.assertEqual( ['    ', 'This is my very long line which\n', '    will wrap near its end,'],
+                self.wrap_plus.balance_characters_between_line_wraps(
+                self.wrapper, ["This is my very long line which will wrap near its end,"], "    ", "    " ) )
+
 
 class SemanticLineWrapUnitTests(unittest.TestCase):
 
@@ -1197,5 +1231,42 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
 
         else:
             self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) ) )
+
+
+def suite(unit_tests_to_run):
+    """
+        Problem with sys.argv[1] when unittest module is in a script
+        https://stackoverflow.com/questions/2812218/problem-with-sys-argv1-when-unittest-module-is-in-a-script
+
+        Is there a way to loop through and execute all of the functions in a Python class?
+        https://stackoverflow.com/questions/2597827/is-there-a-way-to-loop-through-and-execute-all-of-the-functions
+
+        looping over all member variables of a class in python
+        https://stackoverflow.com/questions/1398022/looping-over-all-member-variables-of-a-class-in-python
+    """
+    suite   = unittest.TestSuite()
+    classes = \
+    [
+        SemanticLineWrapUnitTests,
+        LineBalancingUnitTests,
+    ]
+
+    unit_tests_to_run_count = len( unit_tests_to_run )
+
+    for _class in classes:
+        _object = _class()
+
+        for function_name in dir( _object ):
+
+            if function_name.lower().startswith( "test" ):
+
+                if unit_tests_to_run_count > 0 \
+                        and function_name not in unit_tests_to_run:
+
+                    continue
+
+                suite.addTest( _class( function_name ) )
+
+    return suite
 
 
