@@ -33,13 +33,13 @@
     // will be continued by the next sentence without wrapping. You can set this to 0
     // to disable the minimum width and always wrap the lines despite their size.
     //
-    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled,
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
     "WrapPlus.minimum_line_size_percent": 0.0,
 
     // When wrapping lines, it will consider they to be a list of words if between
     // two sequential commas is find at the maximum these number of words.
     //
-    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled,
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
     "WrapPlus.maximum_words_in_comma_separated_list": 3,
 
     // The `semantic_line_wrap` detects the maximum line width and uses it to
