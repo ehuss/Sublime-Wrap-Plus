@@ -34,7 +34,7 @@
     // to disable the minimum width and always wrap the lines despite their size.
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled,
-    "WrapPlus.minimum_line_size_percent": 0.2,
+    "WrapPlus.minimum_line_size_percent": 0.0,
 
     // The `semantic_line_wrap` detects the maximum line width and uses it to
     // limite/delimite the maximum line width. If you line your lines only to be
