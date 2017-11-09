@@ -193,14 +193,17 @@ Wrap Plus handles a lot of situations that the stock Sublime word wrapper doesn'
 
 
 
-# Wrap Plus Enhanced
+## Unit Tests
 
+To run the unit tests:
 
-The file `wrap_lines_enhancement.py` is a wrapper around the default command `wrap_lines_plus` which
-does add the following fix from the issue:
+1. Install the package: https://github.com/randy3k/UnitTesting
+1. Open the file `unit_testing/override_commmit_completions_unit_tests.py`
+1. Open the Sublime Text command palette with `Ctrl+Shift+P`
+1. And run the command: `UnitTesting: Test Current Package`
 
-(Wrap without loosing cursor position)
-https://github.com/ehuss/Sublime-Wrap-Plus/issues/19
+Or you can just uncomment the line `# run_tests()` on the function `plugin_loaded()` at the end of
+the file. The results are going to be displayed on the `Sublime Text Console`.
 
 
 ## License
