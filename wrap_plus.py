@@ -641,18 +641,21 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         debug_start(self.view.settings().get('WrapPlus.debug', False))
         debug('\n\n#########################################################################')
 
+        cursor_original_positions = []
         self._width = self._determine_width(width)
-        # print('wrap width = %r', self._width)
 
+        # print('wrap width = %r', self._width)
         self._determine_tab_size()
         self._determine_comment_style()
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
 
-        for s in self.view.sel():
-            debug('examine %r', s)
-            paragraphs.extend(self._find_paragraphs(s))
+        for selection in self.view.sel():
+            debug('examine %r', selection)
+
+            paragraphs.extend(self._find_paragraphs(selection))
+            cursor_original_positions.append(selection.begin())
 
         view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
@@ -660,6 +663,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         global maximum_words_in_comma_separated_list
         break_long_words = view_settings.get('WrapPlus.break_long_words', True)
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
+        after_wrap = view_settings.get('WrapPlus.after_wrap', "cursor_below")
 
         minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
         balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
@@ -715,7 +719,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 self.view.replace(edit, selection, text)
                 self.print_text_replacements(text, selection)
 
-        self.move_cursor_below_the_last_paragraph()
+        if after_wrap == "cursor_below":
+            self.move_cursor_below_the_last_paragraph()
+
+        else:
+            self.move_the_cursor_to_the_original_position(cursor_original_positions)
 
     def balance_characters_between_line_wraps(self, wrapper, text_lines, initial_prefix, subsequent_prefix):
         """
@@ -1064,6 +1072,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         self.view.sel().add(region)
         self.view.show(region)
         debug_end()
+
+    def move_the_cursor_to_the_original_position(self, cursor_original_positions):
+        self.view.sel().clear()
+
+        for position in cursor_original_positions:
+            self.view.sel().add( sublime.Region( position, position ) )
 
     def print_text_replacements(self, text, selection):
         replaced_txt = self.view.substr(selection)
