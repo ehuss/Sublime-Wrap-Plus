@@ -731,25 +731,36 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # When there are more than 2 lines, we can get a situation like this:
             # new_lines: ['    This is my very long line\n    which will wrap near its\n    end,']
             if lines_count > 2:
+                new_lines_reversed = list( reversed( new_lines ) )
 
-                if len( new_lines[-1] ) < math.ceil( len( new_lines[-2] ) / 2 ):
-                    increment_percent = 1.1
+                for _index, new_line in enumerate( new_lines_reversed ):
+                    next_index = _index + 1
 
-                    # Try to increase the maximum width until the trailing line vanishes
-                    while lines_count == first_lines_count \
-                            and increment_percent < 2:
+                    if next_index < lines_count \
+                            and len( new_line ) < math.ceil( len( new_lines_reversed[next_index] ) / 2 ):
 
-                        new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, subsequent_prefix, increment_percent )[0]
+                        break
 
-                        first_lines_count    = len( new_lines )
-                        increment_percent *= 1.1
+                else:
+                    continue
+
+                increment_percent = 1.1
+
+                # Try to increase the maximum width until the trailing line vanishes
+                while lines_count == first_lines_count \
+                        and increment_percent < 2:
+
+                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, subsequent_prefix, increment_percent )[0]
+
+                    first_lines_count  = len( new_lines )
+                    increment_percent *= 1.1
 
             new_text.extend( new_lines )
 
         # The first line need to be manually fixed by removing the fist indentation
         new_text[1] = new_text[1].lstrip()
 
-        print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
         return new_text
 
     def _split_lines(self, wrapper, text_lines, maximum_line_width, subsequent_prefix, middle_of_the_line_increment_percent=1):
@@ -764,16 +775,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             lines_count = math.ceil( line_length / maximum_line_width ) + 1
 
             for step in range( 1, lines_count ):
-                line_length = math.ceil( line_length / step )
+                new_line_length = math.ceil( line_length / step )
+                # print( "new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
 
-                if line_length > maximum_line_width:
+                if new_line_length > maximum_line_width:
                     continue
 
                 else:
                     break
 
-            # print( "line_length: %d, lines_count: %d, maximum_line_width: %d, new_width: %d (%f)" % ( line_length, lines_count, maximum_line_width, math.ceil( line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
-            wrapper.width = math.ceil( line_length * middle_of_the_line_increment_percent )
+            # print( "maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
+            wrapper.width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
             wrapped_line  = wrapper.fill( line )
             wrapped_lines = wrapped_line.split( "\n" )
 
@@ -792,7 +804,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             new_lines.append( fixed_wrapped_lines )
 
-        print( "_split_lines, new_lines: " + str( new_lines ) )
+        # print( "_split_lines, new_lines: " + str( new_lines ) )
         return new_lines
 
     def semantic_line_wrap(self, paragraph_lines, initial_prefix, subsequent_prefix,
@@ -932,7 +944,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        print( "semantic_line_wrap, new_text: " + str( new_text ) )
+        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
         return new_text
 
     def peek_next_word_length(self, index, text):
@@ -1081,9 +1093,15 @@ def plugin_loaded():
     wrapper.expand_tabs       = False
     wrapper.subsequent_indent = "    "
 
-    # wrap_plus._split_lines( wrapper, ["This is my very long line which will wrap near its end,\n"], 50, "    " )
-    # wrap_plus.balance_characters_between_line_wraps( wrapper, ["This is my very long line which will wrap near its end,\n"], "    ", "    " )
-    # wrap_plus.balance_characters_between_line_wraps( wrapper, ["This is my very long line which will wrap near its end,", "This is my very long line which will wrap near its end," ], "    ", "    " )
+    # wrap_plus._split_lines( wrapper, [ "This is my very long line which my very long line which my_very_long_line_which_will_wrap_near_its_end," ], 50, "    " )
+    # wrap_plus._split_lines( wrapper, [ "This is my very long line which will wrap near its end,\n" ], 50, "    " )
+
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "This is my very long line which will wrap near its end,\n" ], "    ", "    " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "This is my very long line which will wrap near its end,", "This is my very long line which will wrap near its end," ], "    ", "    " )
+
+    wrap_plus._width = 80
+    # wrap_plus._split_lines( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], 80, "    " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], "    ", "    " )
 
 
 def run_unit_tests():
@@ -1096,6 +1114,7 @@ def run_unit_tests():
         # "test_split_lines_without_trailing_new_line",
         # "test_balance_characters_between_line_wraps_with_trailing_new_line",
         # "test_balance_characters_between_line_wraps_without_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_ending_with_long_word",
     ]
 
     runner.run( suite( unit_tests_to_run ) )
@@ -1123,6 +1142,11 @@ class LineBalancingUnitTests(unittest.TestCase):
                 self.wrap_plus._split_lines(
                 self.wrapper, ["This is my very long line which will wrap near its end,\n"], 50, "    " ) )
 
+    def test_split_lines_with_very_long_line_and_word(self):
+        self.assertEqual( [['    This is my very long line which my\n', '    very long line which\n', '    my_very_long_line_which_will_wrap_near_its_end,']],
+                self.wrap_plus._split_lines(
+                self.wrapper, [ "This is my very long line which my very long line which my_very_long_line_which_will_wrap_near_its_end," ], 50, "    " ) )
+
     def test_balance_characters_between_line_wraps_with_trailing_new_line(self):
         self.assertEqual( ['    ', 'This is my very long line which\n', '    will wrap near its end,\n'],
                 self.wrap_plus.balance_characters_between_line_wraps(
@@ -1132,6 +1156,14 @@ class LineBalancingUnitTests(unittest.TestCase):
         self.assertEqual( ['    ', 'This is my very long line which\n', '    will wrap near its end,'],
                 self.wrap_plus.balance_characters_between_line_wraps(
                 self.wrapper, ["This is my very long line which will wrap near its end,"], "    ", "    " ) )
+
+    def test_balance_characters_between_line_wraps_ending_with_long_word(self):
+        self.wrap_plus._width = 80
+        self.assertEqual( ['    ', 'In this proposal last chapter which lies on the part\n',
+                "    called `\\nameref{sec:software_implementation}',"],
+                self.wrap_plus.balance_characters_between_line_wraps(
+                        self.wrapper, [ "In this proposal last chapter which lies on the part called "
+                        "`\\nameref{sec:software_implementation}'," ], "    ", "    " ) )
 
 
 class SemanticLineWrapUnitTests(unittest.TestCase):
