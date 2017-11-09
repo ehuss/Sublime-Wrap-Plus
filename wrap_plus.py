@@ -213,7 +213,7 @@ def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
 blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
-max_words_in_comma_separated_list = 4
+maximum_words_in_comma_separated_list = 4
 
 list_of_words_pattern = re.compile(r'(?:^|\s)+[^ ]+', re.MULTILINE)
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
@@ -640,14 +640,16 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def run(self, edit, width=0):
         debug_start(self.view.settings().get('WrapPlus.debug', False))
         debug('\n\n#########################################################################')
-        self._width = self._determine_width(width)
 
+        self._width = self._determine_width(width)
         # print('wrap width = %r', self._width)
+
         self._determine_tab_size()
         self._determine_comment_style()
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
+
         for s in self.view.sel():
             debug('examine %r', s)
             paragraphs.extend(self._find_paragraphs(s))
@@ -655,12 +657,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
 
+        global maximum_words_in_comma_separated_list
         break_long_words = view_settings.get('WrapPlus.break_long_words', True)
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
 
         minimum_line_size_percent              = view_settings.get('WrapPlus.minimum_line_size_percent', 0.2)
         balance_characters_between_line_wraps  = view_settings.get('WrapPlus.balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.disable_line_wrapping_by_maximum_width', False)
+        maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.maximum_words_in_comma_separated_list', 3) + 1
 
         wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                        break_on_hyphens=break_on_hyphens)
@@ -984,7 +988,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 results_count = len( results )
                 # print( "is_comma_separated_list, results: " + str( results ) )
 
-                if 0 < results_count < max_words_in_comma_separated_list:
+                if 0 < results_count < maximum_words_in_comma_separated_list:
 
                     # Get the last match object
                     for match in list_of_words_pattern.finditer( comma_section ):
@@ -1125,12 +1129,16 @@ class LineBalancingUnitTests(unittest.TestCase):
     @classmethod
     def setUp(self):
         self.maxDiff = None
+
         self.wrap_plus = WrapLinesPlusCommand( None )
         self.wrap_plus._width = 50
 
         self.wrapper = textwrap.TextWrapper(break_long_words=False, break_on_hyphens=False)
         self.wrapper.subsequent_indent = "    "
         self.wrapper.expand_tabs = False
+
+        global maximum_words_in_comma_separated_list
+        maximum_words_in_comma_separated_list = 4
 
     def test_split_lines_without_trailing_new_line(self):
         self.assertEqual( [['    This is my very long line\n', '    which will wrap near its\n', '    end,']],
@@ -1173,6 +1181,9 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
         self.maxDiff = None
         self.wrap_plus = WrapLinesPlusCommand( None )
         self.wrap_plus._width = 80
+
+        global maximum_words_in_comma_separated_list
+        maximum_words_in_comma_separated_list = 4
 
     def test_is_command_separated_list(self):
         self.is_comma_separated_list( "1, 2, 3, 4, 5", 1, True )
