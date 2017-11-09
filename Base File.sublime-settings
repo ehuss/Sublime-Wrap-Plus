@@ -6,6 +6,12 @@
     // If true, will break on hyphens in compound words.
     "WrapPlus.break_on_hyphens": false,
 
+    // Control the cursor behavior while wrapping the text. It accepts the following:
+    //
+    // "cursor_below", will move the cursor/caret to the end the the wrapped text
+    // "cursor_stay", will `attempt` to keep the cursor/caret on its original position
+    "WrapPlus.after_wrap": "cursor_stay",
+
     // If true, the semantic linewrap also know as semantic linefeed will be used.
     // See the following address for more descriptions:
     // http://rhodesmill.org/brandon/2012/one-sentence-per-line/

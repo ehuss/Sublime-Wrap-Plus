@@ -1,3 +1,3 @@
 [
-	{ "keys": ["super+alt+q"], "command": "wrap_lines_enhancement" }
+	{ "keys": ["super+alt+q"], "command": "wrap_lines_plus" }
 ]
