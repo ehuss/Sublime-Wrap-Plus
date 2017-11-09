@@ -1,6 +1,6 @@
 [
     { "caption": "Wrap Plus: Wrap Lines","command": "wrap_lines_plus" },
-    { "caption": "Wrap Plus: Wrap Lines at ... chars (Ask)", "command": "wrap_lines_enhancement_ask" },
+    { "caption": "Wrap Plus: Wrap Lines at ... chars", "command": "wrap_lines_enhancement_ask" },
 
     { "caption": "Wrap Plus: Wrap Lines at 65 chars", "command": "wrap_lines_enhancement", "args": { "width": 65 } },
     { "caption": "Wrap Plus: Wrap Lines at 70 chars", "command": "wrap_lines_enhancement", "args": { "width": 70 } },

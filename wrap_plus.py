@@ -1074,6 +1074,23 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             debug('replaced text is the same')
 
 
+last_used_width = 80
+
+class WrapLinesEnhancementAskCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit, **kwargs):
+        sublime.active_window().show_input_panel(
+            'Provide wrapping width:', str( last_used_width ),
+            self.input_package, None, None
+        )
+
+    def input_package(self, width):
+        global last_used_width
+
+        last_used_width = width
+        self.view.run_command( 'wrap_lines_plus', { 'width': int( width ) } )
+
+
 def reload_package(full_module_name):
     import imp
     import sys
