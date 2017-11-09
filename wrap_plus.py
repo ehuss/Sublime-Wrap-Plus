@@ -1075,11 +1075,40 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
 
 def plugin_loaded():
+    """
+        Running single test from unittest.TestCase via command line
+        https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
+    """
     pass
     # print( "\n\n" )
     # run_unit_tests()
+    # run_manual_tests()
 
-    wrap_plus = WrapLinesPlusCommand( None )
+
+def run_unit_tests():
+    runner = unittest.TextTestRunner()
+
+    # Comment all the tests names on this list, to run all Unit Tests
+    unit_tests_to_run = \
+    [
+        # "test_split_lines_with_trailing_new_line",
+        # "test_split_lines_without_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_with_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_without_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_ending_with_long_word",
+    ]
+
+    classes = \
+    [
+        SemanticLineWrapUnitTests,
+        LineBalancingUnitTests,
+    ]
+
+    runner.run( suite( classes, unit_tests_to_run ) )
+
+
+def run_manual_tests():
+    wrap_plus        = WrapLinesPlusCommand( None )
     wrap_plus._width = 80
 
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "", balance_characters_between_line_wraps=True )
@@ -1104,24 +1133,9 @@ def plugin_loaded():
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "This is my very long line which will wrap near its end,", "This is my very long line which will wrap near its end," ], "    ", "    " )
 
     wrap_plus._width = 80
-    # wrap_plus._split_lines( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], 80, "    " )
+    wrap_plus._split_lines( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], 80, "    " )
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], "    ", "    " )
 
-
-def run_unit_tests():
-    runner = unittest.TextTestRunner()
-
-    # Comment all tests on this list to run all Unit Tests
-    unit_tests_to_run = \
-    [
-        # "test_split_lines_with_trailing_new_line",
-        # "test_split_lines_without_trailing_new_line",
-        # "test_balance_characters_between_line_wraps_with_trailing_new_line",
-        # "test_balance_characters_between_line_wraps_without_trailing_new_line",
-        # "test_balance_characters_between_line_wraps_ending_with_long_word",
-    ]
-
-    runner.run( suite( unit_tests_to_run ) )
 
 
 class LineBalancingUnitTests(unittest.TestCase):
@@ -1276,7 +1290,7 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
             self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) ) )
 
 
-def suite(unit_tests_to_run):
+def suite(classes, unit_tests_to_run):
     """
         Problem with sys.argv[1] when unittest module is in a script
         https://stackoverflow.com/questions/2812218/problem-with-sys-argv1-when-unittest-module-is-in-a-script
@@ -1287,13 +1301,7 @@ def suite(unit_tests_to_run):
         looping over all member variables of a class in python
         https://stackoverflow.com/questions/1398022/looping-over-all-member-variables-of-a-class-in-python
     """
-    suite   = unittest.TestSuite()
-    classes = \
-    [
-        SemanticLineWrapUnitTests,
-        LineBalancingUnitTests,
-    ]
-
+    suite = unittest.TestSuite()
     unit_tests_to_run_count = len( unit_tests_to_run )
 
     for _class in classes:
