@@ -1119,6 +1119,10 @@ def reload_package(full_module_name):
 
 
 def run_tests():
+    """
+        How do I unload (reload) a Python module?
+        https://stackoverflow.com/questions/437589/how-do-i-unload-reload-a-python-module
+    """
     print( "\n\n" )
     reload_package( "Wrap Plus.tests.semantic_linefeed_unit_tests" )
     reload_package( "Wrap Plus.tests.semantic_linefeed_manual_tests" )
