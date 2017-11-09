@@ -1088,6 +1088,12 @@ def plugin_loaded():
 def run_unit_tests():
     runner = unittest.TextTestRunner()
 
+    classes = \
+    [
+        SemanticLineWrapUnitTests,
+        LineBalancingUnitTests,
+    ]
+
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
@@ -1096,12 +1102,6 @@ def run_unit_tests():
         # "test_balance_characters_between_line_wraps_with_trailing_new_line",
         # "test_balance_characters_between_line_wraps_without_trailing_new_line",
         # "test_balance_characters_between_line_wraps_ending_with_long_word",
-    ]
-
-    classes = \
-    [
-        SemanticLineWrapUnitTests,
-        LineBalancingUnitTests,
     ]
 
     runner.run( suite( classes, unit_tests_to_run ) )
