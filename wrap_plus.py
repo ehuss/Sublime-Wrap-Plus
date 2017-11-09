@@ -661,10 +661,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         break_long_words = view_settings.get('WrapPlus.break_long_words', True)
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
 
-        minimum_line_size_percent              = view_settings.get('WrapPlus.minimum_line_size_percent', 0.2)
-        balance_characters_between_line_wraps  = view_settings.get('WrapPlus.balance_characters_between_line_wraps', False)
-        disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.disable_line_wrapping_by_maximum_width', False)
-        maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.maximum_words_in_comma_separated_list', 3) + 1
+        minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
+        balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
+        disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
+        maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
 
         wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                        break_on_hyphens=break_on_hyphens)

@@ -23,7 +23,7 @@
     // will wrap near its end,
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.balance_characters_between_line_wraps": true,
+    "WrapPlus.semantic_balance_characters_between_line_wraps": true,
 
     // The minimum of the percentage of the current maximum line width a line can
     // have. For example, if you `wrap_width` is set to 100, and you set this to `0.2`,
@@ -34,13 +34,13 @@
     // to disable the minimum width and always wrap the lines despite their size.
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.minimum_line_size_percent": 0.0,
+    "WrapPlus.semantic_minimum_line_size_percent": 0.0,
 
     // When wrapping lines, it will consider they to be a list of words if between
     // two sequential commas is find at the maximum these number of words.
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.maximum_words_in_comma_separated_list": 3,
+    "WrapPlus.semantic_maximum_words_in_comma_separated_list": 3,
 
     // The `semantic_line_wrap` detects the maximum line width and uses it to
     // limite/delimite the maximum line width. If you like your lines only to be
@@ -49,7 +49,7 @@
     // * This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
     // * If the setting `WrapPlus.balance_characters_between_line_wraps` is enabled,
     //   this setting will be ignored.
-    "WrapPlus.disable_line_wrapping_by_maximum_width": false,
+    "WrapPlus.semantic_disable_line_wrapping_by_maximum_width": false,
 
     // Determines whether or not line endings are included in the line size:
     // - true: Always included.
