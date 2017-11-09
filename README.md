@@ -198,7 +198,7 @@ Wrap Plus handles a lot of situations that the stock Sublime word wrapper doesn'
 To run the unit tests:
 
 1. Install the package: https://github.com/randy3k/UnitTesting
-1. Open the file `unit_testing/override_commmit_completions_unit_tests.py`
+1. Open the file `tests/semantic_linefeed_unit_tests.py`
 1. Open the Sublime Text command palette with `Ctrl+Shift+P`
 1. And run the command: `UnitTesting: Test Current Package`
 
