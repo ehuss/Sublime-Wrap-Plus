@@ -1,9 +1,62 @@
 {
     // If true, words longer than the wrap width will be split to ensure lines
     // are not longer than the wrap width.
-	"WrapPlus.break_long_words": true,
+    "WrapPlus.break_long_words": false,
+
     // If true, will break on hyphens in compound words.
-	"WrapPlus.break_on_hyphens": true,
+    "WrapPlus.break_on_hyphens": false,
+
+    // Control the cursor behavior while wrapping the text. It accepts the following:
+    //
+    // "cursor_below", will move the cursor/caret to the end the the wrapped text
+    // "cursor_stay", will `attempt` to keep the cursor/caret on its original position
+    "WrapPlus.after_wrap": "cursor_stay",
+
+    // If true, the semantic linewrap also know as semantic linefeed will be used.
+    // See the following address for more descriptions:
+    // http://rhodesmill.org/brandon/2012/one-sentence-per-line/
+    "WrapPlus.semantic_line_wrap": false,
+
+    // Balance the text between lines equally when a line wrapped due reaching the
+    // maximum wrap width. For example, if the maximum is 49 characters, the line:
+    //
+    // This is my very long line which will wrap near its
+    // end,
+    //
+    // Will become something like:
+    //
+    // This is my very long line which
+    // will wrap near its end,
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.semantic_balance_characters_between_line_wraps": true,
+
+    // The minimum of the percentage of the current maximum line width a line can
+    // have. For example, if you `wrap_width` is set to 100, and you set this to `0.2`,
+    // it means that the minimum acceptable line length is 20 characters.
+    //
+    // Therefore if some line has less than 20 characters, it will not be wrapped and
+    // will be continued by the next sentence without wrapping. You can set this to 0
+    // to disable the minimum width and always wrap the lines despite their size.
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.semantic_minimum_line_size_percent": 0.0,
+
+    // When wrapping lines, it will consider they to be a list of words if between
+    // two sequential commas is find at the maximum these number of words.
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.semantic_maximum_words_in_comma_separated_list": 3,
+
+    // The `semantic_line_wrap` detects the maximum line width and uses it to
+    // limite/delimite the maximum line width. If you like your lines only to be
+    // wrapped by delimiter characters, you can set this to true.
+    //
+    // * This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    // * If the setting `WrapPlus.balance_characters_between_line_wraps` is enabled,
+    //   this setting will be ignored.
+    "WrapPlus.semantic_disable_line_wrapping_by_maximum_width": false,
+
     // Determines whether or not line endings are included in the line size:
     // - true: Always included.
     // - false: Never included.
@@ -11,6 +64,7 @@
     //   Word Wrap) and Sublime's wrap column is not 0 (View -> Word Wrap
     //   Column -> Automatic).
     "WrapPlus.include_line_endings": "auto"
+
     // Set the wrap column, overriding Sublime's "wrap_width" if not 0.
-    //"WrapPlus.wrap_width": 78
+    // "WrapPlus.wrap_width": 78
 }

@@ -2,7 +2,9 @@ from __future__ import print_function
 import sublime, sublime_plugin
 import textwrap
 import re
+import math
 import time
+import unittest
 try:
     import Default.comment as comment
 except ImportError:
@@ -18,12 +20,13 @@ def is_quoted_string(scope_r, scope_name):
     return 'quoted' in scope_name or 'comment.block.documentation' in scope_name
 
 debug_enabled = False
+# debug_enabled = True
+
 time_start = 0
 last_time = 0
 def debug_start(enabled):
-    global debug_enabled, time_start, last_time
-    debug_enabled = enabled
-    if debug_enabled:
+    global time_start, last_time
+    if debug_enabled or enabled:
         time_start = time.time()
         last_time = time_start
 
@@ -209,7 +212,14 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-blank_line_pattern = re.compile(r'^[\t \n]*$')
+blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
+maximum_words_in_comma_separated_list = 4
+
+list_of_words_pattern = re.compile(r'(?:^|\s)+[^ ]+', re.MULTILINE)
+next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
+
+whitespace_character = (" ", "\t")
+word_separator_characters = ( ",", ".", "?", "!", ":", ";" )
 
 # This doesn't always work, but seems decent.
 numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
@@ -219,10 +229,13 @@ list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_l
 latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*TeX)'
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
-new_paragraph_pattern = re.compile(r'^[\t ]*' +
-    OR(numbered_list, lettered_list, bullet_list,
-              field_start))
+
+new_paragraph_pattern_string = r'^[\t ]*' + OR(numbered_list, lettered_list, bullet_list, field_start, r'\{')
+# print( "pattern: " + new_paragraph_pattern_string )
+
+new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
 space_prefix_pattern = re.compile(r'^[ \t]*')
+
 # XXX: Does not handle escaped colons in field name.
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)'+fields)  # rest, javadoc, jsdoc, etc
@@ -252,6 +265,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def _is_paragraph_start(self, line_r, line):
         # Certain patterns at the beginning of the line indicate this is the
         # beginning of a paragraph.
+
+        # print( "line: " + str( line ) )
+        # print( "new_paragraph_pattern.match(line): " + str( new_paragraph_pattern.match(line) ) )
         return new_paragraph_pattern.match(line) != None
 
     def _is_paragraph_break(self, line_r, line, pure=False):
@@ -418,8 +434,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     break
 
 
-            paragraph_r = sublime.Region(paragraph_start_pt, paragraph_end_pt)
-            result.append((paragraph_r, lines, view.required_comment_prefix))
+            paragraph_region = sublime.Region(paragraph_start_pt, paragraph_end_pt)
+            result.append((paragraph_region, lines, view.required_comment_prefix))
 
             if is_empty:
                 break
@@ -453,12 +469,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         :returns: The maximum line width.
         """
+        # print( "_determine_width, width: " + str( width ) )
         if width == 0 and self.view.settings().get('wrap_width'):
             try:
                 width = int(self.view.settings().get('wrap_width'))
             except TypeError:
                 pass
 
+        # print( "_determine_width, before get('rulers'), width: " + str( width ) )
         if width == 0 and self.view.settings().get('rulers'):
             # try and guess the wrap width from the ruler, if any
             try:
@@ -468,7 +486,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
-        width = self.view.settings().get('WrapPlus.wrap_width', width)
+        # print( "_determine_width, before get('WrapPlus.wrap_width', width): " + str( width ) )
+        if width == 0:
+            width = self.view.settings().get('WrapPlus.wrap_width', width)
 
         # Value of 0 means 'automatic'.
         if width == 0:
@@ -542,7 +562,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # else:
         #     return '\t'
 
-    def _extract_prefix(self, paragraph_r, lines, required_comment_prefix):
+    def _extract_prefix(self, paragraph_region, lines, required_comment_prefix):
         # The comment prefix has already been stripped from the lines.
         # If the first line starts with a list-like thing, then that will be the initial prefix.
         initial_prefix = ''
@@ -588,7 +608,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     initial_prefix = ''
                     subsequent_prefix = ''
 
-        pt = paragraph_r.begin()
+        pt = paragraph_region.begin()
         scope_r = self.view.extract_scope(pt)
         scope_name = self.view.scope_name(pt)
         if len(lines)==1 and is_quoted_string(scope_r, scope_name):
@@ -619,85 +639,506 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, width=0):
         debug_start(self.view.settings().get('WrapPlus.debug', False))
-        debug('#########################################################################')
+        debug('\n\n#########################################################################')
+
+        cursor_original_positions = []
         self._width = self._determine_width(width)
-        debug('wrap width = %r', self._width)
+
+        # print('wrap width = %r', self._width)
         self._determine_tab_size()
         self._determine_comment_style()
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
-        for s in self.view.sel():
-            debug('examine %r', s)
-            paragraphs.extend(self._find_paragraphs(s))
 
+        for selection in self.view.sel():
+            debug('examine %r', selection)
+
+            paragraphs.extend(self._find_paragraphs(selection))
+            cursor_original_positions.append(selection.begin())
+
+        view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
 
+        global maximum_words_in_comma_separated_list
+        break_long_words = view_settings.get('WrapPlus.break_long_words', True)
+        break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
+        after_wrap = view_settings.get('WrapPlus.after_wrap', "cursor_below")
+
+        minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
+        balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
+        disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
+        maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
+
+        wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
+                                       break_on_hyphens=break_on_hyphens)
+        wrapper.width = self._width
+        wrapper.expand_tabs = False
+
+        # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
+        if view_settings.get( 'WrapPlus.semantic_line_wrap', False ):
+
+            def line_wrapper_type():
+                if balance_characters_between_line_wraps:
+                    # minimum_line_size_percent = 0.0
+                    disable_line_wrapping_by_maximum_width = True
+
+                text = self.semantic_line_wrap( paragraph_lines, initial_prefix, subsequent_prefix,
+                        minimum_line_size_percent, disable_line_wrapping_by_maximum_width,
+                        balance_characters_between_line_wraps )
+
+                if balance_characters_between_line_wraps:
+                    text = self.balance_characters_between_line_wraps( wrapper, text, initial_prefix, subsequent_prefix )
+
+                return "".join( text )
+
+        else:
+
+            def line_wrapper_type():
+                return self.classic_wrap_text(wrapper, paragraph_lines, initial_prefix, subsequent_prefix)
+
+        # print( "self._width: " + str( self._width ) )
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
-            for r, l, p in paragraphs:
-                self.view.sel().add(r)
+            for region, lines, comment_prefix in paragraphs:
+                self.view.sel().add(region)
 
             # Regions fetched from view.sel() will shift appropriately with
             # the calls to replace().
-            for i, s in enumerate(self.view.sel()):
-                paragraph_r, paragraph_lines, required_comment_prefix = paragraphs[i]
-                break_long_words = self.view.settings().get('WrapPlus.break_long_words', True)
-                break_on_hyphens = self.view.settings().get('WrapPlus.break_on_hyphens', True)
-                wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
-                                               break_on_hyphens=break_on_hyphens)
-                wrapper.width = self._width
-                init_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_r, paragraph_lines, required_comment_prefix)
-                orig_init_prefix = init_prefix
-                orig_subsequent_prefix = subsequent_prefix
-                if orig_init_prefix or orig_subsequent_prefix:
-                    # Textwrap is somewhat limited.  It doesn't recognize tabs
-                    # in prefixes.  Unfortunately, this means we can't easily
-                    # differentiate between the initial and subsequent.  This
-                    # is a workaround.
-                    init_prefix = orig_init_prefix.expandtabs(self._tab_width)
-                    subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
-                    wrapper.initial_indent = init_prefix
-                    wrapper.subsequent_indent = subsequent_prefix
+            for index, selection in enumerate(self.view.sel()):
+                paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
+                initial_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
 
-                wrapper.expand_tabs = False
+                text = line_wrapper_type()
 
-                txt = '\n'.join(paragraph_lines)
-                txt = txt.expandtabs(self._tab_width)
-                txt = wrapper.fill(txt)
-
-                # Put the tabs back to the prefixes.
-                if orig_init_prefix or orig_subsequent_prefix:
-                    if init_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
-                        lines = txt.splitlines()
-                        if init_prefix != orig_init_prefix:
-                            debug('fix tabs %r', lines[0])
-                            lines[0] = orig_init_prefix + lines[0][len(init_prefix):]
-                            debug('new line is %r', lines[0])
-                        if subsequent_prefix != orig_subsequent_prefix:
-                            for i, line in enumerate(lines[1:]):
-                                lines[i+1] = orig_subsequent_prefix + lines[i+1][len(subsequent_prefix):]
-                        txt = '\n'.join(lines)
-
-                replaced_txt = self.view.substr(s)
                 # I can't decide if I prefer it to not make the modification
                 # if there is no change (and thus don't mark an unmodified
                 # file as modified), or if it's better to include a "non-
                 # change" in the undo stack.
-                self.view.replace(edit, s, txt)
-                if replaced_txt != txt:
-                    debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, txt)
-                else:
-                    debug('replaced text is the same')
+                self.view.replace(edit, selection, text)
+                self.print_text_replacements(text, selection)
 
-        # Move cursor below the last paragraph.
-        s = self.view.sel()
-        end = s[len(s)-1].end()
+        if after_wrap == "cursor_below":
+            self.move_cursor_below_the_last_paragraph()
+
+        else:
+            self.move_the_cursor_to_the_original_position(cursor_original_positions)
+
+    def balance_characters_between_line_wraps(self, wrapper, text_lines, initial_prefix, subsequent_prefix):
+        """
+            input:  ['This is my very long line which will wrap near its end,']
+            output: ['    ', 'This is my very long line which\n    ', 'will wrap near its end,']
+        """
+        wrapper.initial_prefix    = ""
+        wrapper.subsequent_indent = subsequent_prefix
+
+        new_text      = [initial_prefix]
+        splited_lines = self._split_lines( wrapper, text_lines, self._width, subsequent_prefix )
+
+        for index, new_lines in enumerate( splited_lines ):
+            lines_count       = len( new_lines )
+            first_lines_count = lines_count
+
+            # When there are more than 2 lines, we can get a situation like this:
+            # new_lines: ['    This is my very long line\n    which will wrap near its\n    end,']
+            if lines_count > 2:
+                new_lines_reversed = list( reversed( new_lines ) )
+
+                for _index, new_line in enumerate( new_lines_reversed ):
+                    next_index = _index + 1
+
+                    if next_index < lines_count \
+                            and len( new_line ) < math.ceil( len( new_lines_reversed[next_index] ) / 2 ):
+
+                        break
+
+                else:
+                    continue
+
+                increment_percent = 1.1
+
+                # Try to increase the maximum width until the trailing line vanishes
+                while lines_count == first_lines_count \
+                        and increment_percent < 2:
+
+                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, subsequent_prefix, increment_percent )[0]
+
+                    first_lines_count  = len( new_lines )
+                    increment_percent *= 1.1
+
+            new_text.extend( new_lines )
+
+        # The first line need to be manually fixed by removing the fist indentation
+        new_text[1] = new_text[1].lstrip()
+
+        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        return new_text
+
+    def _split_lines(self, wrapper, text_lines, maximum_line_width, subsequent_prefix, middle_of_the_line_increment_percent=1):
+        """
+            (input)  text_lines: ['This is my very long line which will wrap near its end,\n']
+            (output) new_lines:  [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
+        """
+        new_lines = []
+
+        for line in text_lines:
+            line_length = len( line )
+            lines_count = math.ceil( line_length / maximum_line_width ) + 1
+
+            for step in range( 1, lines_count ):
+                new_line_length = math.ceil( line_length / step )
+                # print( "new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
+
+                if new_line_length > maximum_line_width:
+                    continue
+
+                else:
+                    break
+
+            # print( "maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
+            wrapper.width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
+            wrapped_line  = wrapper.fill( line )
+            wrapped_lines = wrapped_line.split( "\n" )
+
+            # Add again the removed `\n` character due the `split` statement
+            fixed_wrapped_lines = []
+
+            for _wrapped_line in wrapped_lines:
+                fixed_wrapped_lines.append( _wrapped_line + "\n" )
+
+            # The first line need to be manually fixed by adding the fist indentation
+            fixed_wrapped_lines[0]  = subsequent_prefix + fixed_wrapped_lines[0]
+
+            # The last line need to be manually fixed by removing the trailing last time, if not existent on the original
+            if line[-1] != "\n":
+                fixed_wrapped_lines[-1] = fixed_wrapped_lines[-1][0:-1]
+
+            new_lines.append( fixed_wrapped_lines )
+
+        # print( "_split_lines, new_lines: " + str( new_lines ) )
+        return new_lines
+
+    def semantic_line_wrap(self, paragraph_lines, initial_prefix, subsequent_prefix,
+                minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False,
+                balance_characters_between_line_wraps=False):
+        """
+            input: ['This is my very long line which will wrap near its', 'end,']
+            if balance_characters_between_line_wraps:
+                output: ['This is my very long line which will wrap near its end,']
+            else:
+                output: ['    ', 'This is my very long line which will wrap near its\n    ', 'end,']
+        """
+        new_text = []
+        initial_prefix_length    = len( initial_prefix )
+        subsequent_prefix_length = len( subsequent_prefix )
+
+        if not balance_characters_between_line_wraps:
+            new_text.append( initial_prefix )
+
+        is_allowed_to_wrap           = False
+        is_possible_space            = False
+        is_flushing_comma_list       = False
+        is_comma_separated_list      = False
+        is_flushing_accumalated_line = False
+
+        text        = ' '.join(paragraph_lines)
+        text_length = len(text)
+
+        minimum_line_size = int( self._width * minimum_line_size_percent )
+        # print( "minimum_line_size: %s" % ( minimum_line_size ) )
+
+        accumulated_line     = ""
+        line_start_index     = 0
+        comma_list_end_point = 0
+
+        for index, character in enumerate( text ):
+            accumulated_line_length = len( accumulated_line )
+            next_word_length        = self.peek_next_word_length( index, text )
+
+            if is_possible_space and character in whitespace_character:
+                continue
+
+            else:
+                is_possible_space = False
+
+            # Skip the next characters as we already know they are a list. This is only called when
+            # the `comma_list_end_point` is lower than the `self._width`, otherwise the line will
+            # be immediately flushed
+            if comma_list_end_point > 0:
+                comma_list_end_point -= 1
+
+                # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, index - line_start_index, self._width - index - line_start_index, comma_list_end_point, character ) )
+
+                if not is_flushing_accumalated_line:
+
+                    if not disable_line_wrapping_by_maximum_width \
+                            and accumulated_line_length + next_word_length + initial_prefix_length > self._width:
+
+                        # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
+                        is_flushing_accumalated_line = True
+
+                        # Current character is a whitespace, but it must the the next, so fix the index
+                        index -= 1
+
+                    else:
+                        accumulated_line += character
+
+                        is_flushing_comma_list = True
+                        continue
+
+            else:
+                is_flushing_comma_list  = False
+                is_comma_separated_list = False
+
+            # print( "semantic_line_wrap, character: %s " % ( character ) )
+            if not disable_line_wrapping_by_maximum_width \
+                    and not is_flushing_accumalated_line \
+                    and accumulated_line_length + next_word_length + initial_prefix_length > self._width:
+
+                # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
+                is_flushing_accumalated_line = True
+
+                # Current character is a whitespace, but it must the the next, so fix the index
+                index -= 1
+
+            if accumulated_line_length > minimum_line_size:
+                is_allowed_to_wrap = True
+
+            if character in word_separator_characters and is_allowed_to_wrap \
+                    or is_flushing_accumalated_line:
+
+                if index + 2 < text_length:
+                    is_followed_by_space = text[index+1] in whitespace_character
+
+                    if is_followed_by_space:
+
+                        if character in word_separator_characters \
+                                and not is_flushing_comma_list:
+
+                            is_comma_separated_list, comma_list_end_point = self.is_comma_separated_list(text, index, line_start_index)
+                            comma_list_end_point -= index - line_start_index + 3
+
+                        if ( comma_list_end_point > 0 \
+                                and not is_flushing_comma_list ) \
+                                or not is_comma_separated_list \
+                                or is_flushing_accumalated_line:
+
+                            # It is not the first line anymore, now we need to use the `subsequent_prefix_length`
+                            initial_prefix_length = subsequent_prefix_length
+
+                            if character in whitespace_character:
+                                character = ""
+
+                            accumulated_line = "".join( [accumulated_line, character, "\n",
+                                    ( "" if balance_characters_between_line_wraps else subsequent_prefix ) ] )
+
+                            # print( "semantic_line_wrap, accumulated_line flush: %s" % accumulated_line )
+                            new_text.append( accumulated_line )
+
+                            accumulated_line = ""
+                            line_start_index = index + 1
+
+                            is_possible_space            = True
+                            is_allowed_to_wrap           = False
+                            is_flushing_accumalated_line = False
+
+                    else:
+                        accumulated_line += character
+
+                else:
+                    accumulated_line += character
+
+            else:
+                accumulated_line += character
+
+        # Flush out any remaining text
+        if len( accumulated_line ):
+            new_text.append(accumulated_line)
+
+        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
+        return new_text
+
+    def peek_next_word_length(self, index, text):
+        match = next_word_pattern.match( text, index )
+
+        if match:
+            next_word = match.group(0)
+
+            # print( "peek_next_word_length: %s" % next_word )
+            return len( next_word )
+
+        return 0
+
+    def is_comma_separated_list(self, text, index, line_start_index=0):
+        # print( "is_comma_separated_list, index: %3d, line_start_index: %d" % ( index, line_start_index ) )
+
+        next_character    = " "
+        text_length       = len( text ) - 1
+        slice_start_index = index
+
+        while index < text_length:
+            index     = index + 1
+            character = text[index]
+
+            if index + 1 < text_length:
+                next_character = text[index+1]
+
+            # print( "is_comma_separated_list, character: %s, next_character: %s" % ( character, next_character ) )
+            if ( character in word_separator_characters \
+                    and next_character in whitespace_character ) \
+                    or index >= text_length:
+
+                comma_section = text[ slice_start_index+1:index+1 ]
+                # print( "is_comma_separated_list, text:    " + comma_section )
+
+                results       = list_of_words_pattern.findall( comma_section )
+                results_count = len( results )
+                # print( "is_comma_separated_list, results: " + str( results ) )
+
+                if 0 < results_count < maximum_words_in_comma_separated_list:
+
+                    # Get the last match object
+                    for match in list_of_words_pattern.finditer( comma_section ):
+                        pass
+
+                    match_end          = match.end(0)
+                    possible_match_end = 0
+
+                    # `line_start_index` always greater than `index`, like 50 - 20 = 30
+                    # 50, 20 = 30, 80 - 30 = 50, 50 - 10 = 40
+                    # print( "is_comma_separated_list, line_remaining_size: " + str( self._width - ( index - line_start_index ) - match_end ) )
+                    # print( "is_comma_separated_list, match_end:           " + str( match_end ) )
+
+                    is_there_new_commas, possible_match_end = self.is_comma_separated_list( text, index, line_start_index + match_end )
+                    # print( "is_comma_separated_list, possible_match_end:  " + str( possible_match_end ) )
+
+                    if possible_match_end > 0:
+                        return True, possible_match_end + match_end
+
+                    # print( "is_comma_separated_list, slice_start_index - line_start_index + match_end: " + str( slice_start_index - line_start_index + match_end ) )
+                    return True, slice_start_index - line_start_index + match_end
+
+                else:
+                    return False, 0
+
+        return False, 0
+
+    def classic_wrap_text(self, wrapper, paragraph_lines, initial_prefix, subsequent_prefix):
+        orig_initial_prefix = initial_prefix
+        orig_subsequent_prefix = subsequent_prefix
+
+        if orig_initial_prefix or orig_subsequent_prefix:
+            # Textwrap is somewhat limited.  It doesn't recognize tabs
+            # in prefixes.  Unfortunately, this means we can't easily
+            # differentiate between the initial and subsequent.  This
+            # is a workaround.
+            initial_prefix = orig_initial_prefix.expandtabs(self._tab_width)
+            subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
+            wrapper.initial_indent = initial_prefix
+            wrapper.subsequent_indent = subsequent_prefix
+
+        text = '\n'.join(paragraph_lines)
+        text = text.expandtabs(self._tab_width)
+        text = wrapper.fill(text)
+
+        # Put the tabs back to the prefixes.
+        if orig_initial_prefix or orig_subsequent_prefix:
+
+            if initial_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
+                lines = text.splitlines()
+
+                if initial_prefix != orig_initial_prefix:
+                    debug('fix tabs %r', lines[0])
+                    lines[0] = orig_initial_prefix + lines[0][len(initial_prefix):]
+                    debug('new line is %r', lines[0])
+
+                if subsequent_prefix != orig_subsequent_prefix:
+
+                    for index, line in enumerate(lines[1:]):
+                        lines[index+1] = orig_subsequent_prefix + lines[index+1][len(subsequent_prefix):]
+
+                text = '\n'.join(lines)
+
+        return text
+
+    def move_cursor_below_the_last_paragraph(self):
+        selection = self.view.sel()
+        end = selection[len(selection)-1].end()
         line = self.view.line(end)
         end = min(self.view.size(), line.end()+1)
         self.view.sel().clear()
-        r = sublime.Region(end)
-        self.view.sel().add(r)
-        self.view.show(r)
+        region = sublime.Region(end)
+        self.view.sel().add(region)
+        self.view.show(region)
         debug_end()
+
+    def move_the_cursor_to_the_original_position(self, cursor_original_positions):
+        self.view.sel().clear()
+
+        for position in cursor_original_positions:
+            self.view.sel().add( sublime.Region( position, position ) )
+
+    def print_text_replacements(self, text, selection):
+        replaced_txt = self.view.substr(selection)
+
+        if replaced_txt != text:
+            debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, text)
+        else:
+            debug('replaced text is the same')
+
+
+last_used_width = 80
+
+class WrapLinesEnhancementAskCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit, **kwargs):
+        sublime.active_window().show_input_panel(
+            'Provide wrapping width:', str( last_used_width ),
+            self.input_package, None, None
+        )
+
+    def input_package(self, width):
+        global last_used_width
+
+        last_used_width = width
+        self.view.run_command( 'wrap_lines_plus', { 'width': int( width ) } )
+
+
+def reload_package(full_module_name):
+    import imp
+    import sys
+    import importlib
+
+    if full_module_name in sys.modules:
+        module_object = sys.modules[full_module_name]
+        module_object = imp.reload( module_object )
+
+    else:
+        importlib.import_module( full_module_name )
+
+
+def run_tests():
+    """
+        How do I unload (reload) a Python module?
+        https://stackoverflow.com/questions/437589/how-do-i-unload-reload-a-python-module
+    """
+    print( "\n\n" )
+    reload_package( "Wrap Plus.tests.semantic_linefeed_unit_tests" )
+    reload_package( "Wrap Plus.tests.semantic_linefeed_manual_tests" )
+
+    from .tests import semantic_linefeed_unit_tests
+    from .tests import semantic_linefeed_manual_tests
+
+    semantic_linefeed_unit_tests.run_unit_tests()
+    semantic_linefeed_manual_tests.run_manual_tests()
+
+
+def plugin_loaded():
+    """
+        Running single test from unittest.TestCase via command line
+        https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
+    """
+    # run_tests()
+    pass
+

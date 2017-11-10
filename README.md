@@ -71,6 +71,11 @@ There are a few settings you can tweak if you so desire.  You can set them in **
         <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
     </tr>
     <tr>
+        <td><code>"WrapPlus.semantic_line_wrap"</code></td>
+        <td><code>false</code></td>
+        <td>If true, the semantic linewrap also know as semantic linefeed will be used. See the following address for more descriptions: http://rhodesmill.org/brandon/2012/one-sentence-per-line/</td>
+    </tr>
+    <tr>
         <td><code>"WrapPlus.break_on_hyphens"</code></td>
         <td><code>true</code></td>
         <td>Whether or not to break lines on hyphens.</td>
@@ -185,3 +190,23 @@ If you select a range of characters, *only* the lines that are selected will be 
 
 ## Epilogue ##
 Wrap Plus handles a lot of situations that the stock Sublime word wrapper doesn't handle, but it's likely there are many situations where it doesn't work quite right.  If you come across a problem, the immediate solution is to manually select the lines you want to wrap (this will constrain wrapping to just those lines).  If you'd like, feel free to post an [issue](https://github.com/ehuss/Sublime-Wrap-Plus/issues) on the Github page.
+
+
+
+## Unit Tests
+
+To run the unit tests:
+
+1. Install the package: https://github.com/randy3k/UnitTesting
+1. Open the file `tests/semantic_linefeed_unit_tests.py`
+1. Open the Sublime Text command palette with `Ctrl+Shift+P`
+1. And run the command: `UnitTesting: Test Current Package`
+
+Or you can just uncomment the line `# run_tests()` on the function `plugin_loaded()` at the end of
+the file. The results are going to be displayed on the `Sublime Text Console`.
+
+
+## License
+
+See the `LICENSE.txt` file under this repository.
+
