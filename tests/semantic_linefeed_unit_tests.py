@@ -9,7 +9,7 @@ import unittest
 wrap_plus_module = sys.modules["Wrap Plus.wrap_plus"]
 
 
-def run_unit_tests():
+def run_unit_tests(unit_tests_to_run=[]):
     runner = unittest.TextTestRunner()
 
     classes = \
@@ -18,15 +18,18 @@ def run_unit_tests():
         LineBalancingUnitTests,
     ]
 
-    # Comment all the tests names on this list, to run all Unit Tests
-    unit_tests_to_run = \
-    [
-        # "test_split_lines_with_trailing_new_line",
-        # "test_split_lines_without_trailing_new_line",
-        # "test_balance_characters_between_line_wraps_with_trailing_new_line",
-        # "test_balance_characters_between_line_wraps_without_trailing_new_line",
-        # "test_balance_characters_between_line_wraps_ending_with_long_word",
-    ]
+    if len( unit_tests_to_run ) < 1:
+
+        # Comment all the tests names on this list, to run all Unit Tests
+        unit_tests_to_run = \
+        [
+            # "test_semantic_line_wrap_line_starting_with_comment",
+            # "test_split_lines_with_trailing_new_line",
+            # "test_split_lines_without_trailing_new_line",
+            # "test_balance_characters_between_line_wraps_with_trailing_new_line",
+            # "test_balance_characters_between_line_wraps_without_trailing_new_line",
+            # "test_balance_characters_between_line_wraps_ending_with_long_word",
+        ]
 
     runner.run( suite( classes, unit_tests_to_run ) )
 
@@ -48,21 +51,23 @@ class LineBalancingUnitTests(unittest.TestCase):
         global maximum_words_in_comma_separated_list
         maximum_words_in_comma_separated_list = 4
 
+    # _split_lines Unit Tests
     def test_split_lines_without_trailing_new_line(self):
-        self.assertEqual( [['    This is my very long line\n', '    which will wrap near its\n', '    end,']],
+        self.assertEqual( [['This is my very long line\n', '    which will wrap near its\n', '    end,']],
                 self.wrap_plus._split_lines(
-                self.wrapper, ["This is my very long line which will wrap near its end,"], 50, "    " ) )
+                self.wrapper, ["This is my very long line which will wrap near its end,"], 50 ) )
 
     def test_split_lines_with_trailing_new_line(self):
-        self.assertEqual( [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']],
+        self.assertEqual( [['This is my very long line\n', '    which will wrap near its\n', '    end,\n']],
                 self.wrap_plus._split_lines(
-                self.wrapper, ["This is my very long line which will wrap near its end,\n"], 50, "    " ) )
+                self.wrapper, ["This is my very long line which will wrap near its end,\n"], 50 ) )
 
     def test_split_lines_with_very_long_line_and_word(self):
-        self.assertEqual( [['    This is my very long line which my\n', '    very long line which\n', '    my_very_long_line_which_will_wrap_near_its_end,']],
+        self.assertEqual( [['This is my very long line which my\n', '    very long line which\n', '    my_very_long_line_which_will_wrap_near_its_end,']],
                 self.wrap_plus._split_lines(
-                self.wrapper, [ "This is my very long line which my very long line which my_very_long_line_which_will_wrap_near_its_end," ], 50, "    " ) )
+                self.wrapper, [ "This is my very long line which my very long line which my_very_long_line_which_will_wrap_near_its_end," ], 50 ) )
 
+    # balance_characters_between_line_wraps Unit Tests
     def test_balance_characters_between_line_wraps_with_trailing_new_line(self):
         self.assertEqual( ['    ', 'This is my very long line which\n', '    will wrap near its end,\n'],
                 self.wrap_plus.balance_characters_between_line_wraps(
@@ -72,6 +77,11 @@ class LineBalancingUnitTests(unittest.TestCase):
         self.assertEqual( ['    ', 'This is my very long line which\n', '    will wrap near its end,'],
                 self.wrap_plus.balance_characters_between_line_wraps(
                 self.wrapper, ["This is my very long line which will wrap near its end,"], "    ", "    " ) )
+
+    def test_semantic_line_wrap_line_starting_with_comment(self):
+        self.assertEqual( ['% ', 'you still only configuring a few languages closely\n', '% related. On this case, C, C++, Java, Pawn, etc.'],
+                self.wrap_plus.balance_characters_between_line_wraps( self.wrapper,
+                [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "% ", "% " ) )
 
     def test_balance_characters_between_line_wraps_ending_with_long_word(self):
         self.wrap_plus._width = 80

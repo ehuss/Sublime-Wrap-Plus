@@ -705,6 +705,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if balance_characters_between_line_wraps:
                     text = self.balance_characters_between_line_wraps( wrapper, text, initial_prefix, subsequent_prefix )
 
+                # print( 'run, text: ' + "".join( text ) )
                 return "".join( text )
 
         else:
@@ -749,7 +750,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         wrapper.subsequent_indent = subsequent_prefix
 
         new_text      = [initial_prefix]
-        splited_lines = self._split_lines( wrapper, text_lines, self._width, subsequent_prefix )
+        splited_lines = self._split_lines( wrapper, text_lines, self._width )
 
         for index, new_lines in enumerate( splited_lines ):
             lines_count       = len( new_lines )
@@ -777,23 +778,20 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 while lines_count == first_lines_count \
                         and increment_percent < 2:
 
-                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, subsequent_prefix, increment_percent )[0]
+                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, increment_percent )[0]
 
                     first_lines_count  = len( new_lines )
                     increment_percent *= 1.1
 
             new_text.extend( new_lines )
 
-        # The first line need to be manually fixed by removing the fist indentation
-        new_text[1] = new_text[1].lstrip()
-
-        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
         return new_text
 
-    def _split_lines(self, wrapper, text_lines, maximum_line_width, subsequent_prefix, middle_of_the_line_increment_percent=1):
+    def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
         """
-            (input)  text_lines: ['This is my very long line which will wrap near its end,\n']
-            (output) new_lines:  [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
+            (input)  text_lines: ['    This is my very long line which will wrap near its end,\n']
+            (output) new_lines:  [['This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
         """
         new_lines = []
 
@@ -811,9 +809,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 else:
                     break
 
-            # print( "maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
+            print( "_split_lines, maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
             wrapper.width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
+
+            print( "_split_lines, line: " + line )
             wrapped_line  = wrapper.fill( line )
+
+            print( "_split_lines, wrapped_line: " + wrapped_line )
             wrapped_lines = wrapped_line.split( "\n" )
 
             # Add again the removed `\n` character due the `split` statement
@@ -822,16 +824,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             for _wrapped_line in wrapped_lines:
                 fixed_wrapped_lines.append( _wrapped_line + "\n" )
 
-            # The first line need to be manually fixed by adding the fist indentation
-            fixed_wrapped_lines[0]  = subsequent_prefix + fixed_wrapped_lines[0]
-
             # The last line need to be manually fixed by removing the trailing last time, if not existent on the original
             if line[-1] != "\n":
                 fixed_wrapped_lines[-1] = fixed_wrapped_lines[-1][0:-1]
 
             new_lines.append( fixed_wrapped_lines )
 
-        # print( "_split_lines, new_lines: " + str( new_lines ) )
+        print( "_split_lines, new_lines: " + str( new_lines ) )
         return new_lines
 
     def semantic_line_wrap(self, paragraph_lines, initial_prefix, subsequent_prefix,
@@ -971,7 +970,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
+        print( "semantic_line_wrap, new_text: " + str( new_text ) )
         return new_text
 
     def peek_next_word_length(self, index, text):
@@ -1145,8 +1144,20 @@ def run_tests():
     from .tests import semantic_linefeed_unit_tests
     from .tests import semantic_linefeed_manual_tests
 
-    semantic_linefeed_unit_tests.run_unit_tests()
-    semantic_linefeed_manual_tests.run_manual_tests()
+    # Comment all the tests names on this list, to run all Unit Tests
+    unit_tests_to_run = \
+    [
+        # "test_split_lines_with_trailing_new_line",
+        # "test_semantic_line_wrap_line_starting_with_comment",
+        # "test_split_lines_with_trailing_new_line",
+        # "test_split_lines_without_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_with_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_without_trailing_new_line",
+        # "test_balance_characters_between_line_wraps_ending_with_long_word",
+    ]
+
+    semantic_linefeed_unit_tests.run_unit_tests( unit_tests_to_run )
+    # semantic_linefeed_manual_tests.run_manual_tests()
 
 
 def plugin_loaded():
@@ -1154,6 +1165,6 @@ def plugin_loaded():
         Running single test from unittest.TestCase via command line
         https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
     """
-    # run_tests()
     pass
+    run_tests()
 
