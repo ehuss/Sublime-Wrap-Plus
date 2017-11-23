@@ -34,9 +34,17 @@ def run_manual_tests():
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "This is my very long line which will wrap near its end,\n" ], "    ", "    " )
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "This is my very long line which will wrap near its end,", "This is my very long line which will wrap near its end," ], "    ", "    " )
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "% you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "% ", "% " )
-    wrap_plus.balance_characters_between_line_wraps( wrapper, [ "% you still only configuring a few languages closely related.", "On this case, C, C++, Java, Pawn, etc." ], "% ", "%                             " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "% you still only configuring a few languages closely related.", "On this case, C, C++, Java, Pawn, etc." ], "% ", "%                             " )
+
+    line = "This is my very long line which will wrap near its end,"
+    wrap_plus.calculate_lines_count( line, "                                                            ", "                                                            ", 50 )
+
+    wrap_plus._width = 50
+    wrapper.subsequent_indent = "                      "
+    # wrap_plus._split_lines( wrapper, [ "    This is my very long line which will wrap near its end,\n" ], 50 )
 
     wrap_plus._width = 80
+    wrapper.subsequent_indent = "    "
     # wrap_plus._split_lines( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], 80 )
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [  "In this proposal last chapter which lies on the part called `\\nameref{sec:software_implementation}'," ], "    ", "    " )
 

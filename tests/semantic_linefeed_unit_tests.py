@@ -51,7 +51,32 @@ class LineBalancingUnitTests(unittest.TestCase):
         global maximum_words_in_comma_separated_list
         maximum_words_in_comma_separated_list = 4
 
+    # calculate_lines_count Unit Tests
+    def test_calculate_lines_count_with_maximum_lines_indent(self):
+        line = "This is my very long line which will wrap near its end,"
+        indentation = "                                                            "
+        result = self.wrap_plus.calculate_lines_count( line, indentation, indentation, 50 )
+        self.assertEqual( (138, 8335), result )
+
+    def test_calculate_lines_count_with_minimum_lines_indent(self):
+        line = "This is my very long line which will wrap near its end,"
+        indentation = ""
+        result = self.wrap_plus.calculate_lines_count( line, indentation, indentation, 50 )
+        self.assertEqual( (2, 55), result )
+
+    def test_calculate_lines_count_with_only_one_line(self):
+        line = "This is my very long line which will wrap near its end,"
+        indentation = ""
+        result = self.wrap_plus.calculate_lines_count( line, indentation, indentation, 80 )
+        self.assertEqual( (1, 55), result )
+
     # _split_lines Unit Tests
+    def test_split_lines_with_long_subsequent_indentation(self):
+        self.wrapper.subsequent_indent = "                      "
+        self.assertEqual( [['This is my very long line which will\n', '                      wrap near its\n', '                      end,']],
+                self.wrap_plus._split_lines(
+                self.wrapper, ["This is my very long line which will wrap near its end,"], 50 ) )
+
     def test_split_lines_without_trailing_new_line(self):
         self.assertEqual( [['This is my very long line\n', '    which will wrap near its\n', '    end,']],
                 self.wrap_plus._split_lines(

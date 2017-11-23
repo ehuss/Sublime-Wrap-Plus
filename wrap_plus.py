@@ -580,20 +580,20 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def _extract_prefix(self, paragraph_region, lines, required_comment_prefix):
         # The comment prefix has already been stripped from the lines.
         # If the first line starts with a list-like thing, then that will be the initial prefix.
-        initial_prefix = ''
-        subsequent_prefix = ''
+        initial_indent = ''
+        subsequent_indent = ''
         first_line = lines[0]
         regex_match = list_pattern.match(first_line)
         if regex_match:
-            initial_prefix = first_line[0:regex_match.end()]
-            stripped_prefix = initial_prefix.lstrip()
-            leading_whitespace = initial_prefix[:len(initial_prefix)-len(stripped_prefix)]
-            subsequent_prefix = leading_whitespace+' '*self._width_in_spaces(stripped_prefix)
+            initial_indent = first_line[0:regex_match.end()]
+            stripped_prefix = initial_indent.lstrip()
+            leading_whitespace = initial_indent[:len(initial_indent)-len(stripped_prefix)]
+            subsequent_indent = leading_whitespace+' '*self._width_in_spaces(stripped_prefix)
         else:
             regex_match = field_pattern.match(first_line)
             if regex_match:
                 # The spaces in front of the field start.
-                initial_prefix = regex_match.group(1)
+                initial_indent = regex_match.group(1)
                 if len(lines) > 1:
                     # How to handle subsequent lines.
                     regex_match = space_prefix_pattern.match(lines[1])
@@ -601,27 +601,27 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         # It's already indented, keep this indent level
                         # (unless it is less than where the field started).
                         spaces = regex_match.group(0)
-                        if self._width_in_spaces(spaces) >= self._width_in_spaces(initial_prefix)+1:
-                            subsequent_prefix = spaces
-                if not subsequent_prefix:
+                        if self._width_in_spaces(spaces) >= self._width_in_spaces(initial_indent)+1:
+                            subsequent_indent = spaces
+                if not subsequent_indent:
                     # Not already indented, make an indent.
-                    subsequent_prefix = initial_prefix + self._make_indent()
+                    subsequent_indent = initial_indent + self._make_indent()
             else:
                 regex_match = space_prefix_pattern.match(first_line)
                 if regex_match:
-                    initial_prefix = first_line[0:regex_match.end()]
+                    initial_indent = first_line[0:regex_match.end()]
                     if len(lines) > 1:
                         regex_match = space_prefix_pattern.match(lines[1])
                         if regex_match:
-                            subsequent_prefix = lines[1][0:regex_match.end()]
+                            subsequent_indent = lines[1][0:regex_match.end()]
                         else:
-                            subsequent_prefix = ''
+                            subsequent_indent = ''
                     else:
-                        subsequent_prefix = initial_prefix
+                        subsequent_indent = initial_indent
                 else:
                     # Should never happen.
-                    initial_prefix = ''
-                    subsequent_prefix = ''
+                    initial_indent = ''
+                    subsequent_indent = ''
 
         point = paragraph_region.begin()
         scope_region = self.view.extract_scope(point)
@@ -636,20 +636,20 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 regex_match = space_prefix_pattern.match(true_first_line)
                 debug('single line quoted string triggered')
                 if regex_match:
-                    subsequent_prefix = regex_match.group() + subsequent_prefix
+                    subsequent_indent = regex_match.group() + subsequent_indent
 
         # Remove the prefixes that are there.
         new_lines = []
-        new_lines.append(first_line[len(initial_prefix):].strip())
+        new_lines.append(first_line[len(initial_indent):].strip())
         for line in lines[1:]:
-            if line.startswith(subsequent_prefix):
-                line = line[len(subsequent_prefix):]
+            if line.startswith(subsequent_indent):
+                line = line[len(subsequent_indent):]
             new_lines.append(line.strip())
 
-        debug('initial_prefix=%r subsequent_prefix=%r', initial_prefix, subsequent_prefix)
+        debug('initial_indent=%r subsequent_indent=%r', initial_indent, subsequent_indent)
 
-        return (required_comment_prefix+initial_prefix,
-                required_comment_prefix+subsequent_prefix,
+        return (required_comment_prefix+initial_indent,
+                required_comment_prefix+subsequent_indent,
                 new_lines)
 
     def run(self, edit, width=0):
@@ -698,12 +698,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     # minimum_line_size_percent = 0.0
                     disable_line_wrapping_by_maximum_width = True
 
-                text = self.semantic_line_wrap( paragraph_lines, initial_prefix, subsequent_prefix,
+                text = self.semantic_line_wrap( paragraph_lines, initial_indent, subsequent_indent,
                         minimum_line_size_percent, disable_line_wrapping_by_maximum_width,
                         balance_characters_between_line_wraps )
 
                 if balance_characters_between_line_wraps:
-                    text = self.balance_characters_between_line_wraps( wrapper, text, initial_prefix, subsequent_prefix )
+                    text = self.balance_characters_between_line_wraps( wrapper, text, initial_indent, subsequent_indent )
 
                 # print( 'run, text: ' + "".join( text ) )
                 return "".join( text )
@@ -711,7 +711,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         else:
 
             def line_wrapper_type():
-                return self.classic_wrap_text(wrapper, paragraph_lines, initial_prefix, subsequent_prefix)
+                return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
 
         # print( "self._width: " + str( self._width ) )
         if paragraphs:
@@ -724,7 +724,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
                 paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
-                initial_prefix, subsequent_prefix, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
+                initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
 
                 text = line_wrapper_type()
 
@@ -741,15 +741,15 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         else:
             self.move_the_cursor_to_the_original_position(cursor_original_positions)
 
-    def balance_characters_between_line_wraps(self, wrapper, text_lines, initial_prefix, subsequent_prefix):
+    def balance_characters_between_line_wraps(self, wrapper, text_lines, initial_indent, subsequent_indent):
         """
             input:  ['This is my very long line which will wrap near its end,']
             output: ['    ', 'This is my very long line which\n    ', 'will wrap near its end,']
         """
-        wrapper.initial_prefix    = ""
-        wrapper.subsequent_indent = subsequent_prefix
+        wrapper.initial_indent    = ""
+        wrapper.subsequent_indent = subsequent_indent
 
-        new_text      = [initial_prefix]
+        new_text      = [initial_indent]
         splited_lines = self._split_lines( wrapper, text_lines, self._width )
 
         for index, new_lines in enumerate( splited_lines ):
@@ -791,15 +791,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
     def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
         """
             (input)  text_lines: ['    This is my very long line which will wrap near its end,\n']
-            (output) new_lines:  [['This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
+            (output) new_lines:  [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
         """
         new_lines = []
 
-        for line in text_lines:
-            line_length = len( line )
-            lines_count = math.ceil( line_length / maximum_line_width ) + 1
+        initial_indent    = wrapper.initial_indent
+        subsequent_indent = wrapper.subsequent_indent
 
-            for step in range( 1, lines_count ):
+        for line in text_lines:
+            lines_count, line_length = self.calculate_lines_count(line, initial_indent, subsequent_indent, maximum_line_width)
+
+            for step in range( 1, lines_count + 1 ):
                 new_line_length = math.ceil( line_length / step )
                 # print( "new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
 
@@ -833,7 +835,33 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         print( "_split_lines, new_lines: " + str( new_lines ) )
         return new_lines
 
-    def semantic_line_wrap(self, paragraph_lines, initial_prefix, subsequent_prefix,
+    def calculate_lines_count(self, line, initial_indent, subsequent_indent, maximum_line_width):
+        """
+            We do not know how many lines there will be directly because when the wrap lines,
+            the total `line_length` is increase by the `subsequent_indent`.
+        """
+        initial_indent_length    = len( initial_indent )
+        subsequent_indent_length = len( subsequent_indent )
+
+        lines_count = 0
+        line_length = len( line ) + initial_indent_length
+
+        new_line_length  = len( line ) + initial_indent_length
+        last_line_length = 0
+
+        while last_line_length != new_line_length \
+                and lines_count < line_length:
+
+            print( "calculate_lines_count, new_line_length: " + str( new_line_length ) )
+            last_line_length = new_line_length
+
+            lines_count     = math.ceil( last_line_length / maximum_line_width )
+            new_line_length = ( lines_count - 1 ) * subsequent_indent_length + line_length
+
+        print( "calculate_lines_count, lines_count:     " + str( lines_count ) )
+        return lines_count, new_line_length
+
+    def semantic_line_wrap(self, paragraph_lines, initial_indent, subsequent_indent,
                 minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False,
                 balance_characters_between_line_wraps=False):
         """
@@ -844,11 +872,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 output: ['    ', 'This is my very long line which will wrap near its\n    ', 'end,']
         """
         new_text = []
-        initial_prefix_length    = len( initial_prefix )
-        subsequent_prefix_length = len( subsequent_prefix )
+        initial_indent_length    = len( initial_indent )
+        subsequent_indent_length = len( subsequent_indent )
 
         if not balance_characters_between_line_wraps:
-            new_text.append( initial_prefix )
+            new_text.append( initial_indent )
 
         is_allowed_to_wrap           = False
         is_possible_space            = False
@@ -887,7 +915,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if not is_flushing_accumalated_line:
 
                     if not disable_line_wrapping_by_maximum_width \
-                            and accumulated_line_length + next_word_length + initial_prefix_length > self._width:
+                            and accumulated_line_length + next_word_length + initial_indent_length > self._width:
 
                         # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                         is_flushing_accumalated_line = True
@@ -908,7 +936,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # print( "semantic_line_wrap, character: %s " % ( character ) )
             if not disable_line_wrapping_by_maximum_width \
                     and not is_flushing_accumalated_line \
-                    and accumulated_line_length + next_word_length + initial_prefix_length > self._width:
+                    and accumulated_line_length + next_word_length + initial_indent_length > self._width:
 
                 # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                 is_flushing_accumalated_line = True
@@ -938,14 +966,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                                 or not is_comma_separated_list \
                                 or is_flushing_accumalated_line:
 
-                            # It is not the first line anymore, now we need to use the `subsequent_prefix_length`
-                            initial_prefix_length = subsequent_prefix_length
+                            # It is not the first line anymore, now we need to use the `subsequent_indent_length`
+                            initial_indent_length = subsequent_indent_length
 
                             if character in whitespace_character:
                                 character = ""
 
                             accumulated_line = "".join( [accumulated_line, character, "\n",
-                                    ( "" if balance_characters_between_line_wraps else subsequent_prefix ) ] )
+                                    ( "" if balance_characters_between_line_wraps else subsequent_indent ) ] )
 
                             # print( "semantic_line_wrap, accumulated_line flush: %s" % accumulated_line )
                             new_text.append( accumulated_line )
@@ -1038,39 +1066,39 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return False, 0
 
-    def classic_wrap_text(self, wrapper, paragraph_lines, initial_prefix, subsequent_prefix):
-        orig_initial_prefix = initial_prefix
-        orig_subsequent_prefix = subsequent_prefix
+    def classic_wrap_text(self, wrapper, paragraph_lines, initial_indent, subsequent_indent):
+        orig_initial_indent = initial_indent
+        orig_subsequent_indent = subsequent_indent
 
-        if orig_initial_prefix or orig_subsequent_prefix:
+        if orig_initial_indent or orig_subsequent_indent:
             # Textwrap is somewhat limited.  It doesn't recognize tabs
             # in prefixes.  Unfortunately, this means we can't easily
             # differentiate between the initial and subsequent.  This
             # is a workaround.
-            initial_prefix = orig_initial_prefix.expandtabs(self._tab_width)
-            subsequent_prefix = orig_subsequent_prefix.expandtabs(self._tab_width)
-            wrapper.initial_indent = initial_prefix
-            wrapper.subsequent_indent = subsequent_prefix
+            initial_indent = orig_initial_indent.expandtabs(self._tab_width)
+            subsequent_indent = orig_subsequent_indent.expandtabs(self._tab_width)
+            wrapper.initial_indent = initial_indent
+            wrapper.subsequent_indent = subsequent_indent
 
         text = '\n'.join(paragraph_lines)
         text = text.expandtabs(self._tab_width)
         text = wrapper.fill(text)
 
         # Put the tabs back to the prefixes.
-        if orig_initial_prefix or orig_subsequent_prefix:
+        if orig_initial_indent or orig_subsequent_indent:
 
-            if initial_prefix != orig_subsequent_prefix or subsequent_prefix != orig_subsequent_prefix:
+            if initial_indent != orig_subsequent_indent or subsequent_indent != orig_subsequent_indent:
                 lines = text.splitlines()
 
-                if initial_prefix != orig_initial_prefix:
+                if initial_indent != orig_initial_indent:
                     debug('fix tabs %r', lines[0])
-                    lines[0] = orig_initial_prefix + lines[0][len(initial_prefix):]
+                    lines[0] = orig_initial_indent + lines[0][len(initial_indent):]
                     debug('new line is %r', lines[0])
 
-                if subsequent_prefix != orig_subsequent_prefix:
+                if subsequent_indent != orig_subsequent_indent:
 
                     for index, line in enumerate(lines[1:]):
-                        lines[index+1] = orig_subsequent_prefix + lines[index+1][len(subsequent_prefix):]
+                        lines[index+1] = orig_subsequent_indent + lines[index+1][len(subsequent_indent):]
 
                 text = '\n'.join(lines)
 
@@ -1147,7 +1175,9 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
-        # "test_split_lines_with_trailing_new_line",
+        # "test_split_lines_with_long_subsequent_indentation",
+        # "test_calculate_lines_count_with_maximum_lines_indent",
+        # "test_calculate_lines_count_with_minimum_lines_indent",
         # "test_semantic_line_wrap_line_starting_with_comment",
         # "test_split_lines_with_trailing_new_line",
         # "test_split_lines_without_trailing_new_line",
