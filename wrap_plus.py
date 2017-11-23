@@ -767,21 +767,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     if next_index < lines_count \
                             and len( new_line ) < math.ceil( len( new_lines_reversed[next_index] ) / 2 ):
 
+                        increment_percent = 1.1
+
+                        # Try to increase the maximum width until the trailing line vanishes
+                        while lines_count == first_lines_count \
+                                and increment_percent < 2:
+
+                            new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, increment_percent )[0]
+
+                            first_lines_count  = len( new_lines )
+                            increment_percent *= 1.1
+
                         break
-
-                else:
-                    continue
-
-                increment_percent = 1.1
-
-                # Try to increase the maximum width until the trailing line vanishes
-                while lines_count == first_lines_count \
-                        and increment_percent < 2:
-
-                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, increment_percent )[0]
-
-                    first_lines_count  = len( new_lines )
-                    increment_percent *= 1.1
 
             new_text.extend( new_lines )
 
@@ -1175,6 +1172,7 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
+        # "test_balance_characters_between_line_wraps_with_long_subsequent_indentation",
         # "test_split_lines_with_long_subsequent_indentation",
         # "test_calculate_lines_count_with_maximum_lines_indent",
         # "test_calculate_lines_count_with_minimum_lines_indent",

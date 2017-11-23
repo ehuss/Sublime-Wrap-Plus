@@ -37,7 +37,10 @@ def run_manual_tests():
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "% you still only configuring a few languages closely related.", "On this case, C, C++, Java, Pawn, etc." ], "% ", "%                             " )
 
     line = "This is my very long line which will wrap near its end,"
-    wrap_plus.calculate_lines_count( line, "                                                            ", "                                                            ", 50 )
+    # wrap_plus.calculate_lines_count( line, "                                                            ", "                                                            ", 50 )
+
+    indent = "                                         "
+    wrap_plus.balance_characters_between_line_wraps( wrapper, ["% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"], "% ", indent )
 
     wrap_plus._width = 50
     wrapper.subsequent_indent = "                      "
