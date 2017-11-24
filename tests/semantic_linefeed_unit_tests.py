@@ -114,7 +114,6 @@ class LineBalancingUnitTests(unittest.TestCase):
                 self.wrapper, [input_text], "", indent ) )
 
     def test_balance_characters_between_line_wraps_with_big_multi_line_balancing(self):
-        self.wrapper.width = 80
         self.wrap_plus._width = 80
         input_text = \
         [
@@ -141,13 +140,12 @@ class LineBalancingUnitTests(unittest.TestCase):
                 self.wrapper, input_text, "% ", "% " ) )
 
     def test_balance_characters_between_line_wraps_with_comment_indentation_balance(self):
-        self.wrapper.width = 80
         self.wrap_plus._width = 80
         input_text = \
         [
             "Inclui a IA para reconhecer o formatação nos módulos de beautifying.",
             "Ela eh uma heurística,",
-            "que cada bloco implementa e faz ele gerar um arquivo de"
+            "que cada bloco implementa e faz ele gerar um arquivo de",
         ]
         expected_list = \
         [
@@ -164,13 +162,13 @@ class LineBalancingUnitTests(unittest.TestCase):
 
     def test_balance_characters_between_line_wraps_commented_line(self):
         indent = "%                                        "
-        self.wrapper.width = 80
         self.wrap_plus._width = 80
         input_text = "% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"
         expected_list = \
         [
-            '% ', '% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj\n',
-            '%                                        fçlakj lçkasjd fçlakjs dçflkja'
+            '% ', '% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd\n',
+            '%                                        açsdkjflçk çalskdj fçlakj\n',
+            '%                                        lçkasjd fçlakjs dçflkja',
         ]
         self.assertEqual( expected_list,
                 self.wrap_plus.balance_characters_between_line_wraps(
@@ -187,7 +185,7 @@ class LineBalancingUnitTests(unittest.TestCase):
                 self.wrapper, ["This is my very long line which will wrap near its end,"], "    ", "    " ) )
 
     def test_balance_characters_between_line_wraps_starting_with_comment(self):
-        self.assertEqual( ['% ', 'you still only configuring a few languages closely\n', '% related. On this case, C, C++, Java, Pawn, etc.'],
+        self.assertEqual( ['% ', 'you still only configuring a few\n', '% languages closely related. On this\n', '% case, C, C++, Java, Pawn, etc.'],
                 self.wrap_plus.balance_characters_between_line_wraps( self.wrapper,
                 [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "% ", "% " ) )
 

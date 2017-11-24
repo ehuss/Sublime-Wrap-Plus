@@ -790,7 +790,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                         break
 
-                print( "Shrinking the lines..." )
+                # print( "\nShrinking the lines..." )
+                new_lines_backup = list( new_lines )
+
                 if self.is_there_line_over_the_wrap_limit( new_lines ):
 
                     decrement_percent = increment_percent * DECREMENT_VALUE
@@ -804,6 +806,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         decrement_percent *= DECREMENT_VALUE
                         new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, decrement_percent )[0]
 
+                # If still there are lines over the limit, it means some line has some very big word
+                # or some very big indentation, then there is nothing we can do other than discard
+                # the results. Comment this out, and you will see the Unit Tests failing with it.
+                if self.is_there_line_over_the_wrap_limit( new_lines ):
+                    new_lines = new_lines_backup
+
             if index < 1:
                 new_text.append( initial_indent )
                 new_text.extend( new_lines )
@@ -812,7 +820,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 new_text.append( subsequent_indent )
                 new_text.extend( new_lines )
 
-        print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
         return new_text
 
     def is_line_bellow_half_wrap_limit(self, new_lines, subsequent_indent_length):
@@ -847,7 +855,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             for step in range( 1, lines_count + 1 ):
                 new_line_length = math.ceil( line_length / step )
-                print( "_split_lines, new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
+                # print( "_split_lines, new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
 
                 if new_line_length > maximum_line_width:
                     continue
@@ -855,13 +863,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 else:
                     break
 
-            print( "_split_lines, maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
+            # print( "_split_lines, maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
             wrapper.width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
 
-            print( "_split_lines, line: " + line )
+            # print( "_split_lines, line: " + line )
             wrapped_line  = wrapper.fill( line )
 
-            print( "_split_lines, wrapped_line: " + wrapped_line )
+            # print( "_split_lines, wrapped_line: " + wrapped_line )
             wrapped_lines = wrapped_line.split( "\n" )
 
             # Add again the removed `\n` character due the `split` statement
@@ -876,7 +884,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             new_lines.append( fixed_wrapped_lines )
 
-        print( "_split_lines, new_lines: " + str( new_lines ) )
+        # print( "_split_lines, new_lines: " + str( new_lines ) )
         return new_lines
 
     def calculate_lines_count(self, line, initial_indent, subsequent_indent, maximum_line_width):
@@ -896,13 +904,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         while last_line_length != new_line_length \
                 and lines_count < line_length:
 
-            print( "calculate_lines_count, new_line_length: " + str( new_line_length ) )
+            # print( "calculate_lines_count, new_line_length: " + str( new_line_length ) )
             last_line_length = new_line_length
 
             lines_count     = math.ceil( last_line_length / maximum_line_width )
             new_line_length = ( lines_count - 1 ) * subsequent_indent_length + line_length
 
-        print( "calculate_lines_count, lines_count:     " + str( lines_count ) )
+        # print( "calculate_lines_count, lines_count:     " + str( lines_count ) )
         return lines_count, new_line_length
 
     def semantic_line_wrap(self, paragraph_lines, initial_indent, subsequent_indent,
@@ -1042,7 +1050,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        print( "semantic_line_wrap, new_text: " + str( new_text ) )
+        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
         return new_text
 
     def peek_next_word_length(self, index, text):
@@ -1219,6 +1227,8 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
+        # "test_balance_characters_between_line_wraps_commented_line",
+        # "test_balance_characters_between_line_wraps_starting_with_comment",
         # "test_balance_characters_between_line_wraps_with_big_multi_line_balancing",
         # "test_balance_characters_between_line_wraps_with_long_indentation_balance",
         # "test_balance_characters_between_line_wraps_with_long_subsequent_indentation",
