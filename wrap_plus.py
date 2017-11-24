@@ -746,22 +746,29 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             input:  ['This is my very long line which will wrap near its end,']
             output: ['    ', 'This is my very long line which\n    ', 'will wrap near its end,']
         """
+        wrapper.width             = self._width
         wrapper.initial_indent    = ""
         wrapper.subsequent_indent = subsequent_indent
         subsequent_indent_length  = len( subsequent_indent )
 
-        new_text      = []
-        splited_lines = self._split_lines( wrapper, text_lines, self._width )
+        # `decrement_percent` must be stronger than 1.1, i.e., 1.1*1.1 = 1.21*0.9 = 1.089 < 1.1
+        # otherwise this could immediately fail as the last line length would already be
+        # greater than `self._width / 2`
+        INCREMENT_VALUE = 1.05
+        DECREMENT_VALUE = 0.95
+
+        new_text          = []
+        splited_lines     = self._split_lines( wrapper, text_lines, self._width )
 
         for index, new_lines in enumerate( splited_lines ):
-            lines_count       = len( new_lines )
-            first_lines_count = lines_count
+            lines_count = len( new_lines )
 
-            # When there are more than 2 lines, we can get a situation like this:
-            # new_lines: ['    This is my very long line\n    which will wrap near its\n    end,']
             if lines_count > 1:
+                increment_percent  = INCREMENT_VALUE
                 new_lines_reversed = list( reversed( new_lines ) )
 
+                # When there are more than 1 lines, we can get a situation like this:
+                # new_lines: ['    This is my very long line\n    which will wrap near its\n    end,']
                 for _index, new_line in enumerate( new_lines_reversed ):
                     next_index = _index + 1
 
@@ -769,7 +776,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             and len( new_line ) - subsequent_indent_length \
                             < math.ceil( ( len( new_lines_reversed[next_index] ) - subsequent_indent_length ) / 2 ):
 
-                        increment_percent = 1.1
+                        increment_percent = INCREMENT_VALUE
+                        first_lines_count = lines_count
 
                         # Try to increase the maximum width until the trailing line vanishes
                         while lines_count == first_lines_count \
@@ -778,9 +786,23 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, increment_percent )[0]
 
                             first_lines_count  = len( new_lines )
-                            increment_percent *= 1.1
+                            increment_percent *= INCREMENT_VALUE
 
                         break
+
+                print( "Shrinking the lines..." )
+                if self.is_there_line_over_the_wrap_limit( new_lines ):
+
+                    decrement_percent = increment_percent * DECREMENT_VALUE
+                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, decrement_percent )[0]
+
+                    # Try to decrease the maximum width until create a trailing new line
+                    while ( self.is_there_line_over_the_wrap_limit(new_lines) \
+                            or self.is_line_bellow_half_wrap_limit( new_lines, subsequent_indent_length ) ) \
+                                and decrement_percent > 0.4:
+
+                        decrement_percent *= DECREMENT_VALUE
+                        new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, decrement_percent )[0]
 
             if index < 1:
                 new_text.append( initial_indent )
@@ -792,6 +814,23 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
         return new_text
+
+    def is_line_bellow_half_wrap_limit(self, new_lines, subsequent_indent_length):
+        return len( new_lines[-1] ) - subsequent_indent_length \
+            < math.floor( ( self._width - subsequent_indent_length ) / 1.8 )
+
+    def is_there_line_over_the_wrap_limit(self, new_lines):
+        """
+            We need to check whether some line has passed over the wrap limit. This can happen
+            when a line with width 160 can be split in 2 lines of width 80, but not all the
+            words fit on the first line with 80 characters exactly.
+        """
+        for new_line in new_lines:
+
+            if len( new_line ) > self._width:
+                return True
+
+        return False
 
     def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
         """
@@ -808,7 +847,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             for step in range( 1, lines_count + 1 ):
                 new_line_length = math.ceil( line_length / step )
-                # print( "new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
+                print( "_split_lines, new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
 
                 if new_line_length > maximum_line_width:
                     continue
@@ -1180,7 +1219,7 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
-        # "",
+        # "test_balance_characters_between_line_wraps_with_big_multi_line_balancing",
         # "test_balance_characters_between_line_wraps_with_long_indentation_balance",
         # "test_balance_characters_between_line_wraps_with_long_subsequent_indentation",
         # "test_split_lines_with_long_subsequent_indentation",

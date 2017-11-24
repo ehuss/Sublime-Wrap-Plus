@@ -43,10 +43,10 @@ def run_manual_tests():
     indent = "                                         "
     # wrap_plus.balance_characters_between_line_wraps( wrapper, ["% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"], "% ", indent )
 
-    wrapper.width = 80
     wrap_plus._width = 80
     # wrap_plus.balance_characters_between_line_wraps( wrapper, ["% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"], "% ", indent )
-    wrap_plus.balance_characters_between_line_wraps( wrapper, [ "Inclui a IA para reconhecer o formatação nos módulos de beautifying.", "Ela eh uma heurística,", "que cada bloco implementa e faz ele gerar um arquivo de" ], "% ", "% " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "Inclui a IA para reconhecer o formatação nos módulos de beautifying.", "Ela eh uma heurística,", "que cada bloco implementa e faz ele gerar um arquivo de" ], "% ", "% " )
+    wrap_plus.balance_characters_between_line_wraps( wrapper, [ "Inclui a IA para reconhecer o formatação nos módulos de beautifying.", "Ela eh uma heurística,", "que cada bloco implementa e faz ele gerar um arquivo de configuração que representa a atual formatação do código (aqui esta o verdadeiro desafio do trabalho,", "pesquise trabalhos correlatos).", ], "% ", "% " )
 
     wrapper.subsequent_indent = "                      "
     # wrap_plus._split_lines( wrapper, [ "    This is my very long line which will wrap near its end,\n" ], 50 )

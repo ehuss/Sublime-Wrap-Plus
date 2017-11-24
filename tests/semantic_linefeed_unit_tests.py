@@ -113,7 +113,34 @@ class LineBalancingUnitTests(unittest.TestCase):
                 self.wrap_plus.balance_characters_between_line_wraps(
                 self.wrapper, [input_text], "", indent ) )
 
-    def test_balance_characters_between_line_wraps_withd_comment_indentation_balance(self):
+    def test_balance_characters_between_line_wraps_with_big_multi_line_balancing(self):
+        self.wrapper.width = 80
+        self.wrap_plus._width = 80
+        input_text = \
+        [
+            "Inclui a IA para reconhecer o formatação nos módulos de beautifying.",
+            "Ela eh uma heurística,",
+            "que cada bloco implementa e faz ele gerar um arquivo de configuração que representa a atual formatação do código (aqui esta o verdadeiro desafio do trabalho,",
+            "pesquise trabalhos correlatos).",
+        ]
+        expected_list = \
+        [
+            '% ',
+            'Inclui a IA para reconhecer o formatação nos módulos de beautifying.',
+            '% ',
+            'Ela eh uma heurística,',
+            '% ',
+            'que cada bloco implementa e faz ele gerar um arquivo de\n',
+            '% configuração que representa a atual formatação do código\n',
+            '% (aqui esta o verdadeiro desafio do trabalho,',
+            '% ',
+            'pesquise trabalhos correlatos).',
+        ]
+        self.assertEqual( expected_list,
+                self.wrap_plus.balance_characters_between_line_wraps(
+                self.wrapper, input_text, "% ", "% " ) )
+
+    def test_balance_characters_between_line_wraps_with_comment_indentation_balance(self):
         self.wrapper.width = 80
         self.wrap_plus._width = 80
         input_text = \
