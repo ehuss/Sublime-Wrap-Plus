@@ -748,6 +748,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         """
         wrapper.initial_indent    = ""
         wrapper.subsequent_indent = subsequent_indent
+        subsequent_indent_length  = len( subsequent_indent )
 
         new_text      = [initial_indent]
         splited_lines = self._split_lines( wrapper, text_lines, self._width )
@@ -765,7 +766,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     next_index = _index + 1
 
                     if next_index < lines_count \
-                            and len( new_line ) < math.ceil( len( new_lines_reversed[next_index] ) / 2 ):
+                            and len( new_line ) - subsequent_indent_length \
+                            < math.ceil( ( len( new_lines_reversed[next_index] ) - subsequent_indent_length ) / 2 ):
 
                         increment_percent = 1.1
 
@@ -1172,6 +1174,7 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
+        # "test_balance_characters_between_line_wraps_with_long_indentation_balance",
         # "test_balance_characters_between_line_wraps_with_long_subsequent_indentation",
         # "test_split_lines_with_long_subsequent_indentation",
         # "test_calculate_lines_count_with_maximum_lines_indent",
@@ -1185,7 +1188,7 @@ def run_tests():
     ]
 
     semantic_linefeed_unit_tests.run_unit_tests( unit_tests_to_run )
-    # semantic_linefeed_manual_tests.run_manual_tests()
+    #semantic_linefeed_manual_tests.run_manual_tests()
 
 
 def plugin_loaded():

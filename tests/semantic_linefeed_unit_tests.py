@@ -94,20 +94,34 @@ class LineBalancingUnitTests(unittest.TestCase):
 
     # balance_characters_between_line_wraps Unit Tests
     def test_balance_characters_between_line_wraps_with_long_subsequent_indentation(self):
-        indent = "                                         "
+        indent = "%                                         "
         input_text = "% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"
         expected_list = \
         [
-            '% ',
+            '',
             '% tests dd açsdkjflçk çalskdj fçlakj lçkasjd\n',
-            '                                         fçlakjs\n',
-            '                                         dçflkjadd\n',
-            '                                         açsdkjflçk\n',
-            '                                         çalskdj\n',
-            '                                         fçlakj\n',
-            '                                         lçkasjd\n',
-            '                                         fçlakjs\n',
-            '                                         dçflkja'
+            '%                                         fçlakjs\n',
+            '%                                         dçflkjadd\n',
+            '%                                         açsdkjflçk\n',
+            '%                                         çalskdj\n',
+            '%                                         fçlakj\n',
+            '%                                         lçkasjd\n',
+            '%                                         fçlakjs\n',
+            '%                                         dçflkja'
+        ]
+        self.assertEqual( expected_list,
+                self.wrap_plus.balance_characters_between_line_wraps(
+                self.wrapper, [input_text], "", indent ) )
+
+    def test_balance_characters_between_line_wraps_with_long_indentation_balance(self):
+        indent = "%                                        "
+        self.wrapper.width = 80
+        self.wrap_plus._width = 80
+        input_text = "% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"
+        expected_list = \
+        [
+            '% ', '% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj\n',
+            '%                                        fçlakj lçkasjd fçlakjs dçflkja'
         ]
         self.assertEqual( expected_list,
                 self.wrap_plus.balance_characters_between_line_wraps(
