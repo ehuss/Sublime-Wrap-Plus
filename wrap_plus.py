@@ -750,7 +750,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         wrapper.subsequent_indent = subsequent_indent
         subsequent_indent_length  = len( subsequent_indent )
 
-        new_text      = [initial_indent]
+        new_text      = []
         splited_lines = self._split_lines( wrapper, text_lines, self._width )
 
         for index, new_lines in enumerate( splited_lines ):
@@ -759,7 +759,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             # When there are more than 2 lines, we can get a situation like this:
             # new_lines: ['    This is my very long line\n    which will wrap near its\n    end,']
-            if lines_count > 2:
+            if lines_count > 1:
                 new_lines_reversed = list( reversed( new_lines ) )
 
                 for _index, new_line in enumerate( new_lines_reversed ):
@@ -782,7 +782,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                         break
 
-            new_text.extend( new_lines )
+            if index < 1:
+                new_text.append( initial_indent )
+                new_text.extend( new_lines )
+
+            else:
+                new_text.append( subsequent_indent )
+                new_text.extend( new_lines )
 
         print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
         return new_text
@@ -1174,6 +1180,7 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
+        # "",
         # "test_balance_characters_between_line_wraps_with_long_indentation_balance",
         # "test_balance_characters_between_line_wraps_with_long_subsequent_indentation",
         # "test_split_lines_with_long_subsequent_indentation",
@@ -1188,7 +1195,7 @@ def run_tests():
     ]
 
     semantic_linefeed_unit_tests.run_unit_tests( unit_tests_to_run )
-    #semantic_linefeed_manual_tests.run_manual_tests()
+    # semantic_linefeed_manual_tests.run_manual_tests()
 
 
 def plugin_loaded():
