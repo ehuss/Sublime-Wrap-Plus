@@ -230,9 +230,7 @@ def CONCAT(*args):
 blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
 maximum_words_in_comma_separated_list = 4
 
-list_of_words_pattern = re.compile(r'(?:^|\s)+[^ ]+', re.MULTILINE)
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
-
 whitespace_character = (" ", "\t")
 word_separator_characters = ( ",", ".", "?", "!", ":", ";" )
 
@@ -924,6 +922,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 output: ['    ', 'This is my very long line which will wrap near its\n    ', 'end,']
         """
         new_text = []
+
         initial_indent_length    = len( initial_indent )
         subsequent_indent_length = len( subsequent_indent )
 
@@ -942,9 +941,21 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         minimum_line_size = int( self._width * minimum_line_size_percent )
         # print( "minimum_line_size: %s" % ( minimum_line_size ) )
 
+        indent_length        = initial_indent_length
         accumulated_line     = ""
         line_start_index     = 0
-        comma_list_end_point = 0
+        comma_list_size      = 0
+        last_comma_list_size = 0
+
+        def force_flush_accumulated_line():
+            nonlocal index
+            nonlocal is_flushing_accumalated_line
+
+            # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
+            is_flushing_accumalated_line = True
+
+            # Current character is a whitespace, but it must the the next, so fix the index
+            index -= 1
 
         for index, character in enumerate( text ):
             accumulated_line_length = len( accumulated_line )
@@ -957,17 +968,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 is_possible_space = False
 
             # Skip the next characters as we already know they are a list. This is only called when
-            # the `comma_list_end_point` is lower than the `self._width`, otherwise the line will
+            # the `comma_list_size` is lower than the `self._width`, otherwise the line will
             # be immediately flushed
-            if comma_list_end_point > 0:
-                comma_list_end_point -= 1
+            if comma_list_size > 0:
+                last_comma_list_size = comma_list_size
+                comma_list_size     -= 1
 
-                # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, line_remaining_size: %s, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, index - line_start_index, self._width - index - line_start_index, comma_list_end_point, character ) )
+                # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, comma_list_end_point, character ) )
 
                 if not is_flushing_accumalated_line:
 
                     if not disable_line_wrapping_by_maximum_width \
-                            and accumulated_line_length + next_word_length + initial_indent_length > self._width:
+                            and accumulated_line_length + next_word_length + indent_length > self._width:
 
                         # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
                         is_flushing_accumalated_line = True
@@ -985,16 +997,16 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 is_flushing_comma_list  = False
                 is_comma_separated_list = False
 
-            # print( "semantic_line_wrap, character: %s " % ( character ) )
+                if last_comma_list_size == 1:
+                    last_comma_list_size = 0
+                    force_flush_accumulated_line()
+
+            # print( "semantic_line_wrap, index: %d, character: %s " % ( index, character ) )
             if not disable_line_wrapping_by_maximum_width \
                     and not is_flushing_accumalated_line \
-                    and accumulated_line_length + next_word_length + initial_indent_length > self._width:
+                    and accumulated_line_length + next_word_length + indent_length > self._width:
 
-                # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
-                is_flushing_accumalated_line = True
-
-                # Current character is a whitespace, but it must the the next, so fix the index
-                index -= 1
+                force_flush_accumulated_line()
 
             if accumulated_line_length > minimum_line_size:
                 is_allowed_to_wrap = True
@@ -1010,16 +1022,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         if character in word_separator_characters \
                                 and not is_flushing_comma_list:
 
-                            is_comma_separated_list, comma_list_end_point = self.is_comma_separated_list(text, index, line_start_index)
-                            comma_list_end_point -= index - line_start_index + 3
+                            is_comma_separated_list, comma_list_end_point = self.is_comma_separated_list( text, index )
+                            comma_list_size = comma_list_end_point - ( index + 1 )
 
-                        if ( comma_list_end_point > 0 \
+                        # print( "semantic_line_wrap, index: %d, comma_list_size: %d" % ( index, comma_list_size ) )
+                        if ( comma_list_size > 0 \
                                 and not is_flushing_comma_list ) \
                                 or not is_comma_separated_list \
                                 or is_flushing_accumalated_line:
 
                             # It is not the first line anymore, now we need to use the `subsequent_indent_length`
-                            initial_indent_length = subsequent_indent_length
+                            indent_length = subsequent_indent_length
 
                             if character in whitespace_character:
                                 character = ""
@@ -1027,7 +1040,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             accumulated_line = "".join( [accumulated_line, character, "\n",
                                     ( "" if balance_characters_between_line_wraps else subsequent_indent ) ] )
 
-                            # print( "semantic_line_wrap, accumulated_line flush: %s" % accumulated_line )
+                            # print( "semantic_line_wrap, accumulated_line flush: %r" % accumulated_line )
                             new_text.append( accumulated_line )
 
                             accumulated_line = ""
@@ -1064,58 +1077,53 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return 0
 
-    def is_comma_separated_list(self, text, index, line_start_index=0):
-        # print( "is_comma_separated_list, index: %3d, line_start_index: %d" % ( index, line_start_index ) )
+    def is_comma_separated_list(self, text, index):
+        """
+            return if the next characters form a command separated list
+            return 0 if False, otherwise the `text` index where the command separated list ended
+        """
+        # print( "is_comma_separated_list, index: %d" % ( index ) )
+        comma_list_end_point = -1
 
-        next_character    = " "
-        text_length       = len( text ) - 1
-        slice_start_index = index
+        text_length   = len( text ) - 1
+        words_counter = 0
 
         while index < text_length:
             index     = index + 1
             character = text[index]
 
-            if index + 1 < text_length:
+            is_character_whitespace = character in whitespace_character
+
+            if index < text_length:
                 next_character = text[index+1]
+                is_word_separator_character = character in word_separator_characters
+                is_next_character_whitepace = next_character in whitespace_character
 
-            # print( "is_comma_separated_list, character: %s, next_character: %s" % ( character, next_character ) )
-            if ( character in word_separator_characters \
-                    and next_character in whitespace_character ) \
-                    or index >= text_length:
+            else:
+                next_character = '$'
+                is_word_separator_character = True
+                is_next_character_whitepace = True
 
-                comma_section = text[ slice_start_index+1:index+1 ]
-                # print( "is_comma_separated_list, text:    " + comma_section )
+            # We count a word before it begins and set `comma_list_end_point` when we find a space after a comma
+            if is_character_whitespace and not is_next_character_whitepace:
+                words_counter += 1
 
-                results       = list_of_words_pattern.findall( comma_section )
-                results_count = len( results )
-                # print( "is_comma_separated_list, results: " + str( results ) )
+            # print( "is_comma_separated_list, index: %d, words_counter: %d, character: %s, next_character: %s" % ( index, words_counter, character, next_character ) )
+            if is_word_separator_character and is_next_character_whitepace:
 
-                if 0 < results_count < maximum_words_in_comma_separated_list:
-
-                    # Get the last match object
-                    for match in list_of_words_pattern.finditer( comma_section ):
-                        pass
-
-                    match_end          = match.end(0)
-                    possible_match_end = 0
-
-                    # `line_start_index` always greater than `index`, like 50 - 20 = 30
-                    # 50, 20 = 30, 80 - 30 = 50, 50 - 10 = 40
-                    # print( "is_comma_separated_list, line_remaining_size: " + str( self._width - ( index - line_start_index ) - match_end ) )
-                    # print( "is_comma_separated_list, match_end:           " + str( match_end ) )
-
-                    is_there_new_commas, possible_match_end = self.is_comma_separated_list( text, index, line_start_index + match_end )
-                    # print( "is_comma_separated_list, possible_match_end:  " + str( possible_match_end ) )
-
-                    if possible_match_end > 0:
-                        return True, possible_match_end + match_end
-
-                    # print( "is_comma_separated_list, slice_start_index - line_start_index + match_end: " + str( slice_start_index - line_start_index + match_end ) )
-                    return True, slice_start_index - line_start_index + match_end
+                if 0 < words_counter < maximum_words_in_comma_separated_list:
+                    comma_list_end_point = index
 
                 else:
-                    return False, 0
+                    break
 
+                words_counter = 0
+
+        if comma_list_end_point > -1:
+            # print( "is_comma_separated_list (True), comma_list_end_point: %d" % ( comma_list_end_point ) )
+            return True, comma_list_end_point
+
+        # print( "is_comma_separated_list (False), comma_list_end_point: %d" % ( 0 ) )
         return False, 0
 
     def classic_wrap_text(self, wrapper, paragraph_lines, initial_indent, subsequent_indent):
@@ -1227,6 +1235,21 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
+        # "test_is_command_separated_list_5_items",
+        # "test_is_command_separated_list_4_items",
+        # "test_is_command_separated_list_3_items",
+        # "test_is_command_separated_list_2_items",
+        # "test_is_command_separated_list_upperbound_with_1_by_5_trailing_items",
+        # "test_is_command_separated_list_upperbound_with_4_middle_items",
+        # "test_is_command_separated_list_upperbound_with_2_by_5_trailing_items",
+        # "test_is_command_separated_list_upperbound_2_by_4_trailing_items",
+        # "test_is_command_separated_list_lowerbound_with_3_items",
+        # "test_is_command_separated_list_lowerbound_with_2_items",
+        # "test_is_command_separated_list_lowerbound_with_1_items",
+        # "test_is_command_separated_list_lowerbound_with_trailing_1_space",
+        # "test_semantic_line_wrap_simple_sentence_with_dual_comma",
+        # "test_semantic_line_wrap_with_initial_indentation",
+        # "test_semantic_line_wrap_with_numeric_comma_list_on_the_end",
         # "test_balance_characters_between_line_wraps_commented_line",
         # "test_balance_characters_between_line_wraps_starting_with_comment",
         # "test_balance_characters_between_line_wraps_with_big_multi_line_balancing",

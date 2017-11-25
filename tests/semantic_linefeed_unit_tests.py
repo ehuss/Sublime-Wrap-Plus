@@ -209,33 +209,56 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
         global maximum_words_in_comma_separated_list
         maximum_words_in_comma_separated_list = 4
 
-    def test_is_command_separated_list(self):
-        self.is_comma_separated_list( "1, 2, 3, 4, 5", 1, True )
-        self.is_comma_separated_list( "1_ 2, 3, 4_ 5", 4, True )
-        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5", 4, True )
-        self.is_comma_separated_list( "1_ 2, 3_ 4, 5", 4, True )
+    def test_is_command_separated_list_5_items(self):
+        self.is_comma_separated_list( "1, 2, 3, 4, 5", 1, (True, 12) )
 
-    def test_is_command_separated_list_upperbound(self):
-        self.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1, False )
-        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6, 7",  4, False )
-        self.is_comma_separated_list( "1_ 2, 3_ 4__5 6_ 7",  4, False )
-        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6_ 7",  4, False )
+    def test_is_command_separated_list_4_items(self):
+        self.is_comma_separated_list( "1, 2_ 3, 4, 5", 1, (True, 12) )
 
-    def test_is_command_separated_list_lowerbound(self):
-        self.is_comma_separated_list( "1 2, 3 4_5 6, 7",  3, True )
-        self.is_comma_separated_list( "1 2, 3_4_5 6, 7",  3, True )
-        self.is_comma_separated_list( "1 2, 3_4_5_6, 7",  3, True )
+    def test_is_command_separated_list_3_items(self):
+        self.is_comma_separated_list( "1_ 2, 3, 4_ 5", 4, (True, 12) )
+
+    def test_is_command_separated_list_2_items(self):
+        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5", 4, (True, 12) )
+
+    def test_is_command_separated_list_upperbound_with_1_by_5_trailing_items(self):
+        self.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1, (False, 0) )
+
+    def test_is_command_separated_list_upperbound_with_4_middle_items(self):
+        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6, 7",  4, (False, 0) )
+
+    def test_is_command_separated_list_upperbound_with_2_by_5_trailing_items(self):
+        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6_ 7",  4, (False, 0) )
+
+    def test_is_command_separated_list_upperbound_2_by_4_trailing_items(self):
+        self.is_comma_separated_list( "1_ 2, 3_ 4__5 6_ 7",  4, (False, 0) )
+
+    def test_is_command_separated_list_lowerbound_with_3_items(self):
+        self.is_comma_separated_list( "1 2, 3 4_5 6, 7",  3, (True, 14) )
+
+    def test_is_command_separated_list_lowerbound_with_2_items(self):
+        self.is_comma_separated_list( "1 2, 3_4_5 6, 7",  3, (True, 14) )
+
+    def test_is_command_separated_list_lowerbound_with_1_items(self):
+        self.is_comma_separated_list( "1 2, 3_4_5_6, 7",  3, (True, 14) )
+
+    def test_is_command_separated_list_lowerbound_with_trailing_1_space(self):
+        self.is_comma_separated_list( "1 2, 3_ 4_5_6 7 ",  3, (True, 15) )
+
+    def test_is_command_separated_list_lowerbound_with_trailing_2_space(self):
+        self.is_comma_separated_list( "1 2, 3_ 4_5_6 7  ",  3, (True, 16) )
 
     def is_comma_separated_list(self, text, index, goal):
         self.assertTrue( text[index] in wrap_plus_module.word_separator_characters )
-        self.assertEqual( goal, self.wrap_plus.is_comma_separated_list( text, index, True )[0]
-            or self.wrap_plus.is_comma_separated_list( text, index, False )[0] )
-
-    def test_semantic_line_wrap_simple_sentences(self):
+        self.assertEqual( goal, self.wrap_plus.is_comma_separated_list( text, index ) )
+    def test_semantic_line_wrap_simple_sentence(self):
         self.semantic_line_wrap( "1", "1" )
+
+    def test_semantic_line_wrap_simple_sentence_with_single_comma(self):
         self.semantic_line_wrap( "which will take, you quite some time",
         "which will take,\nyou quite some time" )
 
+    def test_semantic_line_wrap_simple_sentence_with_dual_comma(self):
         self.semantic_line_wrap( "which will take, you, quite some time",
         "which will take,\nyou, quite some time" )
 

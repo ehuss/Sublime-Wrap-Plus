@@ -13,6 +13,13 @@ def run_manual_tests():
     wrap_plus        = wrap_plus_module.WrapLinesPlusCommand( None )
     wrap_plus._width = 80
 
+    # print( str( wrap_plus.is_comma_separated_list( "1_ 2, 3_ 4_ 5", 4 ) ) + " 1_ 2, 3_ 4_ 5" )
+    # print( str( wrap_plus.is_comma_separated_list( "1 2, 3 4_5 6, 7", 3 ) ) + " 1 2, 3 4_5 6, 7" )
+    print( str( wrap_plus.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1 ) ) + " 1, 2_ 3_ 4_ 5" )
+    # print( str( wrap_plus.is_comma_separated_list( "1 2, 3 4_5 6, 7", 3 ) ) + " 1 2, 3 4_5 6, 7" )
+    # print( str( "".join( wrap_plus.semantic_line_wrap( [ "1 2 3 4. 5 6 7, 1, 2, 3, 4, 5. 6 7 8 9 1" ], "% ", "% ", balance_characters_between_line_wraps=True ) ) ) )
+    # print( "\n1 2 3 4.\n5 6 7, 1, 2, 3, 4, 5.\n6 7 8 9 1" )
+
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "% ", "% ", balance_characters_between_line_wraps=True )
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "", balance_characters_between_line_wraps=True )
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "" )
@@ -46,7 +53,7 @@ def run_manual_tests():
     wrap_plus._width = 80
     # wrap_plus.balance_characters_between_line_wraps( wrapper, ["% tests dd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkjadd açsdkjflçk çalskdj fçlakj lçkasjd fçlakjs dçflkja"], "% ", indent )
     # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "Inclui a IA para reconhecer o formatação nos módulos de beautifying.", "Ela eh uma heurística,", "que cada bloco implementa e faz ele gerar um arquivo de" ], "% ", "% " )
-    wrap_plus.balance_characters_between_line_wraps( wrapper, [ "Inclui a IA para reconhecer o formatação nos módulos de beautifying.", "Ela eh uma heurística,", "que cada bloco implementa e faz ele gerar um arquivo de configuração que representa a atual formatação do código (aqui esta o verdadeiro desafio do trabalho,", "pesquise trabalhos correlatos).", ], "% ", "% " )
+    # wrap_plus.balance_characters_between_line_wraps( wrapper, [ "Inclui a IA para reconhecer o formatação nos módulos de beautifying.", "Ela eh uma heurística,", "que cada bloco implementa e faz ele gerar um arquivo de configuração que representa a atual formatação do código (aqui esta o verdadeiro desafio do trabalho,", "pesquise trabalhos correlatos).", ], "% ", "% " )
 
     wrapper.subsequent_indent = "                      "
     # wrap_plus._split_lines( wrapper, [ "    This is my very long line which will wrap near its end,\n" ], 50 )
