@@ -48,6 +48,20 @@
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
     "WrapPlus.semantic_maximum_words_in_comma_separated_list": 3,
 
+    // When wrapping lines, it will consider they to be a list of words if it contains
+    // less items then set on this setting, the comma separated list will not be
+    // considered a list of words.
+    //
+    // For example, the minimum comma separated list of words has 3 items:
+    // `it is about to begin a comma separated list of words with 1, 2, 3 items`
+    //
+    // If it has less than 3 items, it is not a list of words, it is just a single
+    // comma breaking two sentences:
+    // `this is just a single comma, breaking a sentence as in 1, 2 3 items sequence`
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.semantic_maximum_items_in_comma_separated_list": 3,
+
     // The `semantic_line_wrap` detects the maximum line width and uses it to
     // limite/delimite the maximum line width. If you like your lines only to be
     // wrapped by delimiter characters, you can set this to true.

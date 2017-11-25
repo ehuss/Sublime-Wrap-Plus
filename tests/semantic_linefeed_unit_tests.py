@@ -263,7 +263,7 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
 
     def test_semantic_line_wrap_simple_sentence_with_dual_comma(self):
         self.semantic_line_wrap( "which will take, you, quite some time",
-        "which will take,\nyou, quite some time" )
+        "which will take, you, quite some time" )
 
     def test_semantic_line_wrap_long_word(self):
         self.semantic_line_wrap( "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime",
@@ -317,11 +317,20 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
                 "    tool,\n"
                 "    which will be certainly limited and still need to configure all over again." )
 
-    def test_semantic_line_wrap_with_3_items_list(self):
+    def test_semantic_line_wrap_with_0_items_list(self):
+        self.wrap_plus.maximum_items_in_comma_separated_list = 3
         self.semantic_line_wrap( [ "% as boas práticas de programação (code clean, GOF, DEITEL"
                 "(forminhas das boas práticas)). E deixa claro qual é o problema", "", "% " ],
-                "% as boas práticas de programação (code clean,\n"
-                "% GOF, DEITEL(forminhas das boas práticas)).\n"
+                "% as boas práticas de programação (code clean, GOF,\n"
+                "% DEITEL(forminhas das boas práticas)).\n"
+                "% E deixa claro qual é o problema" )
+
+    def test_semantic_line_wrap_with_3_items_list(self):
+        self.wrap_plus.maximum_items_in_comma_separated_list = 4
+        self.semantic_line_wrap( [ "% as boas práticas de programação (code clean, GOF, DEITEL"
+                "(forminhas das boas práticas)). E deixa claro qual é o problema", "", "% " ],
+                "% as boas práticas de programação (code clean, GOF,\n"
+                "% DEITEL(forminhas das boas práticas)).\n"
                 "% E deixa claro qual é o problema" )
 
     def semantic_line_wrap(self, initial_text, goal):

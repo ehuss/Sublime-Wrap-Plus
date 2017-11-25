@@ -228,7 +228,6 @@ def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
 blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
-maximum_words_in_comma_separated_list = 4
 
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
@@ -264,6 +263,12 @@ email_quote = r'[\t ]*>[> \t]*'
 funny_c_comment_pattern = re.compile(r'^[\t ]*\*')
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
+
+    def __init__(self, view):
+        super( WrapLinesPlusCommand, self ).__init__( view )
+
+        self.maximum_words_in_comma_separated_list = 4
+        self.maximum_items_in_comma_separated_list = 4
 
     def _my_full_line(self, region):
         # Special case scenario where you select an entire line.  The normal
@@ -673,7 +678,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
 
-        global maximum_words_in_comma_separated_list
         break_long_words = view_settings.get('WrapPlus.break_long_words', True)
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
         after_wrap = view_settings.get('WrapPlus.after_wrap', "cursor_below")
@@ -681,7 +685,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
         balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
-        maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
+        self.maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
+        self.maximum_items_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
 
         wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
                                        break_on_hyphens=break_on_hyphens)
@@ -990,12 +995,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             else:
 
                 if last_comma_list_size == 1:
-                    last_comma_list_size = 0
 
-                    # It is not a comma separated list `if words_list_items_count < maximum_words_in_comma_separated_list`
+                    # It is not a comma separated list `if comma_separated_list_items_count < self.maximum_items_in_comma_separated_list`
                     # therefore we do not push a new line when flushing the processed contents by `is_comma_separated_list()`
                     if is_comma_separated_list:
                         force_flush_accumulated_line()
+
+                    last_comma_list_size = 0
 
                 is_flushing_comma_list  = False
                 is_comma_separated_list = False
@@ -1021,16 +1027,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         if character in word_separator_characters \
                                 and not is_flushing_comma_list:
 
-                            is_comma_separated_list, comma_list_end_point, words_list_items_count = self.is_comma_separated_list( text, index )
+                            is_comma_separated_list, comma_list_end_point, comma_separated_list_items_count = self.is_comma_separated_list( text, index )
                             comma_list_size = comma_list_end_point - ( index + 1 )
 
-                            if words_list_items_count < maximum_words_in_comma_separated_list:
+                            if comma_separated_list_items_count < maximum_words_in_comma_separated_list:
                                 is_comma_separated_list = False
 
                         # print( "semantic_line_wrap, index: %d, comma_list_size: %d" % ( index, comma_list_size ) )
-                        if ( comma_list_size > 0 \
-                                and not is_flushing_comma_list ) \
-                                or not is_comma_separated_list \
+                        if ( is_comma_separated_list \
+                                and comma_list_size > -1 ) \
+                                and not is_flushing_comma_list \
+                                or ( not is_comma_separated_list and \
+                                     comma_list_size < 0 ) \
                                 or is_flushing_accumalated_line:
 
                             # It is not the first line anymore, now we need to use the `subsequent_indent_length`
@@ -1051,6 +1059,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             is_possible_space            = True
                             is_allowed_to_wrap           = False
                             is_flushing_accumalated_line = False
+
+                        else:
+                            accumulated_line += character
 
                     else:
                         accumulated_line += character
@@ -1088,7 +1099,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         comma_list_end_point = -1
 
         # A word list has at least 2 items. For example: start 1, 2, 3 words
-        words_list_items_count = 2
+        comma_separated_list_items_count = 2
 
         text_length   = len( text ) - 1
         words_counter = 0
@@ -1116,13 +1127,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # print( "is_comma_separated_list, index: %d, words_counter: %d, character: %s, next_character: %s" % ( index, words_counter, character, next_character ) )
             if is_word_separator_character and is_next_character_whitepace:
 
-                if 0 < words_counter < maximum_words_in_comma_separated_list:
+                if 0 < words_counter < self.maximum_words_in_comma_separated_list:
                     comma_list_end_point   = index
 
                     # When the next character is '$', we cannot count it as a item as it is already
-                    # set by the `words_list_items_count` default value `2`
+                    # set by the `comma_separated_list_items_count` default value `2`
                     if next_character != '$':
-                        words_list_items_count += 1
+                        comma_separated_list_items_count += 1
 
                 else:
                     break
@@ -1130,10 +1141,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 words_counter = 0
 
         if comma_list_end_point > -1:
-            # print( "is_comma_separated_list (True), comma_list_end_point: %d, words_list_items_count: %d" % ( comma_list_end_point, words_list_items_count ) )
-            return True, comma_list_end_point, words_list_items_count
+            # print( "is_comma_separated_list (True), comma_list_end_point: %d, comma_separated_list_items_count: %d" % ( comma_list_end_point, comma_separated_list_items_count ) )
+            return True, comma_list_end_point, comma_separated_list_items_count
 
-        # print( "is_comma_separated_list (False), comma_list_end_point: %d, words_list_items_count: %d" % ( 0, 0 ) )
+        # print( "is_comma_separated_list (False), comma_list_end_point: %d, comma_separated_list_items_count: %d" % ( 0, 0 ) )
         return False, 0, 0
 
     def classic_wrap_text(self, wrapper, paragraph_lines, initial_indent, subsequent_indent):
@@ -1257,10 +1268,11 @@ def run_tests():
         # "test_is_command_separated_list_lowerbound_with_2_items",
         # "test_is_command_separated_list_lowerbound_with_1_items",
         # "test_is_command_separated_list_lowerbound_with_trailing_1_space",
+        # "test_semantic_line_wrap_with_0_items_list",
+        # "test_semantic_line_wrap_with_numeric_comma_list_on_the_end",
         # "test_semantic_line_wrap_with_3_items_list",
         # "test_semantic_line_wrap_simple_sentence_with_dual_comma",
         # "test_semantic_line_wrap_with_initial_indentation",
-        # "test_semantic_line_wrap_with_numeric_comma_list_on_the_end",
         # "test_balance_characters_between_line_wraps_commented_line",
         # "test_balance_characters_between_line_wraps_starting_with_comment",
         # "test_balance_characters_between_line_wraps_with_big_multi_line_balancing",
@@ -1287,5 +1299,5 @@ def plugin_loaded():
         https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
     """
     pass
-    run_tests()
+    # run_tests()
 
