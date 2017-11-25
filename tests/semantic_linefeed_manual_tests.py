@@ -15,10 +15,12 @@ def run_manual_tests():
 
     # print( str( wrap_plus.is_comma_separated_list( "1_ 2, 3_ 4_ 5", 4 ) ) + " 1_ 2, 3_ 4_ 5" )
     # print( str( wrap_plus.is_comma_separated_list( "1 2, 3 4_5 6, 7", 3 ) ) + " 1 2, 3 4_5 6, 7" )
-    print( str( wrap_plus.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1 ) ) + " 1, 2_ 3_ 4_ 5" )
+    # print( str( wrap_plus.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1 ) ) + " 1, 2_ 3_ 4_ 5" )
     # print( str( wrap_plus.is_comma_separated_list( "1 2, 3 4_5 6, 7", 3 ) ) + " 1 2, 3 4_5 6, 7" )
     # print( str( "".join( wrap_plus.semantic_line_wrap( [ "1 2 3 4. 5 6 7, 1, 2, 3, 4, 5. 6 7 8 9 1" ], "% ", "% ", balance_characters_between_line_wraps=True ) ) ) )
-    # print( "\n1 2 3 4.\n5 6 7, 1, 2, 3, 4, 5.\n6 7 8 9 1" )
+
+    wrap_plus.semantic_line_wrap( [ "% as boas práticas de programação (code clean, GOF, DEITEL (forminhas das boas práticas)). E deixa claro qual é o problema" ], "", "% ", balance_characters_between_line_wraps=True )
+    # print( str( wrap_plus.is_comma_separated_list( "% as boas práticas de programação (code clean, GOF, DEITEL (forminhas das boas práticas)). E deixa claro qual é o problema", 45 ) ) + " % as boas práticas de programação (code clean, GOF, DEITEL (forminhas das boas práticas)). E deixa claro qual é o problema" )
 
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "% ", "% ", balance_characters_between_line_wraps=True )
     # wrap_plus.semantic_line_wrap( [ "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc." ], "", "", balance_characters_between_line_wraps=True )

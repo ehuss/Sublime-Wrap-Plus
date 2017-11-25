@@ -971,35 +971,34 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the `comma_list_size` is lower than the `self._width`, otherwise the line will
             # be immediately flushed
             if comma_list_size > 0:
-                last_comma_list_size = comma_list_size
                 comma_list_size     -= 1
+                last_comma_list_size = comma_list_size + 1
 
                 # print( "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, comma_list_end_point, character ) )
-
                 if not is_flushing_accumalated_line:
 
                     if not disable_line_wrapping_by_maximum_width \
                             and accumulated_line_length + next_word_length + indent_length > self._width:
 
-                        # print( "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
-                        is_flushing_accumalated_line = True
-
-                        # Current character is a whitespace, but it must the the next, so fix the index
-                        index -= 1
+                        force_flush_accumulated_line()
 
                     else:
-                        accumulated_line += character
-
+                        accumulated_line      += character
                         is_flushing_comma_list = True
                         continue
 
             else:
-                is_flushing_comma_list  = False
-                is_comma_separated_list = False
 
                 if last_comma_list_size == 1:
                     last_comma_list_size = 0
-                    force_flush_accumulated_line()
+
+                    # It is not a comma separated list `if words_list_items_count < maximum_words_in_comma_separated_list`
+                    # therefore we do not push a new line when flushing the processed contents by `is_comma_separated_list()`
+                    if is_comma_separated_list:
+                        force_flush_accumulated_line()
+
+                is_flushing_comma_list  = False
+                is_comma_separated_list = False
 
             # print( "semantic_line_wrap, index: %d, character: %s " % ( index, character ) )
             if not disable_line_wrapping_by_maximum_width \
@@ -1022,8 +1021,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         if character in word_separator_characters \
                                 and not is_flushing_comma_list:
 
-                            is_comma_separated_list, comma_list_end_point = self.is_comma_separated_list( text, index )
+                            is_comma_separated_list, comma_list_end_point, words_list_items_count = self.is_comma_separated_list( text, index )
                             comma_list_size = comma_list_end_point - ( index + 1 )
+
+                            if words_list_items_count < maximum_words_in_comma_separated_list:
+                                is_comma_separated_list = False
 
                         # print( "semantic_line_wrap, index: %d, comma_list_size: %d" % ( index, comma_list_size ) )
                         if ( comma_list_size > 0 \
@@ -1085,6 +1087,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # print( "is_comma_separated_list, index: %d" % ( index ) )
         comma_list_end_point = -1
 
+        # A word list has at least 2 items. For example: start 1, 2, 3 words
+        words_list_items_count = 2
+
         text_length   = len( text ) - 1
         words_counter = 0
 
@@ -1112,7 +1117,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if is_word_separator_character and is_next_character_whitepace:
 
                 if 0 < words_counter < maximum_words_in_comma_separated_list:
-                    comma_list_end_point = index
+                    comma_list_end_point   = index
+
+                    # When the next character is '$', we cannot count it as a item as it is already
+                    # set by the `words_list_items_count` default value `2`
+                    if next_character != '$':
+                        words_list_items_count += 1
 
                 else:
                     break
@@ -1120,11 +1130,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 words_counter = 0
 
         if comma_list_end_point > -1:
-            # print( "is_comma_separated_list (True), comma_list_end_point: %d" % ( comma_list_end_point ) )
-            return True, comma_list_end_point
+            # print( "is_comma_separated_list (True), comma_list_end_point: %d, words_list_items_count: %d" % ( comma_list_end_point, words_list_items_count ) )
+            return True, comma_list_end_point, words_list_items_count
 
-        # print( "is_comma_separated_list (False), comma_list_end_point: %d" % ( 0 ) )
-        return False, 0
+        # print( "is_comma_separated_list (False), comma_list_end_point: %d, words_list_items_count: %d" % ( 0, 0 ) )
+        return False, 0, 0
 
     def classic_wrap_text(self, wrapper, paragraph_lines, initial_indent, subsequent_indent):
         orig_initial_indent = initial_indent
@@ -1247,6 +1257,7 @@ def run_tests():
         # "test_is_command_separated_list_lowerbound_with_2_items",
         # "test_is_command_separated_list_lowerbound_with_1_items",
         # "test_is_command_separated_list_lowerbound_with_trailing_1_space",
+        # "test_semantic_line_wrap_with_3_items_list",
         # "test_semantic_line_wrap_simple_sentence_with_dual_comma",
         # "test_semantic_line_wrap_with_initial_indentation",
         # "test_semantic_line_wrap_with_numeric_comma_list_on_the_end",

@@ -209,48 +209,51 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
         global maximum_words_in_comma_separated_list
         maximum_words_in_comma_separated_list = 4
 
+    # is_comma_separated_list Unit Tests
     def test_is_command_separated_list_5_items(self):
-        self.is_comma_separated_list( "1, 2, 3, 4, 5", 1, (True, 12) )
+        self.is_comma_separated_list( "1, 2, 3, 4, 5", 1, (True, 12, 5) )
 
     def test_is_command_separated_list_4_items(self):
-        self.is_comma_separated_list( "1, 2_ 3, 4, 5", 1, (True, 12) )
+        self.is_comma_separated_list( "1, 2_ 3, 4, 5", 1, (True, 12, 4) )
 
     def test_is_command_separated_list_3_items(self):
-        self.is_comma_separated_list( "1_ 2, 3, 4_ 5", 4, (True, 12) )
+        self.is_comma_separated_list( "1_ 2, 3, 4_ 5", 4, (True, 12, 3) )
 
     def test_is_command_separated_list_2_items(self):
-        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5", 4, (True, 12) )
+        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5", 4, (True, 12, 2) )
 
     def test_is_command_separated_list_upperbound_with_1_by_5_trailing_items(self):
-        self.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1, (False, 0) )
+        self.is_comma_separated_list( "1, 2_ 3_ 4_ 5", 1, (False, 0, 0) )
 
     def test_is_command_separated_list_upperbound_with_4_middle_items(self):
-        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6, 7",  4, (False, 0) )
+        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6, 7",  4, (False, 0, 0) )
 
     def test_is_command_separated_list_upperbound_with_2_by_5_trailing_items(self):
-        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6_ 7",  4, (False, 0) )
+        self.is_comma_separated_list( "1_ 2, 3_ 4_ 5 6_ 7",  4, (False, 0, 0) )
 
     def test_is_command_separated_list_upperbound_2_by_4_trailing_items(self):
-        self.is_comma_separated_list( "1_ 2, 3_ 4__5 6_ 7",  4, (False, 0) )
+        self.is_comma_separated_list( "1_ 2, 3_ 4__5 6_ 7",  4, (False, 0, 0) )
 
     def test_is_command_separated_list_lowerbound_with_3_items(self):
-        self.is_comma_separated_list( "1 2, 3 4_5 6, 7",  3, (True, 14) )
+        self.is_comma_separated_list( "1 2, 3 4_5 6, 7",  3, (True, 14, 3) )
 
     def test_is_command_separated_list_lowerbound_with_2_items(self):
-        self.is_comma_separated_list( "1 2, 3_4_5 6, 7",  3, (True, 14) )
+        self.is_comma_separated_list( "1 2, 3_4_5 6, 7",  3, (True, 14, 3) )
 
     def test_is_command_separated_list_lowerbound_with_1_items(self):
-        self.is_comma_separated_list( "1 2, 3_4_5_6, 7",  3, (True, 14) )
+        self.is_comma_separated_list( "1 2, 3_4_5_6, 7",  3, (True, 14, 3) )
 
     def test_is_command_separated_list_lowerbound_with_trailing_1_space(self):
-        self.is_comma_separated_list( "1 2, 3_ 4_5_6 7 ",  3, (True, 15) )
+        self.is_comma_separated_list( "1 2, 3_ 4_5_6 7 ",  3, (True, 15, 2) )
 
     def test_is_command_separated_list_lowerbound_with_trailing_2_space(self):
-        self.is_comma_separated_list( "1 2, 3_ 4_5_6 7  ",  3, (True, 16) )
+        self.is_comma_separated_list( "1 2, 3_ 4_5_6 7  ",  3, (True, 16, 2) )
 
     def is_comma_separated_list(self, text, index, goal):
         self.assertTrue( text[index] in wrap_plus_module.word_separator_characters )
         self.assertEqual( goal, self.wrap_plus.is_comma_separated_list( text, index ) )
+
+    # semantic_line_wrap Unit Tests
     def test_semantic_line_wrap_simple_sentence(self):
         self.semantic_line_wrap( "1", "1" )
 
@@ -313,6 +316,13 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
                 "    For all other languages you still need to find out another source code f\n"
                 "    tool,\n"
                 "    which will be certainly limited and still need to configure all over again." )
+
+    def test_semantic_line_wrap_with_3_items_list(self):
+        self.semantic_line_wrap( [ "% as boas práticas de programação (code clean, GOF, DEITEL"
+                "(forminhas das boas práticas)). E deixa claro qual é o problema", "", "% " ],
+                "% as boas práticas de programação (code clean,\n"
+                "% GOF, DEITEL(forminhas das boas práticas)).\n"
+                "% E deixa claro qual é o problema" )
 
     def semantic_line_wrap(self, initial_text, goal):
 
