@@ -678,18 +678,18 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         view_settings = self.view.settings()
         debug('paragraphs is %r', paragraphs)
 
+        after_wrap       = view_settings.get('WrapPlus.after_wrap', "cursor_below")
         break_long_words = view_settings.get('WrapPlus.break_long_words', True)
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
-        after_wrap = view_settings.get('WrapPlus.after_wrap', "cursor_below")
 
         minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
         balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
-        self.maximum_words_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
-        self.maximum_items_in_comma_separated_list  = view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
 
-        wrapper = textwrap.TextWrapper(break_long_words=break_long_words,
-                                       break_on_hyphens=break_on_hyphens)
+        self.maximum_words_in_comma_separated_list = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
+        self.maximum_items_in_comma_separated_list = view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
+
+        wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
         wrapper.width = self._width
         wrapper.expand_tabs = False
 
@@ -1030,7 +1030,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             is_comma_separated_list, comma_list_end_point, comma_separated_list_items_count = self.is_comma_separated_list( text, index )
                             comma_list_size = comma_list_end_point - ( index + 1 )
 
-                            if comma_separated_list_items_count < maximum_words_in_comma_separated_list:
+                            if comma_separated_list_items_count < self.maximum_words_in_comma_separated_list:
                                 is_comma_separated_list = False
 
                         # print( "semantic_line_wrap, index: %d, comma_list_size: %d" % ( index, comma_list_size ) )
