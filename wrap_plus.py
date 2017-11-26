@@ -1030,10 +1030,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             is_comma_separated_list, comma_list_end_point, comma_separated_list_items_count = self.is_comma_separated_list( text, index )
                             comma_list_size = comma_list_end_point - ( index + 1 )
 
-                            if comma_separated_list_items_count < self.maximum_words_in_comma_separated_list:
+                            if comma_separated_list_items_count < self.maximum_items_in_comma_separated_list:
                                 is_comma_separated_list = False
 
-                        # print( "semantic_line_wrap, index: %d, comma_list_size: %d" % ( index, comma_list_size ) )
+                        # print( "semantic_line_wrap, index: %3d, comma_list_size: %d (%d)" % ( index, comma_list_size, self.maximum_items_in_comma_separated_list ) )
                         if ( is_comma_separated_list \
                                 and comma_list_size > -1 ) \
                                 and not is_flushing_comma_list \
@@ -1268,6 +1268,7 @@ def run_tests():
         # "test_is_command_separated_list_lowerbound_with_2_items",
         # "test_is_command_separated_list_lowerbound_with_1_items",
         # "test_is_command_separated_list_lowerbound_with_trailing_1_space",
+        # "test_semantic_line_wrap_simple_sentence_with_dual_comma_with_3_items_minimum",
         # "test_semantic_line_wrap_with_0_items_list",
         # "test_semantic_line_wrap_with_numeric_comma_list_on_the_end",
         # "test_semantic_line_wrap_with_3_items_list",

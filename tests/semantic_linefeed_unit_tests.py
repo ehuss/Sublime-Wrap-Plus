@@ -262,8 +262,14 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
         "which will take,\nyou quite some time" )
 
     def test_semantic_line_wrap_simple_sentence_with_dual_comma(self):
+        self.wrap_plus.maximum_items_in_comma_separated_list = 4
         self.semantic_line_wrap( "which will take, you, quite some time",
         "which will take, you, quite some time" )
+
+    def test_semantic_line_wrap_simple_sentence_with_dual_comma_with_3_items_minimum(self):
+        self.wrap_plus.maximum_items_in_comma_separated_list = 3
+        self.semantic_line_wrap( "which will take, you, quite some time",
+        "which will take,\nyou, quite some time" )
 
     def test_semantic_line_wrap_long_word(self):
         self.semantic_line_wrap( "quitesometimequitesometimequitesometimequitesometimequitesometimequitesometimequitesometime",
@@ -321,7 +327,8 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
         self.wrap_plus.maximum_items_in_comma_separated_list = 3
         self.semantic_line_wrap( [ "% as boas práticas de programação (code clean, GOF, DEITEL"
                 "(forminhas das boas práticas)). E deixa claro qual é o problema", "", "% " ],
-                "% as boas práticas de programação (code clean, GOF,\n"
+                "% as boas práticas de programação (code clean,\n"
+                "% GOF,\n"
                 "% DEITEL(forminhas das boas práticas)).\n"
                 "% E deixa claro qual é o problema" )
 
