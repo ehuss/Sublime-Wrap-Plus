@@ -693,14 +693,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         wrapper.width = self._width
         wrapper.expand_tabs = False
 
+        if balance_characters_between_line_wraps:
+            # minimum_line_size_percent = 0.0
+            disable_line_wrapping_by_maximum_width = True
+
         # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
         if view_settings.get( 'WrapPlus.semantic_line_wrap', False ):
 
             def line_wrapper_type():
-                if balance_characters_between_line_wraps:
-                    # minimum_line_size_percent = 0.0
-                    disable_line_wrapping_by_maximum_width = True
-
                 text = self.semantic_line_wrap( paragraph_lines, initial_indent, subsequent_indent,
                         minimum_line_size_percent, disable_line_wrapping_by_maximum_width,
                         balance_characters_between_line_wraps )
