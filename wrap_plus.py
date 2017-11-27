@@ -231,7 +231,8 @@ blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
 
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
-word_separator_characters = ( ",", ".", "?", "!", ":", ";" )
+list_separator_characters = ( ",", ";" )
+word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
 
 # This doesn't always work, but seems decent.
 numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
@@ -1024,13 +1025,19 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                     if is_followed_by_space:
 
-                        if character in word_separator_characters \
-                                and not is_flushing_comma_list:
+                        if not is_flushing_comma_list:
 
-                            is_comma_separated_list, comma_list_end_point, comma_separated_list_items_count = self.is_comma_separated_list( text, index )
-                            comma_list_size = comma_list_end_point - ( index + 1 )
+                            if character in list_separator_characters:
+                                is_comma_separated_list, comma_list_end_point, comma_separated_list_items_count = \
+                                        self.is_comma_separated_list( text, index )
 
-                            if comma_separated_list_items_count < self.maximum_items_in_comma_separated_list:
+                                comma_list_size = comma_list_end_point - ( index + 1 )
+
+                                if comma_separated_list_items_count < self.maximum_items_in_comma_separated_list:
+                                    is_comma_separated_list = False
+
+                            elif character in word_separator_characters:
+                                comma_list_size = -1
                                 is_comma_separated_list = False
 
                         # print( "semantic_line_wrap, index: %3d, comma_list_size: %d (%d)" % ( index, comma_list_size, self.maximum_items_in_comma_separated_list ) )
@@ -1112,7 +1119,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             if index < text_length:
                 next_character = text[index+1]
-                is_word_separator_character = character in word_separator_characters
+                is_word_separator_character = character in list_separator_characters
                 is_next_character_whitepace = next_character in whitespace_character
 
             else:
@@ -1128,7 +1135,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if is_word_separator_character and is_next_character_whitepace:
 
                 if 0 < words_counter < self.maximum_words_in_comma_separated_list:
-                    comma_list_end_point   = index
+                    comma_list_end_point = index
 
                     # When the next character is '$', we cannot count it as a item as it is already
                     # set by the `comma_separated_list_items_count` default value `2`
