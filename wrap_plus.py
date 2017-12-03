@@ -233,6 +233,7 @@ next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
 list_separator_characters = ( ",", ";" )
 word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
+phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
 
 # This doesn't always work, but seems decent.
 numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
@@ -1124,7 +1125,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             else:
                 next_character = '$'
-                is_word_separator_character = True
+                is_word_separator_character = character not in phrase_separator_characters
                 is_next_character_whitepace = True
 
             # We count a word before it begins and set `comma_list_end_point` when we find a space after a comma
@@ -1263,6 +1264,7 @@ def run_tests():
     # Comment all the tests names on this list, to run all Unit Tests
     unit_tests_to_run = \
     [
+        # "test_semantic_line_wrap_ending_with_comma_list",
         # "test_is_command_separated_list_5_items",
         # "test_is_command_separated_list_4_items",
         # "test_is_command_separated_list_3_items",
@@ -1279,5 +1281,5 @@ def plugin_loaded():
         https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
     """
     pass
-    # run_tests()
+    run_tests()
 

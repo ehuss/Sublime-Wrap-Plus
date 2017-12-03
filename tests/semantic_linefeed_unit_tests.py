@@ -277,7 +277,11 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
 
     def test_semantic_line_wrap_ending_with_comma_list(self):
         self.semantic_line_wrap( "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc.",
-        "you still only configuring a few languages closely related.\nOn this case, C, C++, Java, Pawn, etc." )
+        "you still only configuring a few languages closely related.\nOn this case,\nC, C++, Java, Pawn,\netc." )
+
+    def test_semantic_line_wrap_ending_with_trailling_comma_on_list(self):
+        self.semantic_line_wrap( "you still only configuring a few languages closely related. On this case, C, C++, Java, Pawn, etc,",
+        "you still only configuring a few languages closely related.\nOn this case,\nC, C++, Java, Pawn, etc," )
 
     def test_semantic_line_wrap_with_comma_list_on_the_middle(self):
         self.semantic_line_wrap( "which will not more take, you quite oh the time, some time, more time, the time, per time",
@@ -285,11 +289,11 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
 
     def test_semantic_line_wrap_with_comma_list_on_the_end(self):
         self.semantic_line_wrap( "few languages close related. On this case, C, C++, Java, Pawn, etc. more over break this line",
-        "few languages close related.\nOn this case, C, C++, Java, Pawn, etc.\nmore over break this line" )
+        "few languages close related.\nOn this case,\nC, C++, Java, Pawn,\netc.\nmore over break this line" )
 
     def test_semantic_line_wrap_with_numeric_comma_list_on_the_end(self):
         self.semantic_line_wrap( "1 2 3 4. 5 6 7, 1, 2, 3, 4, 5. 6 7 8 9 1",
-        "1 2 3 4.\n5 6 7, 1, 2, 3, 4, 5.\n6 7 8 9 1" )
+        "1 2 3 4.\n5 6 7,\n1, 2, 3, 4,\n5.\n6 7 8 9 1" )
 
     def test_semantic_line_wrap_with_long_word_at_comma_list_end(self):
         self.semantic_line_wrap( "For all other languages you still need to find out another source code "
@@ -302,19 +306,19 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
 
     def test_semantic_line_wrap_with_80_characters(self):
         self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
-            "few languages close related.\nOn this case, C, C++, Javas, Pawn, if, you, already, had, written, the, program,\nassure, everything, is, under, versioning, control, system, and, broke,\neverything, etc.\nmore over break this line" )
+            "few languages close related.\nOn this case,\nC, C++, Javas, Pawn, if, you, already, had, written, the, program, assure,\neverything, is, under, versioning, control, system, and, broke, everything,\netc.\nmore over break this line" )
 
     def test_semantic_line_wrap_with_79_characters(self):
         self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Java, Pawn, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
-            "few languages close related.\nOn this case, C, C++, Java, Pawn, if, you, already, had, written, the, program,\nassure, everything, is, under, versioning, control, system, and, broke,\neverything, etc.\nmore over break this line" )
+            "few languages close related.\nOn this case,\nC, C++, Java, Pawn, if, you, already, had, written, the, program, assure,\neverything, is, under, versioning, control, system, and, broke, everything,\netc.\nmore over break this line" )
 
     def test_semantic_line_wrap_with_81_characters(self):
         self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawns, if, you, already, had, written, the, program, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
-            "few languages close related.\nOn this case, C, C++, Javas, Pawns, if, you, already, had, written, the,\nprogram, assure, everything, is, under, versioning, control, system, and, broke,\neverything, etc.\nmore over break this line" )
+            "few languages close related.\nOn this case,\nC, C++, Javas, Pawns, if, you, already, had, written, the, program, assure,\neverything, is, under, versioning, control, system, and, broke, everything,\netc.\nmore over break this line" )
 
     def test_semantic_line_wrap_with_81_characters_on_list_flushing(self):
         self.semantic_line_wrap( [ "few languages close related. On this case, C, C++, Javas, Pawns, if, you, already, had, written, the, programs, assure, everything, is, under, versioning, control, system, and, broke, everything, etc. more over break this line", "", "" ],
-            "few languages close related.\nOn this case, C, C++, Javas, Pawns, if, you, already, had, written, the,\nprograms, assure, everything, is, under, versioning, control, system, and,\nbroke, everything, etc.\nmore over break this line" )
+            "few languages close related.\nOn this case,\nC, C++, Javas, Pawns, if, you, already, had, written, the, programs, assure,\neverything, is, under, versioning, control, system, and, broke, everything,\netc.\nmore over break this line" )
 
     def test_semantic_line_wrap_with_initial_indentation(self):
         self.semantic_line_wrap( [ "For all other languages you still need to find out another source code f tool, "
