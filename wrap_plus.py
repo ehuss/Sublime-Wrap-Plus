@@ -1250,11 +1250,12 @@ def run_tests():
         https://stackoverflow.com/questions/437589/how-do-i-unload-reload-a-python-module
     """
     print( "\n\n" )
+    sublime_plugin.reload_plugin( "Wrap Plus.tests.unit_tests_runner" )
     sublime_plugin.reload_plugin( "Wrap Plus.tests.text_extraction_unit_tests" )
     sublime_plugin.reload_plugin( "Wrap Plus.tests.semantic_linefeed_unit_tests" )
     sublime_plugin.reload_plugin( "Wrap Plus.tests.semantic_linefeed_manual_tests" )
 
-    from .tests import semantic_linefeed_unit_tests
+    from .tests import unit_tests_runner
     from .tests import semantic_linefeed_manual_tests
 
     # Comment all the tests names on this list, to run all Unit Tests
@@ -1267,7 +1268,7 @@ def run_tests():
         # "test_is_command_separated_list_2_items",
     ]
 
-    semantic_linefeed_unit_tests.run_unit_tests( unit_tests_to_run )
+    unit_tests_runner.run_unit_tests( unit_tests_to_run )
     # semantic_linefeed_manual_tests.run_manual_tests()
 
 
