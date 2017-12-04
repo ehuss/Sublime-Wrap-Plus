@@ -2,10 +2,13 @@
 
 import sys
 
+import sublime
+import sublime_plugin
+
 import textwrap
 import unittest
 
-
+from .text_extraction_unit_tests import PrefixStrippingViewUnitTests
 wrap_plus_module = sys.modules["Wrap Plus.wrap_plus"]
 
 
@@ -14,12 +17,12 @@ def run_unit_tests(unit_tests_to_run=[]):
 
     classes = \
     [
-        SemanticLineWrapUnitTests,
-        LineBalancingUnitTests,
+        PrefixStrippingViewUnitTests,
+        # SemanticLineWrapUnitTests,
+        # LineBalancingUnitTests,
     ]
 
     if len( unit_tests_to_run ) < 1:
-
         # Comment all the tests names on this list, to run all Unit Tests
         unit_tests_to_run = \
         [
@@ -32,7 +35,6 @@ def run_unit_tests(unit_tests_to_run=[]):
         ]
 
     runner.run( suite( classes, unit_tests_to_run ) )
-
 
 
 class LineBalancingUnitTests(unittest.TestCase):

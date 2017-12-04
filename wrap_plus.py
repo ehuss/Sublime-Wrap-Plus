@@ -61,6 +61,11 @@ class PrefixStrippingView(object):
     required_comment_pattern = None
 
     def __init__(self, view, min, max):
+        """
+            @param view the Sublime Text view from where to get the text from
+            @min   the view start point to extract the text from
+            @max   the view end point to extract the text from
+        """
         self.view = view
         self.min = min
         self.max = max
@@ -353,10 +358,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             current_line = prev_line
         return current_line_region, current_line
 
-    def _find_paragraphs(self, sr):
+    def _find_paragraphs(self, sublime_text_region):
         """Find and return a list of paragraphs as regions.
 
-        :param Region sr: The region where to look for paragraphs.  If it is
+        :param Region sublime_text_region: The region where to look for paragraphs.  If it is
             an empty region, "discover" where the paragraph starts and ends.
             Otherwise, the region defines the max and min (with potentially
             several paragraphs contained within).
@@ -364,21 +369,21 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         :returns: A list of (region, lines, comment_prefix) of each paragraph.
         """
         result = []
-        debug('find paragraphs sr=%r', sr,)
-        if sr.empty():
+        debug('find paragraphs sublime_text_region=%r', sublime_text_region,)
+        if sublime_text_region.empty():
             is_empty = True
             view_min = 0
             view_max = self.view.size()
         else:
             is_empty = False
-            full_sr = self._my_full_line(sr)
+            full_sr = self._my_full_line(sublime_text_region)
             view_min = full_sr.begin()
             view_max = full_sr.end()
-        started_in_comment = self._started_in_comment(sr.begin())
+        started_in_comment = self._started_in_comment(sublime_text_region.begin())
         self._strip_view = PrefixStrippingView(self.view, view_min, view_max)
         view = self._strip_view
-        # Loop for each paragraph (only loops once if sr is empty).
-        paragraph_start_pt = sr.begin()
+        # Loop for each paragraph (only loops once if sublime_text_region is empty).
+        paragraph_start_pt = sublime_text_region.begin()
         while 1:
             debug('paragraph scanning start %r.', paragraph_start_pt,)
             view.set_comments(self._line_comment, self._is_block_comment, paragraph_start_pt)
@@ -1268,5 +1273,5 @@ def plugin_loaded():
         https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
     """
     pass
-    # run_tests()
+    run_tests()
 
