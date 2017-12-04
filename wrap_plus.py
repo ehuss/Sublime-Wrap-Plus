@@ -1236,27 +1236,14 @@ class WrapLinesEnhancementAskCommand(sublime_plugin.TextCommand):
         self.view.run_command( 'wrap_lines_plus', { 'width': int( width ) } )
 
 
-def reload_package(full_module_name):
-    import imp
-    import sys
-    import importlib
-
-    if full_module_name in sys.modules:
-        module_object = sys.modules[full_module_name]
-        module_object = imp.reload( module_object )
-
-    else:
-        importlib.import_module( full_module_name )
-
-
 def run_tests():
     """
         How do I unload (reload) a Python module?
         https://stackoverflow.com/questions/437589/how-do-i-unload-reload-a-python-module
     """
     print( "\n\n" )
-    reload_package( "Wrap Plus.tests.semantic_linefeed_unit_tests" )
-    reload_package( "Wrap Plus.tests.semantic_linefeed_manual_tests" )
+    sublime_plugin.reload_plugin( "Wrap Plus.tests.semantic_linefeed_unit_tests" )
+    sublime_plugin.reload_plugin( "Wrap Plus.tests.semantic_linefeed_manual_tests" )
 
     from .tests import semantic_linefeed_unit_tests
     from .tests import semantic_linefeed_manual_tests
@@ -1281,5 +1268,5 @@ def plugin_loaded():
         https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
     """
     pass
-    run_tests()
+    # run_tests()
 
