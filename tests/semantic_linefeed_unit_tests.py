@@ -8,7 +8,6 @@ import sublime_plugin
 import textwrap
 import unittest
 
-from .text_extraction_unit_tests import PrefixStrippingViewUnitTests
 wrap_plus_module = sys.modules["Wrap Plus.wrap_plus"]
 
 
@@ -17,7 +16,7 @@ def run_unit_tests(unit_tests_to_run=[]):
 
     classes = \
     [
-        PrefixStrippingViewUnitTests,
+        sys.modules["Wrap Plus.tests.text_extraction_unit_tests"].PrefixStrippingViewUnitTests,
         SemanticLineWrapUnitTests,
         LineBalancingUnitTests,
     ]
