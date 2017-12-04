@@ -18,8 +18,8 @@ def run_unit_tests(unit_tests_to_run=[]):
     classes = \
     [
         PrefixStrippingViewUnitTests,
-        # SemanticLineWrapUnitTests,
-        # LineBalancingUnitTests,
+        SemanticLineWrapUnitTests,
+        LineBalancingUnitTests,
     ]
 
     if len( unit_tests_to_run ) < 1:

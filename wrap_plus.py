@@ -111,7 +111,11 @@ class PrefixStrippingView(object):
         if is_generic_config:
             line_comments.extend([("//", False), ("#", False), ("%", False)])
 
-        for line_comment, is_block_comment in line_comments:
+        extended_prefixes = []
+        for prefix, is_block_comment in line_comments:
+            extended_prefixes.append( (prefix + prefix[-1], is_block_comment) )
+
+        for line_comment, is_block_comment in extended_prefixes:
             line_comment = line_comment.rstrip()
             debug( ( "line_comment: %s, line_stripped: %s" % ( line_comment, line_stripped ) ).replace("%", "%%") )
 
@@ -120,8 +124,7 @@ class PrefixStrippingView(object):
                 line_difference = len(line) - len(line.lstrip())
                 prefix = line[:line_difference+len(line_comment)]
 
-                if self.required_comment_prefix is None or \
-                   len(self.required_comment_prefix) < len(prefix):
+                if len(self.required_comment_prefix) < len(prefix):
                     self.required_comment_prefix = prefix
 
         # TODO: re.escape required_comment_prefix.
@@ -429,15 +432,15 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     # Just in case something is wonky with the scope.
                     end_pt = max(comment_r.begin(), current_line_region.begin())
                     # A substring of current_line.
-                    subline_r = sublime.Region(current_line_region.begin(), end_pt)
-                    subline = self.view.substr(subline_r)
+                    sublime_region = sublime.Region(current_line_region.begin(), end_pt)
+                    region_substring = self.view.substr(sublime_region)
                     # Do not include whitespace preceding the comment.
-                    regex_match = re.search('([ \t]+$)', subline)
+                    regex_match = re.search('([ \t]+$)', region_substring)
                     if regex_match:
                         end_pt -= len(regex_match.group(1))
-                    debug('non-comment contents are: %r', subline)
+                    debug('non-comment contents are: %r', region_substring)
                     paragraph_end_pt = end_pt
-                    lines.append(subline)
+                    lines.append(region_substring)
                     # Skip over the comment.
                     current_line_region, current_line = view.next_line(current_line_region)
                     break
@@ -1247,6 +1250,7 @@ def run_tests():
         https://stackoverflow.com/questions/437589/how-do-i-unload-reload-a-python-module
     """
     print( "\n\n" )
+    sublime_plugin.reload_plugin( "Wrap Plus.tests.text_extraction_unit_tests" )
     sublime_plugin.reload_plugin( "Wrap Plus.tests.semantic_linefeed_unit_tests" )
     sublime_plugin.reload_plugin( "Wrap Plus.tests.semantic_linefeed_manual_tests" )
 
@@ -1273,5 +1277,5 @@ def plugin_loaded():
         https://stackoverflow.com/questions/15971735/running-single-test-from-unittest-testcase-via-command-line
     """
     pass
-    run_tests()
+    # run_tests()
 
