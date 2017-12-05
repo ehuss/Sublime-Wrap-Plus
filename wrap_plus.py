@@ -112,7 +112,11 @@ class PrefixStrippingView(object):
             line_comments.extend([("//", False), ("#", False), ("%", False)])
 
         extended_prefixes = []
+
+        # Fix the C++/Rust extended prefix documentation styles
+        # https://github.com/evandrocoan/SublimeStudio/issues/75
         for prefix, is_block_comment in line_comments:
+            extended_prefixes.append( (prefix, is_block_comment) )
             extended_prefixes.append( (prefix + prefix[-1], is_block_comment) )
 
         for line_comment, is_block_comment in extended_prefixes:
