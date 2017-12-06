@@ -3,7 +3,7 @@
     "pattern" : "*unit_tests.py",
     "async": false,
     "deferred": false,
-    "verbosity": 2,
+    "verbosity": 1,
     "capture_console": true,
     "output": null
 }
