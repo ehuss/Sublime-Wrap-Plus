@@ -51,7 +51,7 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
         selections.add( sublime.Region( start_point, start_point ) )
 
     def get_view_contents(self):
-        return self.view.substr( sublime.Region( 0, self.view.size() - 1 ) )
+        return self.view.substr( sublime.Region( 0, self.view.size() ) )
 
     def test_triple_quotes_comment(self):
         self.setText( """\
@@ -75,7 +75,7 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
         self.view.run_command( "wrap_lines_plus", {"width": 50} )
         self.assertEqual( wrap_text( """\
                 /// This is a doxygen is a doxygen is a doxygen is
-                /// a doxygen style multiline C++ comment""" ),
+                /// a doxygen style multiline C++ comment.""" ),
                 self.get_view_contents() )
 
     def test_double_quotes_wrappting(self):
@@ -87,7 +87,7 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
         self.view.run_command( "wrap_lines_plus", {"width": 50} )
         self.assertEqual( wrap_text( """\
                 // This is a doxygen is a doxygen is a doxygen is
-                // a doxygen style multiline C++ comment""" ),
+                // a doxygen style multiline C++ comment.""" ),
                 self.get_view_contents() )
 
     def test_double_quotes_wrappting_without_leading_whitespace(self):
@@ -99,7 +99,7 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
         self.view.run_command( "wrap_lines_plus", {"width": 50} )
         self.assertEqual( wrap_text( """\
                 //This is a doxygen is a doxygen is a doxygen is a
-                //doxygen style multiline C++ comment""" ),
+                //doxygen style multiline C++ comment.""" ),
                 self.get_view_contents() )
 
     def test_triple_quotes_wrappting_without_leading_whitespace(self):
@@ -111,6 +111,24 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
         self.view.run_command( "wrap_lines_plus", {"width": 50} )
         self.assertEqual( wrap_text( """\
                 ///This is a doxygen is a doxygen is a doxygen is
-                ///a doxygen style multiline C++ comment""" ),
+                ///a doxygen style multiline C++ comment.""" ),
                 self.get_view_contents() )
+
+    def test_markdown_triple_quotes_line_start(self):
+        self.setText( """\
+                1. Although if you prefer, you can provide a menu entry forMyBrandNewChannel` directory:
+                   ```javascript
+                   [
+                   ]
+                   ```""" )
+
+        self.view.run_command( "wrap_lines_plus", {"width": 60} )
+        self.assertEqual( wrap_text( """\
+                1. Although if you prefer, you can provide a menu entry
+                   forMyBrandNewChannel` directory:
+                   ```javascript
+                   [
+                   ]
+                   ```""" ),
+                              self.get_view_contents() )
 
