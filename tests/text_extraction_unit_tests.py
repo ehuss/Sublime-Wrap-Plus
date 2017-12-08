@@ -122,13 +122,11 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
                    ]
                    ```""" )
 
-        self.view.run_command( "wrap_lines_plus", {"width": 60} )
+        self.view.run_command( "wrap_lines_plus", {"width": 100} )
         self.assertEqual( wrap_text( """\
-                1. Although if you prefer, you can provide a menu entry
-                   forMyBrandNewChannel` directory:
+                1. Although if you prefer, you can provide a menu entry forMyBrandNewChannel` directory:
                    ```javascript
                    [
                    ]
-                   ```""" ),
-                              self.get_view_contents() )
+                   ```""" ), self.get_view_contents() )
 

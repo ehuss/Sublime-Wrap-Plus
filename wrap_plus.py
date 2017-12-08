@@ -241,7 +241,7 @@ def OR(*args):
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
-blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*)$|(?:.*"""\\?)')
+blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*(?:````?.*)?)$|(?:.*"""\\?)')
 
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
@@ -1271,7 +1271,7 @@ def run_tests():
     unit_tests_to_run = \
     [
         # "test_semantic_line_wrap_ending_with_comma_list",
-        # "test_is_command_separated_list_5_items",
+        # "test_markdown_triple_quotes_line_start",
         # "test_is_command_separated_list_4_items",
         # "test_is_command_separated_list_3_items",
         # "test_is_command_separated_list_2_items",
