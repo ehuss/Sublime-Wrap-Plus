@@ -29,7 +29,7 @@
     // will wrap near its end,
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.semantic_balance_characters_between_line_wraps": true,
+    "WrapPlus.semantic_balance_characters_between_line_wraps": false,
 
     // The minimum of the percentage of the current maximum line width a line can
     // have. For example, if you `wrap_width` is set to 100, and you set this to `0.2`,
