@@ -3,14 +3,18 @@
 import sys
 import unittest
 
+CURRENT_DIRECTORY    = os.path.dirname( os.path.dirname( os.path.realpath( __file__ ) ) )
+CURRENT_PACKAGE_NAME = os.path.basename( CURRENT_DIRECTORY ).rsplit('.', 1)[0]
+
+
 def run_unit_tests(unit_tests_to_run=[]):
     runner = unittest.TextTestRunner()
 
     classes = \
     [
-        sys.modules["Wrap Plus.tests.text_extraction_unit_tests"].PrefixStrippingViewUnitTests,
-        sys.modules["Wrap Plus.tests.semantic_linefeed_unit_tests"].LineBalancingUnitTests,
-        sys.modules["Wrap Plus.tests.semantic_linefeed_unit_tests"].SemanticLineWrapUnitTests,
+        sys.modules[CURRENT_PACKAGE_NAME + ".tests.text_extraction_unit_tests"].PrefixStrippingViewUnitTests,
+        sys.modules[CURRENT_PACKAGE_NAME + ".tests.semantic_linefeed_unit_tests"].LineBalancingUnitTests,
+        sys.modules[CURRENT_PACKAGE_NAME + ".tests.semantic_linefeed_unit_tests"].SemanticLineWrapUnitTests,
     ]
 
     if len( unit_tests_to_run ) < 1:
