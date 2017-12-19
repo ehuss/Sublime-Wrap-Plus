@@ -671,7 +671,20 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 required_comment_prefix+subsequent_indent,
                 new_lines)
 
-    def run(self, edit, width=0):
+    def get_semantic_line_wrap_setting(self, view_settings, line_wrap_type):
+        is_semantic_line_wrap = view_settings.get( 'WrapPlus.semantic_line_wrap', False )
+
+        if line_wrap_type:
+
+            if line_wrap_type == "semantic":
+                is_semantic_line_wrap = True
+
+            if line_wrap_type == "classic":
+                is_semantic_line_wrap = False
+
+        return is_semantic_line_wrap
+
+    def run(self, edit, width=0, line_wrap_type=None):
         debug_start(self.view.settings().get('WrapPlus.debug', False))
         debug('\n\n#########################################################################')
 
@@ -714,7 +727,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             disable_line_wrapping_by_maximum_width = True
 
         # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
-        if view_settings.get( 'WrapPlus.semantic_line_wrap', False ):
+        if self.get_semantic_line_wrap_setting( view_settings, line_wrap_type ):
 
             def line_wrapper_type():
                 text = self.semantic_line_wrap( paragraph_lines, initial_indent, subsequent_indent,
@@ -1237,7 +1250,9 @@ last_used_width = 80
 
 class WrapLinesEnhancementAskCommand(sublime_plugin.TextCommand):
 
-    def run(self, edit, **kwargs):
+    def run(self, edit, line_wrap_type=None):
+        self.line_wrap_type = line_wrap_type
+
         sublime.active_window().show_input_panel(
             'Provide wrapping width:', str( last_used_width ),
             self.input_package, None, None
@@ -1247,7 +1262,7 @@ class WrapLinesEnhancementAskCommand(sublime_plugin.TextCommand):
         global last_used_width
 
         last_used_width = width
-        self.view.run_command( 'wrap_lines_plus', { 'width': int( width ) } )
+        self.view.run_command( 'wrap_lines_plus', { 'width': int( width ), "line_wrap_type": self.line_wrap_type } )
 
 
 def run_tests():

@@ -1,10 +1,9 @@
 [
-    { "caption": "Wrap Plus: Wrap Lines","command": "wrap_lines_plus" },
-    { "caption": "Wrap Plus: Wrap Lines at ... chars", "command": "wrap_lines_enhancement_ask" },
+    { "caption": "Wrap Plus: Wrap Lines",               "command": "wrap_lines_plus" },
+    { "caption": "Wrap Plus: Force Classic Line Wrap",  "command": "wrap_lines_plus", "args": { "line_wrap_type": "classic" } },
+    { "caption": "Wrap Plus: Force Semantic Line Wrap", "command": "wrap_lines_plus", "args": { "line_wrap_type": "semantic" } },
 
-    { "caption": "Wrap Plus: Wrap Lines at 65 chars", "command": "wrap_lines_plus", "args": { "width": 65 } },
-    { "caption": "Wrap Plus: Wrap Lines at 70 chars", "command": "wrap_lines_plus", "args": { "width": 70 } },
-    { "caption": "Wrap Plus: Wrap Lines at 72 chars", "command": "wrap_lines_plus", "args": { "width": 72 } },
-    { "caption": "Wrap Plus: Wrap Lines at 80 chars", "command": "wrap_lines_plus", "args": { "width": 80 } },
-    { "caption": "Wrap Plus: Wrap Lines at 100 chars", "command": "wrap_lines_plus", "args": { "width": 100 } },
+    { "caption": "Wrap Plus: Wrap Lines (ask)",               "command": "wrap_lines_enhancement_ask" },
+    { "caption": "Wrap Plus: Force Classic Line Wrap (ask)",  "command": "wrap_lines_enhancement_ask", "args": { "line_wrap_type": "classic" } },
+    { "caption": "Wrap Plus: Force Semantic Line Wrap (ask)", "command": "wrap_lines_enhancement_ask", "args": { "line_wrap_type": "semantic" } },
 ]
