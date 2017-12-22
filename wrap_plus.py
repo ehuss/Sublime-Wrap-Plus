@@ -711,6 +711,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         break_long_words = view_settings.get('WrapPlus.break_long_words', True)
         break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
 
+        wrap_extension_percent                 = view_settings.get('WrapPlus.semantic_wrap_extension_percent', 1.0)
         minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
         balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
@@ -718,16 +719,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         self.maximum_words_in_comma_separated_list = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
         self.maximum_items_in_comma_separated_list = view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
 
-        wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
-        wrapper.width = self._width
-        wrapper.expand_tabs = False
-
         if balance_characters_between_line_wraps:
             # minimum_line_size_percent = 0.0
             disable_line_wrapping_by_maximum_width = True
 
         # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
         if self.get_semantic_line_wrap_setting( view_settings, line_wrap_type ):
+            self._width *= wrap_extension_percent
 
             def line_wrapper_type():
                 text = self.semantic_line_wrap( paragraph_lines, initial_indent, subsequent_indent,
@@ -744,6 +742,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             def line_wrapper_type():
                 return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
+
+        wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
+        wrapper.width = self._width
+        wrapper.expand_tabs = False
 
         # print( "self._width: " + str( self._width ) )
         if paragraphs:

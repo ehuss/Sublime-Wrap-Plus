@@ -52,6 +52,15 @@
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
     "WrapPlus.semantic_minimum_line_size_percent": 0.0,
 
+    // Set the percentage of the current line wrapping limit to be applied when
+    // performing the semantic line feed wrapping. For example, if you line
+    // wrapping is set to `100` characters and this setting is set to `1.6`, the
+    // line wrapping limit will be 160 characters when performing the semantic
+    // linefeed wrapping.
+    //
+    // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
+    "WrapPlus.semantic_wrap_extension_percent": 1.6,
+
     // When wrapping lines, it will consider they to be a list of words if between
     // two sequential commas is find at the maximum these number of words.
     //
