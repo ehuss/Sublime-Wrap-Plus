@@ -7,10 +7,20 @@
     "WrapPlus.break_on_hyphens": false,
 
     // Control the cursor behavior while wrapping the text. It accepts the following:
-    //
     // "cursor_below", will move the cursor/caret to the end the the wrapped text
     // "cursor_stay", will `attempt` to keep the cursor/caret on its original position
     "WrapPlus.after_wrap": "cursor_stay",
+
+    // Determines whether or not line endings are included in the line size:
+    // - true: Always included.
+    // - false: Never included.
+    // - "auto": Included only if Sublime's "word_wrap" is enabled (View ->
+    //   Word Wrap) and Sublime's wrap column is not 0 (View -> Word Wrap
+    //   Column -> Automatic).
+    "WrapPlus.include_line_endings": "auto",
+
+    // Set the wrap column, overriding Sublime's "wrap_width" if not 0.
+    // "WrapPlus.wrap_width": 78
 
     // If true, the semantic linewrap also know as semantic linefeed will be used.
     // See the following address for more descriptions:
@@ -70,15 +80,4 @@
     // * If the setting `WrapPlus.balance_characters_between_line_wraps` is enabled,
     //   this setting will be ignored.
     "WrapPlus.semantic_disable_line_wrapping_by_maximum_width": false,
-
-    // Determines whether or not line endings are included in the line size:
-    // - true: Always included.
-    // - false: Never included.
-    // - "auto": Included only if Sublime's "word_wrap" is enabled (View ->
-    //   Word Wrap) and Sublime's wrap column is not 0 (View -> Word Wrap
-    //   Column -> Automatic).
-    "WrapPlus.include_line_endings": "auto"
-
-    // Set the wrap column, overriding Sublime's "wrap_width" if not 0.
-    // "WrapPlus.wrap_width": 78
 }
