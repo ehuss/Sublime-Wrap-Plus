@@ -1,6 +1,7 @@
 # Sublime Wrap Plus
 
 [![Build Status](https://travis-ci.org/evandrocoan/WrapPlus.svg?branch=master)](https://travis-ci.org/evandrocoan/WrapPlus)
+[![Build status](https://ci.appveyor.com/api/projects/status/464j3oiwijfutl8t/branch/master?svg=true)](https://ci.appveyor.com/project/evandrocoan/wrapplus/branch/master)
 <a href="https://packagecontrol.io/packages/Wrap Plus"><img src="https://packagecontrol.herokuapp.com/downloads/Wrap Plus.svg"></a>
 
 Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (<kbd>Alt</kbd><kbd>Q</kbd> in Windows and Linux, <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd> in OS X).  It does not affect the automatic soft line wrapping.
