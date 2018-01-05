@@ -1,11 +1,15 @@
 
 
+import os
 import sys
 
 import textwrap
 import unittest
 
-wrap_plus_module = sys.modules["Wrap Plus.wrap_plus"]
+CURRENT_DIRECTORY    = os.path.dirname( os.path.dirname( os.path.realpath( __file__ ) ) )
+CURRENT_PACKAGE_NAME = os.path.basename( CURRENT_DIRECTORY ).rsplit('.', 1)[0]
+
+wrap_plus_module = sys.modules[CURRENT_PACKAGE_NAME + ".wrap_plus"]
 
 
 class LineBalancingUnitTests(unittest.TestCase):
