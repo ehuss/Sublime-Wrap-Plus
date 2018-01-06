@@ -1272,8 +1272,8 @@ def run_tests():
         How do I unload (reload) a Python module?
         https://stackoverflow.com/questions/437589/how-do-i-unload-reload-a-python-module
     """
-    CURRENT_DIRECTORY    = os.path.dirname( os.path.realpath( __file__ ) )
-    CURRENT_PACKAGE_NAME = os.path.basename( CURRENT_DIRECTORY ).rsplit('.', 1)[0]
+    PACKAGE_ROOT_DIRECTORY = os.path.dirname( os.path.realpath( __file__ ) )
+    CURRENT_PACKAGE_NAME = os.path.basename( PACKAGE_ROOT_DIRECTORY ).rsplit('.', 1)[0]
 
     print( "\n\n" )
     sublime_plugin.reload_plugin( CURRENT_PACKAGE_NAME + ".tests.unit_tests_runner" )
