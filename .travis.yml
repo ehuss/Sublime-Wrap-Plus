@@ -15,9 +15,18 @@ matrix:
         - os: osx
           language: generic
 
-
 before_install:
     - curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/travis.sh
+    - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+            brew update;
+            brew install python3;
+            pip3 install python-coveralls;
+            pip3 install codecov;
+      fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+            pip install python-coveralls;
+            pip install codecov;
+      fi
     # enable gui, see https://docs.travis-ci.com/user/gui-and-headless-browsers
     - if [ "$TRAVIS_OS_NAME" == "linux"  ]; then
             export DISPLAY=:99.0;
@@ -35,21 +44,12 @@ script:
     - sh travis.sh run_tests --coverage
     # testing syntax_test files
     # - sh travis.sh run_syntax_tests
+    - coveralls
+    - codecov
 
 after_success:
     # remove the following if `coveralls` is not needed
-    - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-            brew update;
-            brew install python3;
-            pip3 install python-coveralls;
-            pip3 install codecov;
-      fi
-    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-            pip install python-coveralls;
-            pip install codecov;
-      fi
-    - coveralls
-    - codecov
+    - echo
 
 notifications:
     email: false
