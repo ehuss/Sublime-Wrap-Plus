@@ -1,7 +1,7 @@
 # Sublime Wrap Plus
 
 [![Build Status](https://travis-ci.org/evandrocoan/WrapPlus.svg?branch=master)](https://travis-ci.org/evandrocoan/WrapPlus)
-[![Build status](https://ci.appveyor.com/api/projects/status/464j3oiwijfutl8t/branch/master?svg=true)](https://ci.appveyor.com/project/evandrocoan/wrapplus/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/evandrocoan/WrapPlus?branch=master&svg=true)](https://ci.appveyor.com/project/evandrocoan/WrapPlus/branch/master)
 [![codecov](https://codecov.io/gh/evandrocoan/WrapPlus/branch/master/graph/badge.svg)](https://codecov.io/gh/evandrocoan/WrapPlus)
 [![Coverage Status](https://coveralls.io/repos/github/evandrocoan/WrapPlus/badge.svg?branch=master)](https://coveralls.io/github/evandrocoan/WrapPlus?branch=master)
 <a href="https://packagecontrol.io/packages/Wrap Plus"><img src="https://packagecontrol.herokuapp.com/downloads/Wrap Plus.svg"></a>
