@@ -1305,4 +1305,3 @@ def plugin_loaded():
     """
     pass
     # run_tests()
-
