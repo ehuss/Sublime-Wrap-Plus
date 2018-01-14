@@ -4,6 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/github/evandrocoan/WrapPlus?branch=master&svg=true)](https://ci.appveyor.com/project/evandrocoan/WrapPlus/branch/master)
 [![codecov](https://codecov.io/gh/evandrocoan/WrapPlus/branch/master/graph/badge.svg)](https://codecov.io/gh/evandrocoan/WrapPlus)
 [![Coverage Status](https://coveralls.io/repos/github/evandrocoan/WrapPlus/badge.svg?branch=master)](https://coveralls.io/github/evandrocoan/WrapPlus?branch=master)
+[![Latest Release](https://img.shields.io/github/tag/evandrocoan/WrapPlus.svg?label=version)](https://github.com/evandrocoan/WrapPlus/releases)
 <a href="https://packagecontrol.io/packages/Wrap Plus"><img src="https://packagecontrol.herokuapp.com/downloads/Wrap Plus.svg"></a>
 
 Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (<kbd>Alt</kbd><kbd>Q</kbd> in Windows and Linux, <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd> in OS X).  It does not affect the automatic soft line wrapping.
@@ -168,4 +169,3 @@ the file. The results are going to be displayed on the `Sublime Text Console`.
 ## License
 
 See the `LICENSE.txt` file under this repository.
-
