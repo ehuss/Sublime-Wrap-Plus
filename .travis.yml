@@ -32,7 +32,7 @@ before_install:
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
             pip install python-coveralls;
             pip install codecov;
-            pip install coverage codacy-coverage
+            pip install coverage codacy-coverage;
       fi
 
     # enable gui, see https://docs.travis-ci.com/user/gui-and-headless-browsers

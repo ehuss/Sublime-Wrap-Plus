@@ -1,5 +1,6 @@
 # Sublime Wrap Plus
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9191d17b91814f8caf17c9e537a22904)](https://www.codacy.com/app/evandrocoan/WrapPlus?utm_source=github.com&utm_medium=referral&utm_content=evandrocoan/WrapPlus&utm_campaign=badger)
 [![Build Status](https://travis-ci.org/evandrocoan/WrapPlus.svg?branch=master)](https://travis-ci.org/evandrocoan/WrapPlus)
 [![Build status](https://ci.appveyor.com/api/projects/status/github/evandrocoan/WrapPlus?branch=master&svg=true)](https://ci.appveyor.com/project/evandrocoan/WrapPlus/branch/master)
 [![codecov](https://codecov.io/gh/evandrocoan/WrapPlus/branch/master/graph/badge.svg)](https://codecov.io/gh/evandrocoan/WrapPlus)
