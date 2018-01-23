@@ -28,5 +28,5 @@ on_finish:
     - pip install codecov
     - codecov
     - coverage xml -o coverage.xml
-    - python-codacy-coverage -c $APPVEYOR_REPO_COMMIT -d $APPVEYOR_BUILD_FOLDER -r coverage.xml
+    - python-codacy-coverage
 
