@@ -23,7 +23,7 @@ test_script:
 
 
 on_finish:
-    - "SET PYTHON=C:\Python33"
+    - "SET PYTHON=C:\\Python33"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - pip install codecov
     - codecov
