@@ -39,7 +39,7 @@
     // will wrap near its end,
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.semantic_balance_characters_between_line_wraps": false,
+    "WrapPlus.semantic_balance_characters_between_line_wraps": true,
 
     // The minimum of the percentage of the current maximum line width a line can
     // have. For example, if you `wrap_width` is set to 100, and you set this to `0.2`,
@@ -59,7 +59,7 @@
     // linefeed wrapping.
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.semantic_wrap_extension_percent": 1.6,
+    "WrapPlus.semantic_wrap_extension_percent": 1.5,
 
     // When wrapping lines, it will consider they to be a list of words if between
     // two sequential commas is find at the maximum these number of words.
