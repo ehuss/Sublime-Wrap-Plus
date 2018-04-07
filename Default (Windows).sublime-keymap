@@ -1,3 +1,7 @@
 [
-	{ "keys": ["alt+q"], "command": "wrap_lines_plus" }
+    { "keys": ["alt+q"], "command": "wrap_lines_plus", "context":
+        [
+            { "key": "setting.is_widget", "operator": "equal", "operand": false }
+        ]
+    }
 ]
