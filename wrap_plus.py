@@ -212,7 +212,7 @@ def CONCAT(*args):
 blank_line_pattern = re.compile(r'^[\t \n]*$')
 
 # This doesn't always work, but seems decent.
-numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
+numbered_list = r'(?:(?:[0-9#]{,3}[.)])+[\t ])'
 lettered_list = r'(?:[\w][.)][\t ])'
 bullet_list = r'(?:[*+#-]+[\t ])'
 list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_list) + r'[ \t]*')
