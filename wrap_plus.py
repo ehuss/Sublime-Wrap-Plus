@@ -212,9 +212,8 @@ def CONCAT(*args):
 blank_line_pattern = re.compile(r'^[\t \n]*$')
 
 # This doesn't always work, but seems decent.
-numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
+numbered_list = r'(?:(?:([0-9#]+)[.)])+[\t ])'
 numbered_list_pattern = re.compile(numbered_list)
-last_number_pattern = re.compile(r'(\d+)(?!.*\d)')
 lettered_list = r'(?:[a-zA-Z][.)][\t ])'
 bullet_list = r'(?:[*+#-]+[\t ])'
 list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_list) + r'[ \t]*')
@@ -250,22 +249,27 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         else:
             return self.view.full_line(region)
 
-    def _is_real_numbered_list(self, line_r, line, limit=10):
+    def _is_real_numbered_list(self, line_r, line, limit=10, indent=False):
         """Returns True if `line` is not a paragraph continuation."""
         # We stop checking the list after `limit` lines to avoid quadratic
         # runtime. For inputs like 100 lines of "2. ", this function is called
         # in a loop over the input and also contains a loop over the input.
+        # indent tracks whether we came from an indented line
         if limit == 0:
             return True
-        if last_number_pattern.search(line).group(1) == '1':
+        m = numbered_list_pattern.search(line)
+        if m and m.group(1) == '1':
             return True
         prev_line_r, prev_line = self._strip_view.prev_line(line_r)
         if prev_line_r is None:
-            return True
+            return not indent
         if self._is_paragraph_break(prev_line_r, prev_line):
-            return True
+            return not indent
         if new_paragraph_pattern.match(prev_line):
-            return True
+            return not indent
+        if prev_line[0] == ' ' or prev_line[0] == '\t':
+            # prev_line might be a numbered list or a normal paragraph
+            return self._is_real_numbered_list(prev_line_r, prev_line, limit-1, indent=True)
         if numbered_list_pattern.match(prev_line):
             return self._is_real_numbered_list(prev_line_r, prev_line, limit-1)
         return False # previous line appears to be a normal paragraph
