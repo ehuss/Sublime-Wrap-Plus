@@ -1,9 +1,9 @@
 {
     // If true, words longer than the wrap width will be split to ensure lines
     // are not longer than the wrap width.
-	"WrapPlus.break_long_words": true,
+	"WrapPlus.break_long_words": false,
     // If true, will break on hyphens in compound words.
-	"WrapPlus.break_on_hyphens": true,
+	"WrapPlus.break_on_hyphens": false,
     // Determines whether or not line endings are included in the line size:
     // - true: Always included.
     // - false: Never included.
