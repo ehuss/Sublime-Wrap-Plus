@@ -158,6 +158,7 @@ class PrefixStrippingView(object):
         """Get a line for a point.
 
         :returns: A (region, str) tuple.  str has the comment prefix stripped.
+            Returns None, None if line out of range.
         """
         line_r = self.view.line(where)
         if line_r.begin() < self.min:
@@ -292,6 +293,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         """
         view = self._strip_view
         current_line_r, current_line = view.line(pt)
+        if current_line_r is None:
+            return None, None
         started_in_comment = self._started_in_comment(pt)
 
         debug('is_paragraph_break?')
@@ -370,6 +373,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # The selection defines the beginning.
                 current_line_r, current_line = view.line(paragraph_start_pt)
                 debug('sel beggining = %r %r', current_line_r, current_line)
+
+            if current_line_r is None:
+                debug('Could not find start.')
+                return []
 
             # Skip blank and unambiguous break lines.
             while 1:
