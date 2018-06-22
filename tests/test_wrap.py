@@ -28,19 +28,12 @@ DEFAULT_SETTINGS = {
 class TestWrap(unittest.TestCase):
 
     def test_wrap(self):
-        to_test = ['tests/test.txt',
-                   'tests/test_tab.txt',
-                   'tests/test.py',
-                   'tests/test.c',
-                   'tests/test.rs',
-                   'tests/test.md',
-                   'tests/test.tex',
-                  ]
-
+        base = os.path.join(plugin_path, 'tests', 'wrap_tests')
+        to_test = os.listdir(base)
         for path in to_test:
             # Open the file with Sublime (mainly to just get the correct
             # syntax file).
-            self._with_open_file(path, self._test_wrap)
+            self._with_open_file(os.path.join(base, path), self._test_wrap)
 
     def _test_wrap(self, view):
         contents = view.substr(sublime.Region(0, view.size()))
