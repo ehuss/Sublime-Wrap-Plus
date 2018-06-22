@@ -225,15 +225,16 @@ def CONCAT(*args):
 blank_line_pattern = re.compile(r'^[\t \n]*$')
 
 # This doesn't always work, but seems decent.
-numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
-lettered_list = r'(?:[\w][.)][\t ])'
+numbered_list = r'(?:(?:([0-9#]+)[.)])+[\t ])'
+numbered_list_pattern = re.compile(numbered_list)
+lettered_list = r'(?:[a-zA-Z][.)][\t ])'
 bullet_list = r'(?:[*+#-]+[\t ])'
 list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_list) + r'[ \t]*')
 latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*TeX)'
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
 new_paragraph_pattern = re.compile(
-    r'^[\t ]*' + OR(numbered_list, lettered_list, bullet_list, field_start))
+    r'^[\t ]*' + OR(lettered_list, bullet_list, field_start))
 space_prefix_pattern = re.compile(r'^[ \t]*')
 # XXX: Does not handle escaped colons in field name.
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
@@ -262,10 +263,41 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         else:
             return self.view.full_line(region)
 
+    def _is_real_numbered_list(self, line_r, line, limit=10, indent=False):
+        """Returns True if `line` is not a paragraph continuation."""
+        # We stop checking the list after `limit` lines to avoid quadratic
+        # runtime. For inputs like 100 lines of "2. ", this function is called
+        # in a loop over the input and also contains a loop over the input.
+        # indent tracks whether we came from an indented line
+        if limit == 0:
+            return True
+        m = numbered_list_pattern.search(line)
+        if m and m.group(1) == '1':
+            return True
+        prev_line_r, prev_line = self._strip_view.prev_line(line_r)
+        if prev_line_r is None:
+            return not indent
+        if self._is_paragraph_break(prev_line_r, prev_line):
+            return not indent
+        if new_paragraph_pattern.match(prev_line):
+            return not indent
+        if prev_line[0] == ' ' or prev_line[0] == '\t':
+            # prev_line might be a numbered list or a normal paragraph
+            return self._is_real_numbered_list(prev_line_r, prev_line, limit - 1, indent=True)
+        if numbered_list_pattern.match(prev_line):
+            return self._is_real_numbered_list(prev_line_r, prev_line, limit - 1)
+        return False  # previous line appears to be a normal paragraph
+
     def _is_paragraph_start(self, line_r, line):
         # Certain patterns at the beginning of the line indicate this is the
         # beginning of a paragraph.
-        return new_paragraph_pattern.match(line) is not None
+        if new_paragraph_pattern.match(line):
+            return True
+        if numbered_list_pattern.match(line):
+            result = self._is_real_numbered_list(line_r, line)
+            debug('is {}a paragraph continuation'.format('not ' if result else ''))
+            return result
+        return False
 
     def _is_paragraph_break(self, line_r, line, pure=False):
         """A paragraph "break" is something like a blank line, or a horizontal line,

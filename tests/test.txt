@@ -75,6 +75,73 @@ A. Lettered lists are similar to numbered lists.  Don't hurry. Take your time
 ** Bullet item can have multiple characters.  Topping muffin cupcake cotton
    candy soufflé cake pie.
 ===
+Tests for embedded embedded numbers and lists.
+
+In this example we describe some fascinating events which first occurred in 2004. We're just mentioning 2004 in a sentence, so the rest of the paragraph should not be indented.
+
+5. A numbered list starts with a numbered list marker.
+5#55#.#) the marker can be fairly complicated, but
+5: markers must end with "." or ")"
+
+Test 6
+ 6. markers cannot have any indent
+
+Test 7: to be recognized, a numbered list after a paragraph must start at 1.
+7.1. for lists with subsections, the last section number is what matters
+7.2. test 7
+
+Test 8: otherwise, the numbered list is treated as a paragraph continuation
+1.8. the last section number is what matters
+     test 8, indent
+2.8. test 8 a
+     test 8 b
+
+ Test 9: paragraph continuation after an indented paragraph
+9. test 9
+
+Test 10: continuation after
+ test 10. an indented continuation
+10. test 10 c
+
+11. Wrapped lines must be indented; any amount of indentation is recognized.
+Otherwise,
+11. the next list item will not be recognized.
+
+#. Cupcake ipsum dolor sit amet marzipan faworki. Wafer I love croissant. Tart carrot cake pastry.
+#. Muffin ipsum dolor sit amet marzipan faworki. Wafer I love croissant. Tart carrot cake pastry.
+---
+Tests for embedded embedded numbers and lists.
+
+In this example we describe some fascinating events which first occurred in
+2004. We're just mentioning 2004 in a sentence, so the rest of the paragraph
+should not be indented.
+
+5. A numbered list starts with a numbered list marker.
+5#55#.#) the marker can be fairly complicated, but 5: markers must end with
+         "." or ")"
+
+Test 6 6. markers cannot have any indent
+
+Test 7: to be recognized, a numbered list after a paragraph must start at 1.
+7.1. for lists with subsections, the last section number is what matters
+7.2. test 7
+
+Test 8: otherwise, the numbered list is treated as a paragraph continuation
+1.8. the last section number is what matters test 8, indent 2.8. test 8 a test
+8 b
+
+ Test 9: paragraph continuation after an indented paragraph 9. test 9
+
+Test 10: continuation after test 10. an indented continuation 10. test 10 c
+
+11. Wrapped lines must be indented; any amount of indentation is recognized.
+    Otherwise, 11. the next list item will not be recognized.
+
+#. Cupcake ipsum dolor sit amet marzipan faworki. Wafer I love croissant. Tart
+   carrot cake pastry.
+#. Muffin ipsum dolor sit amet marzipan faworki. Wafer I love croissant. Tart
+   carrot cake pastry.
+===
 Fields
 :Field1: Candy canes caramels bonbon. Tiramisu tootsie roll chocolate cake pie sugar plum muffin macaroon.
 :param str some_param: Tart carrot cake oat cake icing. Lollipop danish dessert dragée lemon drops pie cookie.
