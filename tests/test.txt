@@ -1,155 +1,429 @@
-If you do not already have it installed, it's really the best way to manage your packages.  Go to http://wbond.net/sublime_packages/package_control and install Package Control. Restart Sublime Text 2.  Bring up the Command Palette (`Command+Shift+P` on OS X, `Control+Shift+P` on Linux/Windows).  Select "Package Control: Install Package", wait while Package Control fetches the latest package list, then select Wrap Plus when the list appears.  Package Control will handle automatically updating your packages.
+===
+This line is exactly 78 characters long and should not be change when wrapped.
+---
+This line is exactly 78 characters long and should not be change when wrapped.
+===
+This line is very long, testing basic wrapping. Cotton candy danish pastry cake. Bear claw gummi bears macaroon sweet roll danish cheesecake jelly beans pudding marzipan.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
+Paragraphs separated by spaces should be wrapped, preserving the blank line. Cotton candy danish pastry cake.
+---
+This line is very long, testing basic wrapping. Cotton candy danish pastry
+cake. Bear claw gummi bears macaroon sweet roll danish cheesecake jelly beans
+pudding marzipan.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-- Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-- Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-* Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean
-  massa. Cum sociis natoque penatibus et magnis dis  parturient montes, nascetur ridiculus mus.
-laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum
+Paragraphs separated by spaces should be wrapped, preserving the blank line.
+Cotton candy danish pastry cake.
+===
+List tests. Content immediately preceding a list item should be kept separate from the list items.
+- Bullet list.  Muffin cake cotton candy. Cupcake cotton candy marzipan cake sweet roll cotton candy gummies. Marshmallow candy pudding sweet. Jelly beans chocolate cake chocolate bar liquorice cupcake apple pie halvah macaroon.
 
-a=3
-# foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-# bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-def foo():
-    # - foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
+  List item with multiple paragraphs, should retain indentation.  Very easy to work these to death. What the devil.
+- Another list item.
+Text following merges to the item above.
+  - Sublist, with indentation.  Now, we're going to fluff this cloud. Let all these little things happen. Don't fight them. Learn to use them.
+* The quick, brown fox jumps over
+  a lazy dog. You have freedom here.
+      The only guide is your heart.
+        You gotta think like a tree.
+            Just relax and let it flow.
+              That easy. A thin paint will stick to a thick paint.
++ Let's do it again then, what the heck. Nice little clouds playing around in the sky. Here we're limited by the time we have.
+# You're meant to have fun in life. And I know you're saying, 'Oh Bob, you've done it this time.' And you may be right. You got your heavy coat out yet? It's getting colder. A happy cloud.
+1. Numbered lists are numbers or #, with . or ), possibly repeating multiple times.
+1.2. Nested number example. If you hypnotize it, it will go away. Let's do it again then, what the heck.
+1.2.3) Now we can begin working on lots of happy little things. Poor old tree. Tree trunks grow however makes them happy.
+#. Automatic numbered list example. We'll make some happy little bushes here. It looks so good, I might as well not stop.
+3) Numbered lists can use parenthesis.  Now we'll take the almighty fan brush. Here's something that's fun.
+45678. Numbers can be quite large.  We can always carry this a step further. There's really no end to this. Use your imagination, let it go.
+A. Lettered lists are similar to numbered lists.  Don't hurry. Take your time and enjoy. Every time you practice, you learn more.
+** Bullet item can have multiple characters.  Topping muffin cupcake cotton candy soufflé cake pie.
+---
+List tests. Content immediately preceding a list item should be kept separate
+from the list items.
+- Bullet list.  Muffin cake cotton candy. Cupcake cotton candy marzipan cake
+  sweet roll cotton candy gummies. Marshmallow candy pudding sweet. Jelly
+  beans chocolate cake chocolate bar liquorice cupcake apple pie halvah
+  macaroon.
 
-1. foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-1.2 bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-1.2. bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-a. foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-a) foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-A. baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz
-I. foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-- foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-* bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-** bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-
-Numbered lists (not comments).
-# bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-## bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-
-Numbered lists inside comments.
-# # bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-# ## bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-# Header
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-## Header 2
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-### Header 3
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-# Header 4 #
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-## Header 5 ##
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-=Header 6=
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-==Header 7==
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-===Header 8===
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-
-foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo foo
-:bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar bar
-::baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz baz
+  List item with multiple paragraphs, should retain indentation.  Very easy to
+  work these to death. What the devil.
+- Another list item. Text following merges to the item above.
+  - Sublist, with indentation.  Now, we're going to fluff this cloud. Let all
+    these little things happen. Don't fight them. Learn to use them.
+* The quick, brown fox jumps over a lazy dog. You have freedom here. The only
+  guide is your heart. You gotta think like a tree. Just relax and let it
+  flow. That easy. A thin paint will stick to a thick paint.
++ Let's do it again then, what the heck. Nice little clouds playing around in
+  the sky. Here we're limited by the time we have.
+# You're meant to have fun in life. And I know you're saying, 'Oh Bob, you've
+  done it this time.' And you may be right. You got your heavy coat out yet?
+  It's getting colder. A happy cloud.
+1. Numbered lists are numbers or #, with . or ), possibly repeating multiple
+   times.
+1.2. Nested number example. If you hypnotize it, it will go away. Let's do it
+     again then, what the heck.
+1.2.3) Now we can begin working on lots of happy little things. Poor old tree.
+       Tree trunks grow however makes them happy.
+#. Automatic numbered list example. We'll make some happy little bushes here.
+   It looks so good, I might as well not stop.
+3) Numbered lists can use parenthesis.  Now we'll take the almighty fan brush.
+   Here's something that's fun.
+45678. Numbers can be quite large.  We can always carry this a step further.
+       There's really no end to this. Use your imagination, let it go.
+A. Lettered lists are similar to numbered lists.  Don't hurry. Take your time
+   and enjoy. Every time you practice, you learn more.
+** Bullet item can have multiple characters.  Topping muffin cupcake cotton
+   candy soufflé cake pie.
+===
+Fields
+:Field1: Candy canes caramels bonbon. Tiramisu tootsie roll chocolate cake pie sugar plum muffin macaroon.
+:param str some_param: Tart carrot cake oat cake icing. Lollipop danish dessert dragée lemon drops pie cookie.
+@param {number} x - Jsdoc style field. Jujubes jelly-o gummi bears cookie muffin. Muffin cookie icing lollipop.
+@throws Will throw an error if the argument is null. Pie soufflé cake cake chocolate cake brownie gummi bears.
+@todo Carrot cake danish icing carrot cake marzipan wafer. Chocolate cake cupcake chocolate cake powder liquorice.
+---
+Fields
+:Field1: Candy canes caramels bonbon. Tiramisu tootsie roll chocolate cake pie
+    sugar plum muffin macaroon.
+:param str some_param: Tart carrot cake oat cake icing. Lollipop danish
+    dessert dragée lemon drops pie cookie.
+@param {number} x - Jsdoc style field. Jujubes jelly-o gummi bears cookie
+    muffin. Muffin cookie icing lollipop.
+@throws Will throw an error if the argument is null. Pie soufflé cake cake
+    chocolate cake brownie gummi bears.
+@todo Carrot cake danish icing carrot cake marzipan wafer. Chocolate cake
+    cupcake chocolate cake powder liquorice.
+===
+Horizontal lines / transitions / thematic breaks.
+----
+Ice cream candy canes muffin wafer pudding donut halvah. Jelly sesame snaps danish jelly beans dragée gummies marshmallow.
+   ***
+Can be indented.
+___
+Ice cream candy canes muffin wafer pudding donut halvah.
+=======
+Ice cream candy canes muffin wafer pudding donut halvah.
+```
+Ice cream candy canes muffin wafer pudding donut halvah.
+'''
+Ice cream candy canes muffin wafer pudding donut halvah.
+"""
+Ice cream candy canes muffin wafer pudding donut halvah.
+...
+Ice cream candy canes muffin wafer pudding donut halvah.
+~~~
+Ice cream candy canes muffin wafer pudding donut halvah.
++++
+Ice cream candy canes muffin wafer pudding donut halvah.
+^^^
+Ice cream candy canes muffin wafer pudding donut halvah.
+!!!
+Ice cream candy canes muffin wafer pudding donut halvah.
+@@@
+Ice cream candy canes muffin wafer pudding donut halvah.
+###
+Ice cream candy canes muffin wafer pudding donut halvah.
+$$$
+Ice cream candy canes muffin wafer pudding donut halvah.
+%%%
+Ice cream candy canes muffin wafer pudding donut halvah.
+&&&
+Ice cream candy canes muffin wafer pudding donut halvah.
+:::
+Ice cream candy canes muffin wafer pudding donut halvah.
+;;;
+Ice cream candy canes muffin wafer pudding donut halvah.
+,,,
+Ice cream candy canes muffin wafer pudding donut halvah.
+???
+---
+Horizontal lines / transitions / thematic breaks.
+----
+Ice cream candy canes muffin wafer pudding donut halvah. Jelly sesame snaps
+danish jelly beans dragée gummies marshmallow.
+   ***
+Can be indented.
+___
+Ice cream candy canes muffin wafer pudding donut halvah.
+=======
+Ice cream candy canes muffin wafer pudding donut halvah.
+```
+Ice cream candy canes muffin wafer pudding donut halvah.
+'''
+Ice cream candy canes muffin wafer pudding donut halvah.
+"""
+Ice cream candy canes muffin wafer pudding donut halvah.
+...
+Ice cream candy canes muffin wafer pudding donut halvah.
+~~~
+Ice cream candy canes muffin wafer pudding donut halvah.
++++
+Ice cream candy canes muffin wafer pudding donut halvah.
+^^^
+Ice cream candy canes muffin wafer pudding donut halvah.
+!!!
+Ice cream candy canes muffin wafer pudding donut halvah.
+@@@
+Ice cream candy canes muffin wafer pudding donut halvah.
+###
+Ice cream candy canes muffin wafer pudding donut halvah.
+$$$
+Ice cream candy canes muffin wafer pudding donut halvah.
+%%%
+Ice cream candy canes muffin wafer pudding donut halvah.
+&&&
+Ice cream candy canes muffin wafer pudding donut halvah.
+:::
+Ice cream candy canes muffin wafer pudding donut halvah.
+;;;
+Ice cream candy canes muffin wafer pudding donut halvah.
+,,,
+Ice cream candy canes muffin wafer pudding donut halvah.
+???
+===WrapPlus.break_long_words=True,WrapPlus.break_on_hyphens=True
+Long, unbroken words.
 
 The following url should be really long (http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
 
 The following url isn't very long (http://www.this.is.long.com/foo/bar/thing#where-it-is).
+---
+Long, unbroken words.
 
+The following url should be really long (http://www.this.is.long.com/foo/bar/t
+hing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo
+/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thi
+ng/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
 
-    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+The following url isn't very long
+(http://www.this.is.long.com/foo/bar/thing#where-it-is).
+===WrapPlus.break_long_words=False,WrapPlus.break_on_hyphens=True
+Long, unbroken words.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+The following url should be really long (http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
 
-    """Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium."""
+The following url isn't very long (http://www.this.is.long.com/foo/bar/thing#where-it-is).
+---
+Long, unbroken words.
 
+The following url should be really long
+(http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-
+it-is).
 
-    """Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et
-    magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis,
-    ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget,
-    arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo.
-    Nullam dictum felis eu pede mollis pretium."""
-    """blah"""
+The following url isn't very long
+(http://www.this.is.long.com/foo/bar/thing#where-it-is).
+===WrapPlus.break_long_words=False,WrapPlus.break_on_hyphens=False
+Long, unbroken words.
 
-> This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus. Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
+The following url should be really long (http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long (http://www.this.is.long.com/foo/bar/thing#where-it-is).
+---
+Long, unbroken words.
+
+The following url should be really long
+(http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long
+(http://www.this.is.long.com/foo/bar/thing#where-it-is).
+===WrapPlus.break_on_hyphens=False
+This is long line to be wrapped with a hyphenated word to illustrate the word-hyphenation bug.
+---
+This is long line to be wrapped with a hyphenated word to illustrate the
+word-hyphenation bug.
+===WrapPlus.break_on_hyphens=True
+This is long line to be wrapped with a hyphenated word to illustrate the word-hyphenation bug.
+
+Hyphenated word to illustrate the word-
+hyphenation bug.
+---
+This is long line to be wrapped with a hyphenated word to illustrate the word-
+hyphenation bug.
+
+Hyphenated word to illustrate the word- hyphenation bug.
+===WrapPlus.break_long_words=False,WrapPlus.break_on_hyphens=False
+Long, unbroken words.
+
+The following url should be really long (http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long (http://www.this.is.long.com/foo/bar/thing#where-it-is).
+---
+Long, unbroken words.
+
+The following url should be really long
+(http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long
+(http://www.this.is.long.com/foo/bar/thing#where-it-is).
+===WrapPlus.break_long_words=True,WrapPlus.break_on_hyphens=False
+Long, unbroken words.
+
+The following url should be really long (http://www.this.is.long.com/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long (http://www.this.is.long.com/foo/bar/thing#where-it-is).
+---
+Long, unbroken words.
+
+The following url should be really long (http://www.this.is.long.com/foo/bar/t
+hing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo
+/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thing/foo/bar/thi
+ng/foo/bar/thing/foo/bar/thing/foo/bar/thing#where-it-is).
+
+The following url isn't very long
+(http://www.this.is.long.com/foo/bar/thing#where-it-is).
+===
+    Paragraph indentation.
+We'll paint one happy little tree right here. We don't have anything but happy trees here.
+
+    Paragraph two.
+TODO: This should work without a blank line, but it currently does not.
+
+Subsequent line indentation.  Clouds are free. They just float around the sky all day and have fun.
+    Don't be afraid to make these big decisions.
+    Once you start, they sort of just make themselves.
+
+Paragraph two.
+    Every single thing in the world has its own personality - and it is up to you to make friends with the little rascals.
+
+    Everything indented should stay indented.
+    These little son of a guns hide in your brush and you just have to push them out.
+    Just go out and talk to a tree. Make friends with it.
+---
+    Paragraph indentation. We'll paint one happy little tree right here. We
+don't have anything but happy trees here.
+
+    Paragraph two. TODO: This should work without a blank line, but it
+currently does not.
+
+Subsequent line indentation.  Clouds are free. They just float around the sky
+    all day and have fun. Don't be afraid to make these big decisions. Once
+    you start, they sort of just make themselves.
+
+Paragraph two. Every single thing in the world has its own personality - and
+    it is up to you to make friends with the little rascals.
+
+    Everything indented should stay indented. These little son of a guns hide
+    in your brush and you just have to push them out. Just go out and talk to
+    a tree. Make friends with it.
+===WrapPlus.skip_range=True
+>> skip_range is needed since selecting this entire contents doesn't quite work.
+>> Due to the way the PrefixStrippingView works, only the first lines starting with
+>> two brackets are wrapped, and the subsequent lines are skipped.  Quite difficult
+>> to fix, so just ignore for now.
+>>
+>> Jelly cheesecake jelly beans marshmallow chocolate bar biscuit jelly jelly. Sugar plum candy wafer.
+>> Cotton candy cake brownie cupcake jelly-o.
+> Danish marshmallow danish halvah lollipop jelly beans gummies chocolate bonbon. Bear claw chocolate topping jujubes icing.
 >
-> Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.
+> Caramels lemon drops marzipan candy caramels cheesecake cake jelly-o.  Tootsie roll ice cream bear claw.
+> Bonbon wafer powder chocolate tart muffin marshmallow.
 
-> This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
-consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
-Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
+Jelly marshmallow sesame snaps chocolate chupa chups apple pie. Brownie jelly-o brownie biscuit biscuit.
 
-> Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
-id sem consectetuer libero luctus adipiscing.
+> > Chupa chups sesame snaps icing powder lollipop toffee. Jujubes lollipop brownie sugar plum.
+> > Candy canes sweet gummies dessert muffin sesame snaps. Sesame snaps cotton candy marshmallow cookie dessert.
+> Bonbon bonbon marzipan biscuit fruitcake chocolate bar cake. Jujubes lollipop brownie sugar plum.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.
+> Sweet danish gingerbread fruitcake caramels dessert apple pie sugar plum biscuit.
+---
+>> skip_range is needed since selecting this entire contents doesn't quite
+>> work. Due to the way the PrefixStrippingView works, only the first lines
+>> starting with two brackets are wrapped, and the subsequent lines are
+>> skipped.  Quite difficult to fix, so just ignore for now.
+>>
+>> Jelly cheesecake jelly beans marshmallow chocolate bar biscuit jelly jelly.
+>> Sugar plum candy wafer. Cotton candy cake brownie cupcake jelly-o.
+> Danish marshmallow danish halvah lollipop jelly beans gummies chocolate
+> bonbon. Bear claw chocolate topping jujubes icing.
+>
+> Caramels lemon drops marzipan candy caramels cheesecake cake jelly-o.
+> Tootsie roll ice cream bear claw. Bonbon wafer powder chocolate tart muffin
+> marshmallow.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim.
+Jelly marshmallow sesame snaps chocolate chupa chups apple pie. Brownie
+jelly-o brownie biscuit biscuit.
 
+> > Chupa chups sesame snaps icing powder lollipop toffee. Jujubes lollipop
+> > brownie sugar plum. Candy canes sweet gummies dessert muffin sesame snaps.
+> > Sesame snaps cotton candy marshmallow cookie dessert.
+> Bonbon bonbon marzipan biscuit fruitcake chocolate bar cake. Jujubes
+> lollipop brownie sugar plum.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-The quadratic form $\mN$ for the integration of the squared norm of an $m$-dimensional linear function on any simplex $\Omega$ of dimension $n$ can therefore be written as
-\begin{align}
-\label{eq:integration_matrix}
-\mN &= \Factorial{n} \, \vol{\Omega} \, \Transpose{\mP} \inp{\mH^0_n \otimes \IdentityMatrix_m} \, \mP \nonumber\\%
-    &= \Factorial{n} \, \vol{\Omega} \, \mN^0~.
-\end{align}
-The discrete $L^2$-product of piecewise-linear functions on a simplical complexes is obtained by assembling the quadratic forms $\mN$ of each simplex into an operator $\mM$ on the whole complex.
-
+> Sweet danish gingerbread fruitcake caramels dessert apple pie sugar plum
+> biscuit.
+===
 .. data:: sample
-    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+    <START>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.<END>
 .. data:: sample2
-    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+    <START>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.<END>
+---
+.. data:: sample
+    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo
+    ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis
+    dis parturient montes, nascetur ridiculus mus.
+.. data:: sample2
+    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo
+    ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis
+    dis parturient montes, nascetur ridiculus mus.
+===WrapPlus.include_line_endings=True
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 1234567
 
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
+---
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 1234567
 
-GT Quoted
----------
-Quoted with the greater-than symbol.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789
+12345678
+===WrapPlus.include_line_endings=False
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
 
-    >> This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus. Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
-    >>
-    >> Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.
-    > This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus. Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
-    >
-    > Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
+---
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
 
-    Intermixed line without quote. Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789
+123456789
+===WrapPlus.include_line_endings='auto',word_wrap=True,wrap_width=78
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 1234567
 
-    > > Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.
-    > > Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse id sem consectetuer libero luctus adipiscing.
-    > This is a blockquote with one paragraph. Lorem ipsum dolor sit amet,
-    consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
-    Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
+---
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 1234567
 
-    > Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
-    id sem consectetuer libero luctus adipiscing.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789
+12345678
+===WrapPlus.include_line_endings='auto',word_wrap=False
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
 
-Single point: Should ignore gt symbol.  Wrap as normal, but remove the gt
-symbol first, and then readd it with the correct indentation.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
+---
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
 
-Selection: Only wrap selected lines.  Ignore gt symbol.  Use gt symbol indent
-found on first line of each paragraph.
+123456789 123456789 123456789 123456789 123456789 123456789 123456789
+123456789
+===wrap_width=40
+123456789 123456789 123456789 1234567890
 
-This behaves just like comments.
+123456789 123456789 123456789 123456789 123456789
+---
+123456789 123456789 123456789 1234567890
 
-Changes in the number of carets (with possible intermixed spaces) should be
-treated like a paragraph boundary.
+123456789 123456789 123456789 123456789
+123456789
+===rulers=[40]
+123456789 123456789 123456789 1234567890
+
+123456789 123456789 123456789 123456789 123456789
+---
+123456789 123456789 123456789 1234567890
+
+123456789 123456789 123456789 123456789
+123456789
+===WrapPlus.wrap_width=40
+123456789 123456789 123456789 1234567890
+
+123456789 123456789 123456789 123456789 123456789
+---
+123456789 123456789 123456789 1234567890
+
+123456789 123456789 123456789 123456789
+123456789
