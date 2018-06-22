@@ -1,9 +1,6 @@
 import os
-import queue
 import re
 import sublime
-import threading
-import time
 import unittest
 
 plugin_path = os.path.dirname(os.path.dirname(__file__))
@@ -30,14 +27,17 @@ class TestWrap(unittest.TestCase):
     def test_wrap(self):
         base = os.path.join(plugin_path, 'tests', 'wrap_tests')
         to_test = os.listdir(base)
-        for path in to_test:
-            # Open the file with Sublime (mainly to just get the correct
-            # syntax file).
-            self._with_open_file(os.path.join(base, path), self._test_wrap)
+        for filename in to_test:
+            abspath = os.path.join(base, filename)
+            contents = open(abspath, encoding='utf8').read()
+            contents = contents.replace('\r\n', '\n')
+            i = contents.find('\n')
+            syntax = contents[:i]
+            contents = contents[i + 1:]
+            assert contents.startswith('==='), 'bad file %r' % (filename,)
+            self._test_wrap(filename, contents, syntax)
 
-    def _test_wrap(self, view):
-        contents = view.substr(sublime.Region(0, view.size()))
-        syntax = view.settings().get('syntax')
+    def _test_wrap(self, filename, contents, syntax):
         # Split test file into separate tests.
         starts = re.finditer(r'^===((?:[A-Za-z0-9._-]+=[^,\n]+,?)+)?$',
                              contents, flags=re.MULTILINE)
@@ -59,7 +59,6 @@ class TestWrap(unittest.TestCase):
                     key, value = setting.split('=')
                     settings[key] = eval(value)
             # Open a new view to run the test in.
-            filename = os.path.basename(view.file_name())
             self._wrap_with_scratch(filename, orig, expected, syntax, settings,
                                     self._test_wrap_individual)
             if not settings.get('WrapPlus.skip_range', False):
@@ -129,51 +128,3 @@ class TestWrap(unittest.TestCase):
                 filename, settings, actual, expected))
         window.focus_view(view)
         window.run_command('close_file')
-
-    def _with_open_file(self, filename, f, **kwargs):
-        """Opens filename (relative to the plugin) in a new view, calls
-        f(view) to perform the tests.
-        """
-        window = sublime.active_window()
-        path = os.path.join(plugin_path, filename)
-        if not os.path.exists(path):
-            # Unfortunately there doesn't seem to be a good way to detect a
-            # failure to load.
-            raise ValueError('Can\'t find path %r' % path)
-        view = window.find_open_file(path)
-        if view:
-            window.focus_view(view)
-            f(view, **kwargs)
-            return
-        view = window.open_file(path)
-        q = queue.Queue()
-
-        def async_test_view():
-            try:
-                # Wait for view to finish loading.
-                for n in range(500):
-                    if view.is_loading():
-                        time.sleep(0.01)
-                    else:
-                        break
-                else:
-                    raise AssertionError('View never loaded.')
-                f(view, **kwargs)
-            except Exception as e:
-                q.put(e)
-            else:
-                q.put(None)
-
-        try:
-            t = threading.Thread(target=async_test_view)
-            t.start()
-            t.join()
-            msg = q.get()
-            if msg:
-                raise msg
-        finally:
-            if view.window():
-                window.focus_view(view)
-                if view.is_dirty():
-                    view.run_command('revert')
-                window.run_command('close_file')
