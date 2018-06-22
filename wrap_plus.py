@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sublime
 import sublime_plugin
-import textwrap
+from . import py_textwrap as textwrap
 import re
 import time
 try:
