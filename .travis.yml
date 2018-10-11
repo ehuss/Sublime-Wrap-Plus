@@ -25,8 +25,8 @@ before_install:
     - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
             brew update;
             brew install python3;
-            pip3 install python-coveralls;
-            pip3 install codecov;
+            pip3 --disable-pip-version-check install python-coveralls;
+            pip3 --disable-pip-version-check install codecov;
       fi
 
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then

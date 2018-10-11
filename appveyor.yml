@@ -8,7 +8,7 @@ environment:
 install:
     - ps: appveyor DownloadFile "https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/appveyor.ps1"
     - ps: .\appveyor.ps1 "bootstrap" -verbose
-    - ps: pip install coverage codacy-coverage
+    - ps: pip install --disable-pip-version-check coverage codacy-coverage
     # install Package Control
     # - ps: .\appveyor.ps1 "install_package_control" -verbose
 
@@ -25,7 +25,7 @@ test_script:
 on_finish:
     - "SET PYTHON=C:\\Python33"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-    - pip install codecov
+    - pip install --disable-pip-version-check codecov
     - codecov
     - python --version
     - echo %PATH%
