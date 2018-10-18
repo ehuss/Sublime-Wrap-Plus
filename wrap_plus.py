@@ -1255,10 +1255,11 @@ class WrapLinesEnhancementAskCommand(sublime_plugin.TextCommand):
     def run(self, edit, line_wrap_type=None):
         self.line_wrap_type = line_wrap_type
 
-        sublime.active_window().show_input_panel(
+        view = sublime.active_window().show_input_panel(
             'Provide wrapping width:', str( last_used_width ),
             self.input_package, None, None
         )
+        view.run_command("select_all")
 
     def input_package(self, width):
         global last_used_width
