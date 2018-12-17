@@ -1,6 +1,6 @@
 {
     "tests_dir" : "tests",
-    "pattern" : "*unit_tests.py",
+    "pattern" : "test_*.py",
     "async": true,
     "deferred": false,
     "verbosity": 1,
