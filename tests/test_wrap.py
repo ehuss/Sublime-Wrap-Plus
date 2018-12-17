@@ -56,8 +56,8 @@ class TestWrap(unittest.TestCase):
             settings = {}
             if start.group(1):
                 for setting in start.group(1).split(','):
-                    key, value = setting.split('=')
-                    settings[key] = eval(value)
+                    setting_name, value = setting.split('=')
+                    settings[setting_name] = eval(value)
             # Open a new view to run the test in.
             self._wrap_with_scratch(filename, orig, expected, syntax, settings,
                                     self._test_wrap_individual)
@@ -114,12 +114,12 @@ class TestWrap(unittest.TestCase):
         view_settings = view.settings()
         bad_keys = set(settings.keys()) - set(DEFAULT_SETTINGS.keys())
         self.assertEqual(bad_keys, set())
-        for key, value in DEFAULT_SETTINGS.items():
-            value = settings.get(key, value)
+        for setting_name, value in DEFAULT_SETTINGS.items():
+            value = settings.get(setting_name, value)
             if value == UNSET:
-                view_settings.erase(key)
+                view_settings.erase(setting_name)
             else:
-                view_settings.set(key, value)
+                view_settings.set(setting_name, value)
         view.run_command('append', {'characters': contents})
         f(view)
         actual = view.substr(sublime.Region(0, view.size()))
