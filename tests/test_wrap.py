@@ -16,6 +16,8 @@ DEFAULT_SETTINGS = {
     'translate_tabs_to_spaces': False,
     'WrapPlus.break_long_words': False,
     'WrapPlus.break_on_hyphens': False,
+    'WrapPlus.after_wrap': 'cursor_below',
+    'WrapPlus.semantic_line_wrap': False,
     'WrapPlus.include_line_endings': 'auto',
     'WrapPlus.wrap_width': UNSET,
     'WrapPlus.skip_range': False,  # Workaround for a bug.
