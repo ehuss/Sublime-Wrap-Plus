@@ -1,0 +1,55 @@
+Packages/LaTeX/LaTeX.sublime-syntax
+===
+This is a test. This is a test. This is a test. This is a test. % This is a comment
+---
+This is a test. This is a test. This is a test. This is a test. % This is a comment
+===
+This is an example of a citation starting on a new line
+\cite{Newton1687}
+---
+This is an example of a citation starting on a new line \cite{Newton1687}
+===
+sample text
+\textbf{sample text}
+---
+sample text \textbf{sample text}
+===
+% Must not omit this very important statement:
+Very important statement
+---
+% Must not omit this very important statement:
+Very important statement
+===
+We refer the reader to the proof in Lemma~\ref{lem:FLT}
+% <START>Here is some text
+% that I have decided
+% to remove.<END>
+the proof given is particularly elegant because of reasons X,Y,Z...
+---
+We refer the reader to the proof in Lemma~\ref{lem:FLT}
+% Here is some text that I have decided to remove.
+the proof given is particularly elegant because of reasons X,Y,Z...
+===
+<START>The quadratic form $\mN$ for the integration of the squared norm of an $m$-dimensional linear function on any simplex $\Omega$ of dimension $n$ can therefore be written as<END>
+\begin{align}
+\label{eq:integration_matrix}
+\mN &= \Factorial{n} \, \vol{\Omega} \, \Transpose{\mP} \inp{\mH^0_n \otimes \IdentityMatrix_m} \, \mP \nonumber\\%
+    &= \Factorial{n} \, \vol{\Omega} \, \mN^0~.
+\end{align}
+<START>The discrete $L^2$-product of piecewise-linear functions on a simplical complexes is obtained by assembling the quadratic forms $\mN$ of each simplex into an operator $\mM$ on the whole complex.<END>
+
+Don't touch lines that start with a backslash.
+---
+The quadratic form $\mN$ for the integration of the squared norm of an
+$m$-dimensional linear function on any simplex $\Omega$ of dimension $n$ can
+therefore be written as
+\begin{align}
+\label{eq:integration_matrix}
+\mN &= \Factorial{n} \, \vol{\Omega} \, \Transpose{\mP} \inp{\mH^0_n \otimes \IdentityMatrix_m} \, \mP \nonumber\\%
+    &= \Factorial{n} \, \vol{\Omega} \, \mN^0~.
+\end{align}
+The discrete $L^2$-product of piecewise-linear functions on a simplical
+complexes is obtained by assembling the quadratic forms $\mN$ of each simplex
+into an operator $\mM$ on the whole complex.
+
+Don't touch lines that start with a backslash.

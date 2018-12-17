@@ -66,9 +66,7 @@ script:
 
 
 after_success:
-    # remove the following if `coveralls` is not needed
-    - echo
+    - echo After Success
 
 notifications:
     email: false
-

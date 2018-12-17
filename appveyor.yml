@@ -31,4 +31,3 @@ on_finish:
     - echo %PATH%
     - coverage xml -o coverage.xml
     - python-codacy-coverage
-

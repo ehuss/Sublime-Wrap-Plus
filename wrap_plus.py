@@ -1,6 +1,7 @@
 from __future__ import print_function
-import sublime, sublime_plugin
-import textwrap
+import sublime
+import sublime_plugin
+from . import py_textwrap as textwrap
 import re
 
 import os
@@ -21,29 +22,35 @@ def is_quoted_string(scope_region, scope_name):
     # comment.block.documentation.python
     return 'quoted' in scope_name or 'comment.block.documentation' in scope_name
 
+
 debug_enabled = False
 # debug_enabled = True
 
 time_start = 0
 last_time = 0
+
+
 def debug_start(enabled):
     global time_start, last_time
     if debug_enabled or enabled:
         time_start = time.time()
         last_time = time_start
 
+
 def debug(msg, *args):
     if debug_enabled:
         global last_time
         t = time.time()
-        d = t-time_start
-        print('%.3f (+%.3f) ' % (d, t-last_time), end='')
+        d = t - time_start
+        print('%.3f (+%.3f) ' % (d, t - last_time), end='')
         last_time = t
         print(msg % args)
 
+
 def debug_end():
     if debug_enabled:
-        print('Total time: %.3f' % (time.time()-time_start))
+        print('Total time: %.3f' % (time.time() - time_start))
+
 
 class PrefixStrippingView(object):
     """View that strips out prefix characters, like comments.
@@ -73,7 +80,7 @@ class PrefixStrippingView(object):
         self.max = max
 
     def _is_c_comment(self, scope_name):
-        if not 'comment' in scope_name and not 'block' in scope_name:
+        if 'comment' not in scope_name and 'block' not in scope_name:
             return False
         for start, end, disable_indent in self.block_comment:
             if start == '/*' and end == '*/':
@@ -152,8 +159,8 @@ class PrefixStrippingView(object):
             for line_region in lines[1:-1]:
                 line = self.view.substr(line_region)
                 regex_match = funny_c_comment_pattern.match(line)
-                if regex_match != None:
-                    if first_star_prefix == None:
+                if regex_match is not None:
+                    if first_star_prefix is None:
                         first_star_prefix = regex_match.group()
                 else:
                     first_star_prefix = None
@@ -182,6 +189,7 @@ class PrefixStrippingView(object):
         """Get a line for a point.
 
         :returns: A (region, str) tuple.  str has the comment prefix stripped.
+            Returns None, None if line out of range.
         """
         line_region = self.view.line(where)
         if line_region.begin() < self.min:
@@ -210,8 +218,8 @@ class PrefixStrippingView(object):
                         # This should never happen (matches the string but not
                         # the regex?).
                         return None, None
-                l = len(self.required_comment_prefix)
-                line = line[l:]
+                rcp_len = len(self.required_comment_prefix)
+                line = line[rcp_len:]
                 # XXX: Should this also update line_region?
             else:
                 return None, None
@@ -223,7 +231,7 @@ class PrefixStrippingView(object):
     def next_line(self, where):
         l_r = self.view.line(where)
         debug('next line region=%r', l_r)
-        point = l_r.end()+1
+        point = l_r.end() + 1
         if point >= self.max:
             debug('past max at %r', self.max)
             return None, None
@@ -231,15 +239,19 @@ class PrefixStrippingView(object):
 
     def prev_line(self, where):
         l_r = self.view.line(where)
-        point = l_r.begin()-1
+        point = l_r.begin() - 1
         if point <= self.min:
             return None, None
         return self.line(point)
 
+
 def OR(*args):
     return '(?:' + '|'.join(args) + ')'
+
+
 def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
+
 
 blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*(?:````?.*)?)$|(?:.*"""\\?)')
 
@@ -250,15 +262,16 @@ word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
 phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
 
 # This doesn't always work, but seems decent.
-numbered_list = r'(?:(?:[0-9#]+[.)])+[\t ])'
-lettered_list = r'(?:[\w][.)][\t ])'
+numbered_list = r'(?:(?:([0-9#]+)[.)])+[\t ])'
+numbered_list_pattern = re.compile(numbered_list)
+lettered_list = r'(?:[a-zA-Z][.)][\t ])'
 bullet_list = r'(?:[*+#-]+[\t ])'
 list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_list) + r'[ \t]*')
 latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*TeX)'
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
 
-new_paragraph_pattern_string = r'^[\t ]*' + OR(numbered_list, lettered_list, bullet_list, field_start, r'\{')
+new_paragraph_pattern_string = r'^[\t ]*' + OR(lettered_list, bullet_list, field_start, r'\{')
 # print( "pattern: " + new_paragraph_pattern_string )
 
 new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
@@ -266,10 +279,10 @@ space_prefix_pattern = re.compile(r'^[ \t]*')
 
 # XXX: Does not handle escaped colons in field name.
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
-field_pattern = re.compile(r'^([ \t]*)'+fields)  # rest, javadoc, jsdoc, etc
+field_pattern = re.compile(r'^([ \t]*)' + fields)  # rest, javadoc, jsdoc, etc
 
 sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
-sep_line = '[' + sep_chars + r']+[ \t'+sep_chars+']*'
+sep_line = '[' + sep_chars + r']+[ \t' + sep_chars + ']*'
 
 # Break pattern is a little ambiguous.  Something like "# Header" could also be a list element.
 break_pattern = re.compile(r'^[\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
@@ -277,6 +290,7 @@ pure_break_pattern = re.compile(r'^[\t ]*' + sep_line + '$')
 
 email_quote = r'[\t ]*>[> \t]*'
 funny_c_comment_pattern = re.compile(r'^[\t ]*\*')
+
 
 class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
@@ -291,18 +305,46 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # "full_line" function will extend it to contain the next line
         # (because the cursor is actually at the beginning of the next line).
         # I would prefer it didn't do that.
-        if self.view.substr(region.end()-1) == '\n':
-            return self.view.full_line(sublime.Region(region.begin(), region.end()-1))
+        if self.view.substr(region.end() - 1) == '\n':
+            return self.view.full_line(sublime.Region(region.begin(), region.end() - 1))
         else:
             return self.view.full_line(region)
+
+    def _is_real_numbered_list(self, line_region, line, limit=10, indent=False):
+        """Returns True if `line` is not a paragraph continuation."""
+        # We stop checking the list after `limit` lines to avoid quadratic
+        # runtime. For inputs like 100 lines of "2. ", this function is called
+        # in a loop over the input and also contains a loop over the input.
+        # indent tracks whether we came from an indented line
+        if limit == 0:
+            return True
+        regex_match = numbered_list_pattern.search(line)
+        if regex_match and regex_match.group(1) == '1':
+            return True
+        prev_line_region, prev_line = self._strip_view.prev_line(line_region)
+        if prev_line_region is None:
+            return not indent
+        if self._is_paragraph_break(prev_line_region, prev_line):
+            return not indent
+        if new_paragraph_pattern.match(prev_line):
+            return not indent
+        if prev_line[0] == ' ' or prev_line[0] == '\t':
+            # prev_line might be a numbered list or a normal paragraph
+            return self._is_real_numbered_list(prev_line_region, prev_line, limit - 1, indent=True)
+        if numbered_list_pattern.match(prev_line):
+            return self._is_real_numbered_list(prev_line_region, prev_line, limit - 1)
+        return False  # previous line appears to be a normal paragraph
 
     def _is_paragraph_start(self, line_region, line):
         # Certain patterns at the beginning of the line indicate this is the
         # beginning of a paragraph.
-
-        # print( "line: " + str( line ) )
-        # print( "new_paragraph_pattern.match(line): " + str( new_paragraph_pattern.match(line) ) )
-        return new_paragraph_pattern.match(line) != None
+        if new_paragraph_pattern.match(line):
+            return True
+        if numbered_list_pattern.match(line):
+            result = self._is_real_numbered_list(line_region, line)
+            debug('is {}a paragraph continuation'.format('not ' if result else ''))
+            return result
+        return False
 
     def _is_paragraph_break(self, line_region, line, pure=False):
         """A paragraph "break" is something like a blank line, or a horizontal line,
@@ -315,12 +357,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if 'heading' in scope_name:
             return True
         if pure:
-            return pure_break_pattern.match(line) != None
+            return pure_break_pattern.match(line) is not None
         else:
-            return break_pattern.match(line) != None
+            return break_pattern.match(line) is not None
 
     def _is_blank_line(self, line):
-        return blank_line_pattern.match(line) != None
+        return blank_line_pattern.match(line) is not None
 
     def _find_paragraph_start(self, point):
         """Start at point and move up to find where the paragraph starts.
@@ -329,6 +371,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         """
         view = self._strip_view
         current_line_region, current_line = view.line(point)
+        if current_line_region is None:
+            return None, None
         started_in_comment = self._started_in_comment(point)
 
         debug('is_paragraph_break?')
@@ -344,26 +388,26 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 break
             # Check if the previous line is a "break" separator.
             debug('break?')
-            prev_line_r, prev_line = view.prev_line(current_line_region)
-            if prev_line_r == None:
+            prev_line_region, prev_line = view.prev_line(current_line_region)
+            if prev_line_region is None:
                 # current_line is as far up as we're allowed to go.
                 break
-            if self._is_paragraph_break(prev_line_r, prev_line):
+            if self._is_paragraph_break(prev_line_region, prev_line):
                 debug('prev line %r is a paragraph break', prev_line,)
                 break
             # If the previous line has a comment, and we started in a
             # non-comment scope, stop.  No need to check for comment to
             # non-comment change because the prefix restrictions should handle
             # that.
-            if (not started_in_comment and
-                self.view.score_selector(prev_line_r.end(), 'comment')
+            if (not started_in_comment
+                and self.view.score_selector(prev_line_region.end(), 'comment')
                ):
                 debug('prev line contains a comment, cannot continue.')
                 break
             debug('prev_line %r is part of the paragraph', prev_line,)
             # Previous line is a part of this paragraph.  Add it, and loop
             # around again.
-            current_line_region = prev_line_r
+            current_line_region = prev_line_region
             current_line = prev_line
         return current_line_region, current_line
 
@@ -401,11 +445,16 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # Find the beginning of this paragraph.
                 debug('empty sel finding paragraph start.')
                 current_line_region, current_line = self._find_paragraph_start(paragraph_start_pt)
-                debug('empty sel paragraph start determined to be %r %r', current_line_region, current_line)
+                debug('empty sel paragraph start determined to be %r %r',
+                      current_line_region, current_line)
             else:
                 # The selection defines the beginning.
                 current_line_region, current_line = view.line(paragraph_start_pt)
                 debug('sel beggining = %r %r', current_line_region, current_line)
+
+            if current_line_region is None:
+                debug('Could not find start.')
+                return []
 
             # Skip blank and unambiguous break lines.
             while 1:
@@ -428,8 +477,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # If we started in a non-comment scope, and the end of the
                 # line contains a comment, include any non-comment text in the
                 # wrap and stop looking for more.
-                if (not started_in_comment and
-                    self.view.score_selector(current_line_region.end(), 'comment')
+                if (not started_in_comment
+                    and self.view.score_selector(current_line_region.end(), 'comment')
                    ):
                     debug('end of paragraph hit a comment.')
                     # Find the start of the comment.
@@ -455,7 +504,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 paragraph_end_pt = current_line_region.end()
 
                 current_line_region, current_line = view.next_line(current_line_region)
-                if current_line_region == None:
+                if current_line_region is None:
                     # Line is outside of our range.
                     debug('Out of range, stopping.')
                     break
@@ -467,7 +516,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     debug('current line is a paragraph start, stopping.')
                     break
 
-
             paragraph_region = sublime.Region(paragraph_start_pt, paragraph_end_pt)
             result.append((paragraph_region, lines, view.required_comment_prefix))
 
@@ -477,7 +525,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # Skip over blank lines and break lines till the next paragraph
             # (or end of range).
             debug('skip over blank lines')
-            while current_line_region != None:
+            while current_line_region is not None:
                 if self._is_paragraph_start(current_line_region, current_line):
                     break
                 if not self._is_paragraph_break(current_line_region, current_line):
@@ -485,7 +533,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # It's a paragraph break, skip over it.
                 current_line_region, current_line = view.next_line(current_line_region)
 
-            if current_line_region == None:
+            if current_line_region is None:
                 break
 
             debug('next_paragraph_start is %r %r', current_line_region, current_line)
@@ -529,7 +577,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             width = 78
 
         ile = self.view.settings().get('WrapPlus.include_line_endings', 'auto')
-        if ile == True:
+        if ile is True:
             width -= self._determine_line_ending_size()
         elif ile == 'auto':
             if self._auto_word_wrap_enabled() and self.view.settings().get('wrap_width', 0) != 0:
@@ -549,7 +597,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
     def _auto_word_wrap_enabled(self):
         ww = self.view.settings().get('word_wrap')
-        return (ww == True or
+        return (ww is True or
                 (ww == 'auto' and self.view.score_selector(0, 'text')))
 
     def _determine_tab_size(self):
@@ -586,11 +634,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
     def _width_in_spaces(self, text):
         tab_count = text.count('\t')
-        return tab_count*self._tab_width + len(text)-tab_count
+        return tab_count * self._tab_width + len(text) - tab_count
 
     def _make_indent(self):
         # This is suboptimal.
-        return ' '*4
+        return ' ' * 4
         # if self.view.settings().get('translate_tabs_to_spaces'):
         #     return ' ' * self._tab_width
         # else:
@@ -606,8 +654,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if regex_match:
             initial_indent = first_line[0:regex_match.end()]
             stripped_prefix = initial_indent.lstrip()
-            leading_whitespace = initial_indent[:len(initial_indent)-len(stripped_prefix)]
-            subsequent_indent = leading_whitespace+' '*self._width_in_spaces(stripped_prefix)
+            leading_whitespace = initial_indent[:len(initial_indent) - len(stripped_prefix)]
+            subsequent_indent = leading_whitespace + ' ' * self._width_in_spaces(stripped_prefix)
         else:
             regex_match = field_pattern.match(first_line)
             if regex_match:
@@ -620,7 +668,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         # It's already indented, keep this indent level
                         # (unless it is less than where the field started).
                         spaces = regex_match.group(0)
-                        if self._width_in_spaces(spaces) >= self._width_in_spaces(initial_indent)+1:
+                        if (self._width_in_spaces(spaces) >=
+                            self._width_in_spaces(initial_indent) + 1
+                           ):
+                            subsequent_indent = spaces
                             subsequent_indent = spaces
                 if not subsequent_indent:
                     # Not already indented, make an indent.
@@ -645,7 +696,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         point = paragraph_region.begin()
         scope_region = self.view.extract_scope(point)
         scope_name = self.view.scope_name(point)
-        if len(lines)==1 and is_quoted_string(scope_region, scope_name):
+        if len(lines) == 1 and is_quoted_string(scope_region, scope_name):
             # A multi-line quoted string, that is currently only on one line.
             # This is mainly for Python docstrings.  Not sure if it's a
             # problem in other cases.
@@ -667,8 +718,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         debug('initial_indent=%r subsequent_indent=%r', initial_indent, subsequent_indent)
 
-        return (required_comment_prefix+initial_indent,
-                required_comment_prefix+subsequent_indent,
+        return (required_comment_prefix + initial_indent,
+                required_comment_prefix + subsequent_indent,
                 new_lines)
 
     def get_semantic_line_wrap_setting(self, view_settings, line_wrap_type):
@@ -708,8 +759,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         debug('paragraphs is %r', paragraphs)
 
         after_wrap       = view_settings.get('WrapPlus.after_wrap', "cursor_below")
-        break_long_words = view_settings.get('WrapPlus.break_long_words', True)
-        break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', True)
+        break_long_words = view_settings.get('WrapPlus.break_long_words', False)
+        break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', False)
 
         wrap_extension_percent                 = view_settings.get('WrapPlus.semantic_wrap_extension_percent', 1.0)
         minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
@@ -758,7 +809,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
                 paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
-                initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(paragraph_region, paragraph_lines, required_comment_prefix)
+
+                initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(
+                    paragraph_region, paragraph_lines, required_comment_prefix)
 
                 text = line_wrapper_type()
 
@@ -1205,7 +1258,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # Put the tabs back to the prefixes.
         if orig_initial_indent or orig_subsequent_indent:
 
-            if initial_indent != orig_subsequent_indent or subsequent_indent != orig_subsequent_indent:
+            if (initial_indent != orig_subsequent_indent
+                or subsequent_indent != orig_subsequent_indent
+                ):
                 lines = text.splitlines()
 
                 if initial_indent != orig_initial_indent:
@@ -1216,7 +1271,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if subsequent_indent != orig_subsequent_indent:
 
                     for index, line in enumerate(lines[1:]):
-                        lines[index+1] = orig_subsequent_indent + lines[index+1][len(subsequent_indent):]
+                        remaining = lines[index + 1][len(subsequent_indent):]
+                        lines[index + 1] = orig_subsequent_indent + remaining
 
                 text = '\n'.join(lines)
 
@@ -1224,9 +1280,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
     def move_cursor_below_the_last_paragraph(self):
         selection = self.view.sel()
-        end = selection[len(selection)-1].end()
+        end = selection[len(selection) - 1].end()
         line = self.view.line(end)
-        end = min(self.view.size(), line.end()+1)
+        end = min(self.view.size(), line.end() + 1)
         self.view.sel().clear()
         region = sublime.Region(end)
         self.view.sel().add(region)
