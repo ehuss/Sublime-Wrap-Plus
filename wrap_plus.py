@@ -43,7 +43,7 @@ def debug_start(enabled):
 
 def debug_end():
     if debug_enabled > 1:
-        print('Total time: %.3f' % (time.time() - time_start))
+        log(1, 'Total time: %.3f', time.time() - time_start)
 
 
 class PrefixStrippingView(object):
@@ -124,7 +124,7 @@ class PrefixStrippingView(object):
 
         for line_comment, is_block_comment in extended_prefixes:
             line_comment = line_comment.rstrip()
-            log(2,  ( "line_comment: %s, line_stripped: %s" % ( line_comment, line_stripped ) ).replace("%", "%%") )
+            log(2, "line_comment: %s, line_stripped: %s", line_comment, line_stripped )
 
             if line_stripped.startswith(line_comment):
 
@@ -547,14 +547,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         :returns: The maximum line width.
         """
-        log(4, "_determine_width, width: %s" % width )
+        log(4, "_determine_width, width: %s", width )
         if width == 0 and self.view.settings().get('wrap_width'):
             try:
                 width = int(self.view.settings().get('wrap_width'))
             except TypeError:
                 pass
 
-        log(4, "_determine_width, before get('rulers'), width: %s" % width )
+        log(4, "_determine_width, before get('rulers'), width: %s", width )
         if width == 0 and self.view.settings().get('rulers'):
             # try and guess the wrap width from the ruler, if any
             try:
@@ -564,7 +564,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
-        log(4, "_determine_width, before get('WrapPlus.wrap_width', width): %s" % width )
+        log(4, "_determine_width, before get('WrapPlus.wrap_width', width): %s", width )
         if width == 0:
             width = self.view.settings().get('WrapPlus.wrap_width', width)
 
@@ -770,7 +770,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # minimum_line_size_percent = 0.0
             disable_line_wrapping_by_maximum_width = True
 
-        log(4, "minimum_line_size_percent: %s" % minimum_line_size_percent )
+        log(4, "minimum_line_size_percent: %s", minimum_line_size_percent )
         if self.get_semantic_line_wrap_setting( view_settings, line_wrap_type ):
             self._width *= wrap_extension_percent
 
@@ -794,7 +794,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         wrapper.width = self._width
         wrapper.expand_tabs = False
 
-        log(4, "self._width: %s" % self._width )
+        log(4, "self._width: %s", self._width )
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -903,7 +903,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 new_text.append( subsequent_indent )
                 new_text.extend( new_lines )
 
-        log(4, "balance_characters_between_line_wraps, new_text: %s" + new_text )
+        log(4, "balance_characters_between_line_wraps, new_text: %s", new_text )
         return new_text
 
     def is_line_bellow_half_wrap_limit(self, new_lines, subsequent_indent_length):
@@ -938,7 +938,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             for step in range( 1, lines_count + 1 ):
                 new_line_length = math.ceil( line_length / step )
-                log(4, "_split_lines, new_line_length: %d, lines_count: %d" % ( new_line_length, lines_count ) )
+                log(4, "_split_lines, new_line_length: %d, lines_count: %d", new_line_length, lines_count )
 
                 if new_line_length > maximum_line_width:
                     continue
@@ -946,7 +946,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 else:
                     break
 
-            log(4, "_split_lines, maximum_line_width: %d, new_width: %d (%f)" % ( maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent ) )
+            log(4, "_split_lines, maximum_line_width: %d, new_width: %d (%f)", maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent )
             wrapper.width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
 
             log(4, "_split_lines, line: " + line )
@@ -967,7 +967,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             new_lines.append( fixed_wrapped_lines )
 
-        log(4, "_split_lines, new_lines: %s" % new_lines )
+        log(4, "_split_lines, new_lines: %s", new_lines )
         return new_lines
 
     def calculate_lines_count(self, line, initial_indent, subsequent_indent, maximum_line_width):
@@ -987,13 +987,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         while last_line_length != new_line_length \
                 and lines_count < line_length:
 
-            log(4, "calculate_lines_count, new_line_length: %s" % new_line_length )
+            log(4, "calculate_lines_count, new_line_length: %s", new_line_length )
             last_line_length = new_line_length
 
             lines_count     = math.ceil( last_line_length / maximum_line_width )
             new_line_length = ( lines_count - 1 ) * subsequent_indent_length + line_length
 
-        log(4, "calculate_lines_count, lines_count:     %s" % lines_count )
+        log(4, "calculate_lines_count, lines_count:     %s", lines_count )
         return lines_count, new_line_length
 
     def semantic_line_wrap(self, paragraph_lines, initial_indent, subsequent_indent,
@@ -1024,7 +1024,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         text_length = len(text)
 
         minimum_line_size = int( self._width * minimum_line_size_percent )
-        log(4, "minimum_line_size: %s" % ( minimum_line_size ) )
+        log(4, "minimum_line_size: %s", minimum_line_size )
 
         indent_length        = initial_indent_length
         accumulated_line     = ""
@@ -1036,7 +1036,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             nonlocal index
             nonlocal is_flushing_accumalated_line
 
-            log(4, "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d" % ( next_word_length ) )
+            log(4, "semantic_line_wrap, Flushing accumulated_line... next_word_length: %d", next_word_length )
             is_flushing_accumalated_line = True
 
             # Current character is a whitespace, but it must the the next, so fix the index
@@ -1059,7 +1059,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 comma_list_size     -= 1
                 last_comma_list_size = comma_list_size + 1
 
-                log(4, "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, comma_list_end_point: %d, character: %s" % ( index, accumulated_line_length, comma_list_size, comma_list_end_point, character ) )
+                log(4, "semantic_line_wrap, is_flushing, index: %d, accumulated_line_length: %d, comma_list_size: %d, comma_list_end_point: %d, character: %s", index, accumulated_line_length, comma_list_size, comma_list_end_point, character )
                 if not is_flushing_accumalated_line:
 
                     if not disable_line_wrapping_by_maximum_width \
@@ -1086,7 +1086,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 is_flushing_comma_list  = False
                 is_comma_separated_list = False
 
-            log(4, "semantic_line_wrap, index: %d, character: %s " % ( index, character ) )
+            log(4, "semantic_line_wrap, index: %d, character: %s ", index, character )
             if not disable_line_wrapping_by_maximum_width \
                     and not is_flushing_accumalated_line \
                     and accumulated_line_length + next_word_length + indent_length > self._width:
@@ -1119,7 +1119,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                                 comma_list_size = -1
                                 is_comma_separated_list = False
 
-                        log(4, "semantic_line_wrap, index: %3d, comma_list_size: %d (%d)" % ( index, comma_list_size, self.maximum_items_in_comma_separated_list ) )
+                        log(4, "semantic_line_wrap, index: %3d, comma_list_size: %d (%d)", index, comma_list_size, self.maximum_items_in_comma_separated_list )
                         if ( is_comma_separated_list \
                                 and comma_list_size > -1 ) \
                                 and not is_flushing_comma_list \
@@ -1136,7 +1136,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                             accumulated_line = "".join( [accumulated_line, character, "\n",
                                     ( "" if balance_characters_between_line_wraps else subsequent_indent ) ] )
 
-                            log(4, "semantic_line_wrap, accumulated_line flush: %r" % accumulated_line )
+                            log(4, "semantic_line_wrap, accumulated_line flush: %r", accumulated_line )
                             new_text.append( accumulated_line )
 
                             accumulated_line = ""
@@ -1162,7 +1162,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        log(4, "semantic_line_wrap, new_text: %s" % new_text )
+        log(4, "semantic_line_wrap, new_text: %s", new_text )
         return new_text
 
     def peek_next_word_length(self, index, text):
@@ -1171,7 +1171,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if match:
             next_word = match.group(0)
 
-            log(4, "peek_next_word_length: %s" % next_word )
+            log(4, "peek_next_word_length: %s", next_word )
             return len( next_word )
 
         return 0
@@ -1181,7 +1181,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             return if the next characters form a command separated list
             return 0 if False, otherwise the `text` index where the command separated list ended
         """
-        log(4, "is_comma_separated_list, index: %d" % ( index ) )
+        log(4, "is_comma_separated_list, index: %d", index )
         comma_list_end_point = -1
 
         # A word list has at least 2 items. For example: start 1, 2, 3 words
@@ -1210,7 +1210,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if is_character_whitespace and not is_next_character_whitepace:
                 words_counter += 1
 
-            log(4, "is_comma_separated_list, index: %d, words_counter: %d, character: %s, next_character: %s" % ( index, words_counter, character, next_character ) )
+            log(4, "is_comma_separated_list, index: %d, words_counter: %d, character: %s, next_character: %s", index, words_counter, character, next_character )
             if is_word_separator_character and is_next_character_whitepace:
 
                 if 0 < words_counter < self.maximum_words_in_comma_separated_list:
@@ -1227,10 +1227,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 words_counter = 0
 
         if comma_list_end_point > -1:
-            log(4, "is_comma_separated_list (True), comma_list_end_point: %d, comma_separated_list_items_count: %d" % ( comma_list_end_point, comma_separated_list_items_count ) )
+            log(4, "is_comma_separated_list (True), comma_list_end_point: %d, comma_separated_list_items_count: %d", comma_list_end_point, comma_separated_list_items_count )
             return True, comma_list_end_point, comma_separated_list_items_count
 
-        log(4, "is_comma_separated_list (False), comma_list_end_point: %d, comma_separated_list_items_count: %d" % ( 0, 0 ) )
+        log(4, "is_comma_separated_list (False), comma_list_end_point: %d, comma_separated_list_items_count: %d", 0, 0 )
         return False, 0, 0
 
     def classic_wrap_text(self, wrapper, paragraph_lines, initial_indent, subsequent_indent):
