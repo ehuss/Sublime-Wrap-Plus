@@ -113,7 +113,7 @@ class PrefixStrippingView(object):
         # Determine if point is inside a "line comment".
         # Only whitespace is allowed to the left of the line comment.
         is_generic_config = "source.genconfig" in scope_name
-        debug( "line_comments: " + str( line_comments ) )
+        debug( "line_comments: %s", line_comments )
 
         # When using the generic syntax, the Sublime Text plugin `Default.comment` will return
         # the default syntax comment prefix `#` instead of the actual line prefix
@@ -553,14 +553,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         :returns: The maximum line width.
         """
-        # print( "_determine_width, width: " + str( width ) )
+        # print( "_determine_width, width: %s" % width )
         if width == 0 and self.view.settings().get('wrap_width'):
             try:
                 width = int(self.view.settings().get('wrap_width'))
             except TypeError:
                 pass
 
-        # print( "_determine_width, before get('rulers'), width: " + str( width ) )
+        # print( "_determine_width, before get('rulers'), width: %s" % width )
         if width == 0 and self.view.settings().get('rulers'):
             # try and guess the wrap width from the ruler, if any
             try:
@@ -570,7 +570,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             except TypeError:
                 pass
 
-        # print( "_determine_width, before get('WrapPlus.wrap_width', width): " + str( width ) )
+        # print( "_determine_width, before get('WrapPlus.wrap_width', width): %s" % width )
         if width == 0:
             width = self.view.settings().get('WrapPlus.wrap_width', width)
 
@@ -775,7 +775,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # minimum_line_size_percent = 0.0
             disable_line_wrapping_by_maximum_width = True
 
-        # print( "minimum_line_size_percent: " + str( minimum_line_size_percent ) )
+        # print( "minimum_line_size_percent: %s" % minimum_line_size_percent )
         if self.get_semantic_line_wrap_setting( view_settings, line_wrap_type ):
             self._width *= wrap_extension_percent
 
@@ -799,7 +799,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         wrapper.width = self._width
         wrapper.expand_tabs = False
 
-        # print( "self._width: " + str( self._width ) )
+        # print( "self._width: %s" % self._width )
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
             self.view.sel().clear()
@@ -908,7 +908,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 new_text.append( subsequent_indent )
                 new_text.extend( new_lines )
 
-        # print( "balance_characters_between_line_wraps, new_text: " + str( new_text ) )
+        # print( "balance_characters_between_line_wraps, new_text: %s" + new_text )
         return new_text
 
     def is_line_bellow_half_wrap_limit(self, new_lines, subsequent_indent_length):
@@ -972,7 +972,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             new_lines.append( fixed_wrapped_lines )
 
-        # print( "_split_lines, new_lines: " + str( new_lines ) )
+        # print( "_split_lines, new_lines: %s" % new_lines )
         return new_lines
 
     def calculate_lines_count(self, line, initial_indent, subsequent_indent, maximum_line_width):
@@ -992,13 +992,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         while last_line_length != new_line_length \
                 and lines_count < line_length:
 
-            # print( "calculate_lines_count, new_line_length: " + str( new_line_length ) )
+            # print( "calculate_lines_count, new_line_length: %s" % new_line_length )
             last_line_length = new_line_length
 
             lines_count     = math.ceil( last_line_length / maximum_line_width )
             new_line_length = ( lines_count - 1 ) * subsequent_indent_length + line_length
 
-        # print( "calculate_lines_count, lines_count:     " + str( lines_count ) )
+        # print( "calculate_lines_count, lines_count:     %s" % lines_count )
         return lines_count, new_line_length
 
     def semantic_line_wrap(self, paragraph_lines, initial_indent, subsequent_indent,
@@ -1167,7 +1167,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if len( accumulated_line ):
             new_text.append(accumulated_line)
 
-        # print( "semantic_line_wrap, new_text: " + str( new_text ) )
+        # print( "semantic_line_wrap, new_text: %s" % new_text )
         return new_text
 
     def peek_next_word_length(self, index, text):
