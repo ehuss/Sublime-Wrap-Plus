@@ -377,23 +377,25 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         debug('is_paragraph_break?')
         if self._is_paragraph_break(current_line_region, current_line):
+            debug('yes')
             return current_line_region, current_line
         debug('no')
 
         while 1:
             # Check if this line is the start of a paragraph.
-            debug('start?')
+            debug('is the start of a paragraph?')
             if self._is_paragraph_start(current_line_region, current_line):
-                debug('current_line is paragraph start: %r', current_line,)
+                debug('yes, current_line is paragraph start: %r', current_line,)
                 break
+            debug('no')
             # Check if the previous line is a "break" separator.
-            debug('break?')
+            debug('previous line is line break?')
             prev_line_region, prev_line = view.prev_line(current_line_region)
             if prev_line_region is None:
-                # current_line is as far up as we're allowed to go.
+                debug("yes, current_line is as far up as we're allowed to go.")
                 break
             if self._is_paragraph_break(prev_line_region, prev_line):
-                debug('prev line %r is a paragraph break', prev_line,)
+                debug('yes, prev line %r is a paragraph break', prev_line,)
                 break
             # If the previous line has a comment, and we started in a
             # non-comment scope, stop.  No need to check for comment to
@@ -402,9 +404,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if (not started_in_comment
                 and self.view.score_selector(prev_line_region.end(), 'comment')
                ):
-                debug('prev line contains a comment, cannot continue.')
+                debug('yes, prev line %r contains a comment, cannot continue.', prev_line)
                 break
-            debug('prev_line %r is part of the paragraph', prev_line,)
+            debug('no, prev_line %r is part of the paragraph', prev_line,)
             # Previous line is a part of this paragraph.  Add it, and loop
             # around again.
             current_line_region = prev_line_region
@@ -671,7 +673,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         if (self._width_in_spaces(spaces) >=
                             self._width_in_spaces(initial_indent) + 1
                            ):
-                            subsequent_indent = spaces
                             subsequent_indent = spaces
                 if not subsequent_indent:
                     # Not already indented, make an indent.
