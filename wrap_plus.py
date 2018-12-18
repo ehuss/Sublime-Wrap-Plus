@@ -1,17 +1,19 @@
 from __future__ import print_function
 import sublime
 import sublime_plugin
-from . import py_textwrap as textwrap
-import re
 
-import os
+import re
 import math
 import time
-import unittest
+
 try:
     import Default.comment as comment
 except ImportError:
     import comment
+
+from debug_tools import getLogger
+
+from . import py_textwrap as textwrap
 
 
 def is_quoted_string(scope_region, scope_name):
@@ -23,32 +25,24 @@ def is_quoted_string(scope_region, scope_name):
     return 'quoted' in scope_name or 'comment.block.documentation' in scope_name
 
 
-debug_enabled = False
-# debug_enabled = True
-
 time_start = 0
-last_time = 0
-
+debug_enabled = 127
+log = getLogger(debug_enabled, "wrap_plus")
 
 def debug_start(enabled):
-    global time_start, last_time
-    if debug_enabled or enabled:
+    global debug_enabled
+
+    if enabled:
+        debug_enabled = int(enabled) + 1
+        log.debug_level = debug_enabled
+
+    if debug_enabled > 1:
+        global time_start
         time_start = time.time()
-        last_time = time_start
-
-
-def debug(msg, *args):
-    if debug_enabled:
-        global last_time
-        t = time.time()
-        d = t - time_start
-        print('%.3f (+%.3f) ' % (d, t - last_time), end='')
-        last_time = t
-        print(msg % args)
 
 
 def debug_end():
-    if debug_enabled:
+    if debug_enabled > 1:
         print('Total time: %.3f' % (time.time() - time_start))
 
 
@@ -107,13 +101,13 @@ class PrefixStrippingView(object):
 
         if not line_stripped:
             # Empty line, nothing to do.
-            debug('Empty line, no comment characters found.')
+            log(2, 'Empty line, no comment characters found.')
             return
 
         # Determine if point is inside a "line comment".
         # Only whitespace is allowed to the left of the line comment.
         is_generic_config = "source.genconfig" in scope_name
-        debug( "line_comments: %s", line_comments )
+        log(2,  "line_comments: %s", line_comments )
 
         # When using the generic syntax, the Sublime Text plugin `Default.comment` will return
         # the default syntax comment prefix `#` instead of the actual line prefix
@@ -130,7 +124,7 @@ class PrefixStrippingView(object):
 
         for line_comment, is_block_comment in extended_prefixes:
             line_comment = line_comment.rstrip()
-            debug( ( "line_comment: %s, line_stripped: %s" % ( line_comment, line_stripped ) ).replace("%", "%%") )
+            log(2,  ( "line_comment: %s, line_stripped: %s" % ( line_comment, line_stripped ) ).replace("%", "%%") )
 
             if line_stripped.startswith(line_comment):
 
@@ -148,9 +142,9 @@ class PrefixStrippingView(object):
         if regex_match:
             self.required_comment_prefix = regex_match.group()
             self.required_comment_pattern = email_quote_pattern
-            debug('doing email style quoting')
+            log(2, 'doing email style quoting')
 
-        debug('scope=%r range=%r', scope_name, scope_region)
+        log(2, 'scope=%r range=%r', scope_name, scope_region)
 
         if self._is_c_comment(scope_name):
             # Check for C-style commenting with each line starting with an asterisk.
@@ -175,9 +169,9 @@ class PrefixStrippingView(object):
                 end = scope_region.end() - len(regex_match.group(2))
                 self.min = max(self.min, begin)
                 self.max = min(self.max, end)
-            debug('Scope narrowed to %i:%i', self.min, self.max)
+            log(2, 'Scope narrowed to %i:%i', self.min, self.max)
 
-        debug('required_comment_prefix determined to be %r', self.required_comment_prefix,)
+        log(2, 'required_comment_prefix determined to be %r', self.required_comment_prefix,)
 
         # Narrow the min/max range if inside a "quoted" string.
         if is_quoted_string(scope_region, scope_name):
@@ -193,15 +187,15 @@ class PrefixStrippingView(object):
         """
         line_region = self.view.line(where)
         if line_region.begin() < self.min:
-            debug('line min increased')
+            log(2, 'line min increased')
             line_region = sublime.Region(self.min, line_region.end())
         if line_region.end() > self.max:
-            debug('line max lowered')
+            log(2, 'line max lowered')
             line_region = sublime.Region(line_region.begin(), self.max)
         line = self.view.substr(line_region)
-        debug('line=%r', line)
+        log(2, 'line=%r', line)
         if self.required_comment_prefix:
-            debug('checking required comment prefix %r', self.required_comment_prefix)
+            log(2, 'checking required comment prefix %r', self.required_comment_prefix)
 
             if line.startswith(self.required_comment_prefix):
                 # Check for an insufficient prefix.
@@ -230,10 +224,10 @@ class PrefixStrippingView(object):
 
     def next_line(self, where):
         l_r = self.view.line(where)
-        debug('next line region=%r', l_r)
+        log(2, 'next line region=%r', l_r)
         point = l_r.end() + 1
         if point >= self.max:
-            debug('past max at %r', self.max)
+            log(2, 'past max at %r', self.max)
             return None, None
         return self.line(point)
 
@@ -342,7 +336,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             return True
         if numbered_list_pattern.match(line):
             result = self._is_real_numbered_list(line_region, line)
-            debug('is {}a paragraph continuation'.format('not ' if result else ''))
+            log(2, 'is {}a paragraph continuation'.format('not ' if result else ''))
             return result
         return False
 
@@ -353,7 +347,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         """
         if self._is_blank_line(line): return True
         scope_name = self.view.scope_name(line_region.begin())
-        debug('scope_name=%r (%r)', scope_name, line_region)
+        log(2, 'scope_name=%r (%r)', scope_name, line_region)
         if 'heading' in scope_name:
             return True
         if pure:
@@ -375,27 +369,27 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             return None, None
         started_in_comment = self._started_in_comment(point)
 
-        debug('is_paragraph_break?')
+        log(2, 'is_paragraph_break?')
         if self._is_paragraph_break(current_line_region, current_line):
-            debug('yes')
+            log(2, 'yes')
             return current_line_region, current_line
-        debug('no')
+        log(2, 'no')
 
         while 1:
             # Check if this line is the start of a paragraph.
-            debug('is the start of a paragraph?')
+            log(2, 'is the start of a paragraph?')
             if self._is_paragraph_start(current_line_region, current_line):
-                debug('yes, current_line is paragraph start: %r', current_line,)
+                log(2, 'yes, current_line is paragraph start: %r', current_line,)
                 break
-            debug('no')
+            log(2, 'no')
             # Check if the previous line is a "break" separator.
-            debug('previous line is line break?')
+            log(2, 'previous line is line break?')
             prev_line_region, prev_line = view.prev_line(current_line_region)
             if prev_line_region is None:
-                debug("yes, current_line is as far up as we're allowed to go.")
+                log(2, "yes, current_line is as far up as we're allowed to go.")
                 break
             if self._is_paragraph_break(prev_line_region, prev_line):
-                debug('yes, prev line %r is a paragraph break', prev_line,)
+                log(2, 'yes, prev line %r is a paragraph break', prev_line,)
                 break
             # If the previous line has a comment, and we started in a
             # non-comment scope, stop.  No need to check for comment to
@@ -404,9 +398,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if (not started_in_comment
                 and self.view.score_selector(prev_line_region.end(), 'comment')
                ):
-                debug('yes, prev line %r contains a comment, cannot continue.', prev_line)
+                log(2, 'yes, prev line %r contains a comment, cannot continue.', prev_line)
                 break
-            debug('no, prev_line %r is part of the paragraph', prev_line,)
+            log(2, 'no, prev_line %r is part of the paragraph', prev_line,)
             # Previous line is a part of this paragraph.  Add it, and loop
             # around again.
             current_line_region = prev_line_region
@@ -424,7 +418,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         :returns: A list of (region, lines, comment_prefix) of each paragraph.
         """
         result = []
-        debug('find paragraphs sublime_text_region=%r', sublime_text_region,)
+        log(2, 'find paragraphs sublime_text_region=%r', sublime_text_region,)
         if sublime_text_region.empty():
             is_empty = True
             view_min = 0
@@ -440,32 +434,32 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # Loop for each paragraph (only loops once if sublime_text_region is empty).
         paragraph_start_pt = sublime_text_region.begin()
         while 1:
-            debug('paragraph scanning start %r.', paragraph_start_pt,)
+            log(2, 'paragraph scanning start %r.', paragraph_start_pt,)
             view.set_comments(self._line_comment, self._is_block_comment, paragraph_start_pt)
             lines = []
             if is_empty:
                 # Find the beginning of this paragraph.
-                debug('empty sel finding paragraph start.')
+                log(2, 'empty sel finding paragraph start.')
                 current_line_region, current_line = self._find_paragraph_start(paragraph_start_pt)
-                debug('empty sel paragraph start determined to be %r %r',
+                log(2, 'empty sel paragraph start determined to be %r %r',
                       current_line_region, current_line)
             else:
                 # The selection defines the beginning.
                 current_line_region, current_line = view.line(paragraph_start_pt)
-                debug('sel beggining = %r %r', current_line_region, current_line)
+                log(2, 'sel beggining = %r %r', current_line_region, current_line)
 
             if current_line_region is None:
-                debug('Could not find start.')
+                log(2, 'Could not find start.')
                 return []
 
             # Skip blank and unambiguous break lines.
             while 1:
-                debug('skip blank line')
+                log(2, 'skip blank line')
                 if not self._is_paragraph_break(current_line_region, current_line, pure=True):
-                    debug('not paragraph break')
+                    log(2, 'not paragraph break')
                     break
                 if is_empty:
-                    debug('empty sel on paragraph break %r', current_line,)
+                    log(2, 'empty sel on paragraph break %r', current_line,)
                     return []
                 current_line_region, current_line = view.next_line(current_line_region)
 
@@ -473,16 +467,16 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             paragraph_end_pt = current_line_region.end()
             # current_line_region now points to the beginning of the paragraph.
             # Move down until the end of the paragraph.
-            debug('Scan until end of paragraph.')
+            log(2, 'Scan until end of paragraph.')
             while 1:
-                debug('current_line_region=%r max=%r', current_line_region, view.max)
+                log(2, 'current_line_region=%r max=%r', current_line_region, view.max)
                 # If we started in a non-comment scope, and the end of the
                 # line contains a comment, include any non-comment text in the
                 # wrap and stop looking for more.
                 if (not started_in_comment
                     and self.view.score_selector(current_line_region.end(), 'comment')
                    ):
-                    debug('end of paragraph hit a comment.')
+                    log(2, 'end of paragraph hit a comment.')
                     # Find the start of the comment.
                     # This assumes comments do not have multiple scopes.
                     comment_r = self.view.extract_scope(current_line_region.end())
@@ -495,7 +489,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     regex_match = re.search('([ \t]+$)', region_substring)
                     if regex_match:
                         end_pt -= len(regex_match.group(1))
-                    debug('non-comment contents are: %r', region_substring)
+                    log(2, 'non-comment contents are: %r', region_substring)
                     paragraph_end_pt = end_pt
                     lines.append(region_substring)
                     # Skip over the comment.
@@ -508,14 +502,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 current_line_region, current_line = view.next_line(current_line_region)
                 if current_line_region is None:
                     # Line is outside of our range.
-                    debug('Out of range, stopping.')
+                    log(2, 'Out of range, stopping.')
                     break
-                debug('current_line = %r %r', current_line_region, current_line)
+                log(2, 'current_line = %r %r', current_line_region, current_line)
                 if self._is_paragraph_break(current_line_region, current_line):
-                    debug('current line is a break, stopping.')
+                    log(2, 'current line is a break, stopping.')
                     break
                 if self._is_paragraph_start(current_line_region, current_line):
-                    debug('current line is a paragraph start, stopping.')
+                    log(2, 'current line is a paragraph start, stopping.')
                     break
 
             paragraph_region = sublime.Region(paragraph_start_pt, paragraph_end_pt)
@@ -526,7 +520,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             # Skip over blank lines and break lines till the next paragraph
             # (or end of range).
-            debug('skip over blank lines')
+            log(2, 'skip over blank lines')
             while current_line_region is not None:
                 if self._is_paragraph_start(current_line_region, current_line):
                     break
@@ -538,7 +532,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if current_line_region is None:
                 break
 
-            debug('next_paragraph_start is %r %r', current_line_region, current_line)
+            log(2, 'next_paragraph_start is %r %r', current_line_region, current_line)
             paragraph_start_pt = current_line_region.begin()
             if paragraph_start_pt >= view_max:
                 break
@@ -705,7 +699,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             true_first_line = self.view.substr(true_first_line_r)
             if true_first_line_r.begin() <= scope_region.begin():
                 regex_match = space_prefix_pattern.match(true_first_line)
-                debug('single line quoted string triggered')
+                log(2, 'single line quoted string triggered')
                 if regex_match:
                     subsequent_indent = regex_match.group() + subsequent_indent
 
@@ -717,7 +711,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 line = line[len(subsequent_indent):]
             new_lines.append(line.strip())
 
-        debug('initial_indent=%r subsequent_indent=%r', initial_indent, subsequent_indent)
+        log(2, 'initial_indent=%r subsequent_indent=%r', initial_indent, subsequent_indent)
 
         return (required_comment_prefix + initial_indent,
                 required_comment_prefix + subsequent_indent,
@@ -737,8 +731,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         return is_semantic_line_wrap
 
     def run(self, edit, width=0, line_wrap_type=None):
-        debug_start(self.view.settings().get('WrapPlus.debug', False))
-        debug('\n\n#########################################################################')
+        debug_enabled = self.view.settings().get('WrapPlus.debug', False)
+        debug_start(debug_enabled)
+        log(2, '\n\n#########################################################################')
 
         cursor_original_positions = []
         self._width = self._determine_width(width)
@@ -751,13 +746,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         paragraphs = []
 
         for selection in self.view.sel():
-            debug('examine %r', selection)
+            log(2, 'examine %r', selection)
 
             paragraphs.extend(self._find_paragraphs(selection))
             cursor_original_positions.append(selection.begin())
 
         view_settings = self.view.settings()
-        debug('paragraphs is %r', paragraphs)
+        log(2, 'paragraphs is %r', paragraphs)
 
         after_wrap       = view_settings.get('WrapPlus.after_wrap', "cursor_below")
         break_long_words = view_settings.get('WrapPlus.break_long_words', False)
@@ -1265,9 +1260,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 lines = text.splitlines()
 
                 if initial_indent != orig_initial_indent:
-                    debug('fix tabs %r', lines[0])
+                    log(2, 'fix tabs %r', lines[0])
                     lines[0] = orig_initial_indent + lines[0][len(initial_indent):]
-                    debug('new line is %r', lines[0])
+                    log(2, 'new line is %r', lines[0])
 
                 if subsequent_indent != orig_subsequent_indent:
 
@@ -1300,9 +1295,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         replaced_txt = self.view.substr(selection)
 
         if replaced_txt != text:
-            debug('replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, text)
+            log(2, 'replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, text)
         else:
-            debug('replaced text is the same')
+            log(2, 'replaced text is the same')
 
 
 last_used_width = 80

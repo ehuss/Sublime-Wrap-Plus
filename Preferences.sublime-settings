@@ -89,4 +89,7 @@
     // * If the setting `WrapPlus.balance_characters_between_line_wraps` is enabled,
     //   this setting will be ignored.
     "WrapPlus.semantic_disable_line_wrapping_by_maximum_width": false,
+
+    // Control console debugging messages, it can be false, or bitwise int number
+    "WrapPlus.debug": false,
 }
