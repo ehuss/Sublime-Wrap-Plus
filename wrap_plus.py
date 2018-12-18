@@ -253,7 +253,7 @@ def CONCAT(*args):
     return '(?:' + ''.join(args) + ')'
 
 
-blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*(?:````?.*)?)$|(?:.*"""\\?)')
+blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*(?:````?.*)?)$|(?:.*"""\\?$)')
 
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
