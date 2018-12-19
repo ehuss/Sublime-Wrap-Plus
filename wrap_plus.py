@@ -27,7 +27,14 @@ def is_quoted_string(scope_region, scope_name):
 
 time_start = 0
 debug_enabled = 127
+# log = getLogger(debug_enabled, "wrap_plus", "wrapplus.txt", mode='w')
 log = getLogger(debug_enabled, "wrap_plus")
+
+
+def plugin_unloaded():
+    # Unlocks the log file, if any
+    log.delete()
+
 
 def debug_start(enabled):
     global debug_enabled
