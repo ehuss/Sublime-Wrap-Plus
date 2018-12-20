@@ -61,7 +61,7 @@ script:
             coveralls;
             codecov;
             coverage xml -o coverage.xml;
-            python-codacy-coverage;
+            # python-codacy-coverage;
       fi
 
 
