@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import sublime
 import unittest
@@ -44,7 +45,11 @@ class TestWrap(unittest.TestCase):
         starts = re.finditer(r'^===((?:[A-Za-z0-9._-]+=[^,\n]+,?)+)?$',
                              contents, flags=re.MULTILINE)
         starts = list(starts)
+        sys.stderr.write('\nstarts: %s, ' % len(starts))
         for i, start in enumerate(starts):
+            # Fix appveyor/travis thinking Sublime Text is not responding
+            sys.stderr.write('%s. ' % (i + 1))
+            sys.stderr.flush()
             # Get individual test substring.
             try:
                 end = starts[i + 1]
