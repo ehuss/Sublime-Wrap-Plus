@@ -61,12 +61,12 @@ script:
             coveralls;
             codecov;
             coverage xml -o coverage.xml;
-            # python-codacy-coverage;
       fi
+    # python-codacy-coverage;
 
 
 after_success:
-    - echo After Success
+    - echo "After Success"
 
 notifications:
     email: false
