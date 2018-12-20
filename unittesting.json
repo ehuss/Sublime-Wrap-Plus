@@ -3,7 +3,7 @@
     "pattern" : "test_*.py",
     "async": true,
     "deferred": false,
-    "verbosity": 1,
+    "verbosity": 2,
     "capture_console": true,
     "output": null
 }
