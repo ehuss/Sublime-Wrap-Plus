@@ -797,10 +797,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             def line_wrapper_type():
                 return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
 
-        wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
-        wrapper.width = self._width
-        wrapper.expand_tabs = False
-
         log(4, "self._width: %s", self._width )
         if paragraphs:
             # Use view selections to handle shifts from the replace() command.
@@ -812,6 +808,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             # the calls to replace().
             for index, selection in enumerate(self.view.sel()):
                 paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
+
+                wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
+                wrapper.width = self._width
+                wrapper.expand_tabs = False
 
                 initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(
                     paragraph_region, paragraph_lines, required_comment_prefix)
