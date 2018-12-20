@@ -19,7 +19,6 @@ build: off
 test_script:
     # run tests with test coverage report
     - ps: .\appveyor.ps1 "run_tests" -coverage -verbose
-    - echo
 
 
 on_finish:
