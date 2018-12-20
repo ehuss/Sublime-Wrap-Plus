@@ -27,8 +27,8 @@ def is_quoted_string(scope_region, scope_name):
 
 time_start = 0
 debug_enabled = 127
-# log = getLogger(debug_enabled, "wrap_plus", "wrapplus.txt", mode='w')
-log = getLogger(debug_enabled, "wrap_plus")
+log = getLogger(debug_enabled, "wrap_plus", "wrapplus.txt", mode='w')
+# log = getLogger(debug_enabled, "wrap_plus")
 
 
 def plugin_unloaded():
@@ -283,9 +283,9 @@ fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)' + fields)  # rest, javadoc, jsdoc, etc
 
 sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
-sep_line = '[' + sep_chars + r']+[ \t' + sep_chars + ']*'
+sep_line = r'[{sep}]+[(?: |\t){sep}]*'.format(sep=sep_chars)
 
-# Break pattern is a little ambiguous.  Something like "# Header" could also be a list element.
+# Break pattern is a little ambiguous. Something like "# Header" could also be a list element.
 break_pattern = re.compile(r'^[\t ]*' + OR(sep_line, OR(latex_hack, rest_directive) + '.*') + '$')
 pure_break_pattern = re.compile(r'^[\t ]*' + sep_line + '$')
 
@@ -340,30 +340,39 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # Certain patterns at the beginning of the line indicate this is the
         # beginning of a paragraph.
         if new_paragraph_pattern.match(line):
+            log(2, 'is not a new paragraph')
             return True
         if numbered_list_pattern.match(line):
             result = self._is_real_numbered_list(line_region, line)
-            log(2, 'is {}a paragraph continuation'.format('not ' if result else ''))
+            log(2, 'is %sa paragraph continuation', 'not ' if result else '')
             return result
+        log(2, 'is not a paragraph')
         return False
 
     def _is_paragraph_break(self, line_region, line, pure=False):
         """A paragraph "break" is something like a blank line, or a horizontal line,
-        or anything that  should not be wrapped and treated like a blank line
+        or anything that should not be wrapped and treated like a blank line
         (i.e. ignored).
         """
         if self._is_blank_line(line): return True
         scope_name = self.view.scope_name(line_region.begin())
-        log(2, 'scope_name=%r (%r)', scope_name, line_region)
+        log(2, 'scope_name=%r %r line=%r', scope_name, line_region, line)
         if 'heading' in scope_name:
+            log(2, "'heading' in scope_name")
             return True
         if pure:
-            return pure_break_pattern.match(line) is not None
+            pure_break = pure_break_pattern.match(line) is not None
+            log(2, 'pure_break:', pure_break)
+            return pure_break
         else:
-            return break_pattern.match(line) is not None
+            normal_break = break_pattern.match(line) is not None
+            log(2, 'normal_break:', normal_break)
+            return normal_break
 
     def _is_blank_line(self, line):
-        return blank_line_pattern.match(line) is not None
+        is_blank_line = blank_line_pattern.match(line) is not None
+        log(2, is_blank_line)
+        return is_blank_line
 
     def _find_paragraph_start(self, point):
         """Start at point and move up to find where the paragraph starts.
@@ -453,7 +462,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             else:
                 # The selection defines the beginning.
                 current_line_region, current_line = view.line(paragraph_start_pt)
-                log(2, 'sel beggining = %r %r', current_line_region, current_line)
+                log(2, 'sel beginning = %r %r', current_line_region, current_line)
 
             if current_line_region is None:
                 log(2, 'Could not find start.')
@@ -461,9 +470,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             # Skip blank and unambiguous break lines.
             while 1:
-                log(2, 'skip blank line')
+                log(2, 'skip blank line?')
                 if not self._is_paragraph_break(current_line_region, current_line, pure=True):
-                    log(2, 'not paragraph break')
+                    log(2, 'yes, not paragraph break')
                     break
                 if is_empty:
                     log(2, 'empty sel on paragraph break %r', current_line,)
@@ -656,6 +665,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         regex_match = list_pattern.match(first_line)
         if regex_match:
             initial_indent = first_line[0:regex_match.end()]
+            log(2, 'setting initial_indent:', initial_indent)
+
             stripped_prefix = initial_indent.lstrip()
             leading_whitespace = initial_indent[:len(initial_indent) - len(stripped_prefix)]
             subsequent_indent = leading_whitespace + ' ' * self._width_in_spaces(stripped_prefix)
@@ -664,6 +675,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if regex_match:
                 # The spaces in front of the field start.
                 initial_indent = regex_match.group(1)
+                log(2, 'setting initial_indent:', initial_indent)
                 if len(lines) > 1:
                     # How to handle subsequent lines.
                     regex_match = space_prefix_pattern.match(lines[1])
