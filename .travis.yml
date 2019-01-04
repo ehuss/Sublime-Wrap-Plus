@@ -63,7 +63,9 @@ script:
             coverage xml -o coverage.xml;
       fi
 
-    # - python-codacy-coverage;
+    # - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+    #         python-codacy-coverage;
+    #   fi
 
 
 after_success:
