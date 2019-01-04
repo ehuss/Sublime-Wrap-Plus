@@ -46,8 +46,8 @@ install:
     # bootstrap the testing environment
     - sh travis.sh bootstrap
 
-    # install Package Control and package denepdencies
-    # - sh travis.sh install_package_control
+    # install Package Control and package dependencies
+    - sh travis.sh install_package_control
 
 
 script:
@@ -62,7 +62,8 @@ script:
             codecov;
             coverage xml -o coverage.xml;
       fi
-    # python-codacy-coverage;
+
+    # - python-codacy-coverage;
 
 
 after_success:

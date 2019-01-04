@@ -9,8 +9,9 @@ install:
     - ps: appveyor DownloadFile "https://raw.githubusercontent.com/evandroforks/UnitTesting/master/sbin/appveyor.ps1"
     - ps: .\appveyor.ps1 "bootstrap" -verbose
     - ps: pip install --disable-pip-version-check coverage codacy-coverage
+
     # install Package Control
-    # - ps: .\appveyor.ps1 "install_package_control" -verbose
+    - ps: .\appveyor.ps1 "install_package_control" -verbose
 
 
 build: off
