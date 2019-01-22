@@ -1,5 +1,5 @@
 [
-    { "keys": ["alt+q"], "command": "wrap_lines_plus", "context":
+    { "keys": ["super+alt+q"], "command": "wrap_lines_plus", "context":
         [
             { "key": "setting.is_widget", "operator": "equal", "operand": false }
         ]
