@@ -749,12 +749,41 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return is_semantic_line_wrap
 
+    def get_original_positions(self, paragraphs):
+        cursor_original_positions = []
+
+        for selection in self.view.sel():
+            log(2, 'examine %r', selection)
+            paragraphs.extend(self._find_paragraphs(selection))
+
+            start = selection.begin()
+            reversed_index = -2
+
+            if start + reversed_index > 0:
+                sublime_region = sublime.Region(start-10, start+1)
+                region_substring = self.view.substr(sublime_region)
+                possible_newline = region_substring[-1]
+
+                # print('region_substring %r' % region_substring, 'len', len(region_substring))
+                if possible_newline in ('\n', ' '):
+
+                    while start + reversed_index > 0 \
+                            and abs(reversed_index) <= len(region_substring) \
+                            and region_substring[reversed_index] in (' ', '\t'):
+                        # print('reversed_index', reversed_index, 'start', start)
+                        start = start - 1
+                        reversed_index = reversed_index - 1
+                        # if abs(reversed_index) <= len(region_substring): print('next %r' % region_substring[reversed_index])
+
+            cursor_original_positions.append(start)
+
+        return cursor_original_positions
+
     def run(self, edit, width=0, line_wrap_type=None):
         debug_enabled = self.view.settings().get('WrapPlus.debug', False)
         debug_start(debug_enabled)
         log(2, '\n\n#########################################################################')
 
-        cursor_original_positions = []
         self._width = self._determine_width(width)
 
         log(4,'wrap width = %r', self._width)
@@ -763,12 +792,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
-
-        for selection in self.view.sel():
-            log(2, 'examine %r', selection)
-
-            paragraphs.extend(self._find_paragraphs(selection))
-            cursor_original_positions.append(selection.begin())
+        cursor_original_positions = self.get_original_positions(paragraphs)
 
         view_settings = self.view.settings()
         log(2, 'paragraphs is %r', paragraphs)
@@ -793,7 +817,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if self.get_semantic_line_wrap_setting( view_settings, line_wrap_type ):
             self._width *= wrap_extension_percent
 
-            def line_wrapper_type():
+            def line_wrapper_type(paragraph_lines):
                 text = self.semantic_line_wrap( paragraph_lines, initial_indent, subsequent_indent,
                         minimum_line_size_percent, disable_line_wrapping_by_maximum_width,
                         balance_characters_between_line_wraps )
@@ -806,7 +830,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         else:
 
-            def line_wrapper_type():
+            def line_wrapper_type(paragraph_lines):
                 return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
 
         log(4, "self._width: %s", self._width )
@@ -828,14 +852,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(
                     paragraph_region, paragraph_lines, required_comment_prefix)
 
-                text = line_wrapper_type()
+                wrapped_text = line_wrapper_type(paragraph_lines)
+                original_text = self.view.substr(selection)
 
-                # I can't decide if I prefer it to not make the modification
-                # if there is no change (and thus don't mark an unmodified
-                # file as modified), or if it's better to include a "non-
-                # change" in the undo stack.
-                self.view.replace(edit, selection, text)
-                self.print_text_replacements(text, selection)
+                if original_text != wrapped_text:
+                    self.view.replace(edit, selection, wrapped_text)
+                    log(2, 'replaced text not the same:\noriginal=%r\nnew=%r', original_text, wrapped_text)
+                else:
+                    log(2, 'replaced text is the same')
 
         if after_wrap == "cursor_below":
             self.move_cursor_below_the_last_paragraph()
@@ -1309,14 +1333,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         for position in cursor_original_positions:
             self.view.sel().add( sublime.Region( position, position ) )
-
-    def print_text_replacements(self, text, selection):
-        replaced_txt = self.view.substr(selection)
-
-        if replaced_txt != text:
-            log(2, 'replaced text not the same:\noriginal=%r\nnew=%r', replaced_txt, text)
-        else:
-            log(2, 'replaced text is the same')
 
 
 last_used_width = 80
