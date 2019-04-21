@@ -839,29 +839,56 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 original_text = self.view.substr(selection)
 
                 if original_text != wrapped_text:
-                    spaces_count_original = len( [
-                           char for char in self.view.substr( sublime.Region( selection.begin(),
-                                cursor_original_positions[index] ) ) if char in (' ', '\t')] )
+                    cut_original_text = self.view.substr( sublime.Region( selection.begin(), cursor_original_positions[index] ) )
+                    word_region = self.view.word(cursor_original_positions[index])
+                    actual_word = self.view.substr(word_region)
+
+                    distance_word_end = cursor_original_positions[index] - word_region.begin()
+                    wrapped_text_difference = 0
+
+                    if len(original_text) < len(wrapped_text):
+                        wrapped_text_difference = abs( len(original_text) - len(wrapped_text) )
 
                     self.view.replace(edit, selection, wrapped_text)
-                    spaces_count_wrapped = len( [
-                           char for char in self.view.substr( sublime.Region( selection.begin(),
-                                cursor_original_positions[index] ) ) if char in (' ', '\t')] )
+                    replaced_region = sublime.Region( selection.begin(), word_region.end() + wrapped_text_difference )
+                    cut_replaced_text = self.view.substr( replaced_region )
+                    last_position = cut_replaced_text.rfind(actual_word)
 
-                    # print('spaces_count_original', spaces_count_original)
-                    # print('spaces_count_wrapped', spaces_count_wrapped)
-                    offsets.append(spaces_count_wrapped-spaces_count_original)
+                    log(2, 'cursor_original_positions[%s]' % index, cursor_original_positions[index])
+                    log(2, 'cut_replaced_text', cut_replaced_text)
+                    log(2, 'actual_word', actual_word)
+                    log(2, 'word_region.begin', word_region.begin())
+                    log(2, 'word_region.end', word_region.end())
+                    log(2, 'last_position', last_position)
+
+                    # fallback to the original heuristic if the word is not found
+                    if last_position > -1:
+                        actual_position = selection.begin() + last_position + distance_word_end
+                        offset = actual_position - cursor_original_positions[index]
+
+                        log(2,  'actual_position', actual_position, 'offset', offset )
+                        offsets.append( offset )
+
+                    else:
+                        cut_replaced_text = self.view.substr( sublime.Region( selection.begin(), word_region.begin() ) )
+                        spaces_count_original = len( [char for char in cut_original_text if char in (' ', '\t')] )
+                        spaces_count_wrapped = len( [char for char in cut_replaced_text if char in (' ', '\t')] )
+
+                        log(2, 'spaces_count_original', spaces_count_original)
+                        log(2, 'spaces_count_wrapped', spaces_count_wrapped)
+                        offsets.append(spaces_count_wrapped - spaces_count_original)
+
                     log(2, 'replaced text not the same:\noriginal=%r\nnew=%r', original_text, wrapped_text)
 
                 else:
                     offsets.append(0)
                     log(2, 'replaced text is the same')
 
-        if after_wrap == "cursor_below":
-            self.move_cursor_below_the_last_paragraph()
+            if after_wrap == "cursor_below":
+                self.move_cursor_below_the_last_paragraph()
 
-        else:
-            self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
+            else:
+                self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
 
     def move_the_cursor_to_the_original_position(self, cursor_original_positions, offsets):
         self.view.sel().clear()
