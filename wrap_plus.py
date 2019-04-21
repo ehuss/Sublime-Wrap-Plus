@@ -757,24 +757,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             paragraphs.extend(self._find_paragraphs(selection))
 
             start = selection.begin()
-            reversed_index = -2
-
-            if start + reversed_index > 0:
-                sublime_region = sublime.Region(start-10, start+1)
-                region_substring = self.view.substr(sublime_region)
-                possible_newline = region_substring[-1]
-
-                # print('region_substring %r' % region_substring, 'len', len(region_substring))
-                if possible_newline in ('\n', ' '):
-
-                    while start + reversed_index > 0 \
-                            and abs(reversed_index) <= len(region_substring) \
-                            and region_substring[reversed_index] in (' ', '\t'):
-                        # print('reversed_index', reversed_index, 'start', start)
-                        start = start - 1
-                        reversed_index = reversed_index - 1
-                        # if abs(reversed_index) <= len(region_substring): print('next %r' % region_substring[reversed_index])
-
             cursor_original_positions.append(start)
 
         return cursor_original_positions
@@ -792,6 +774,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
+        offsets = []
         cursor_original_positions = self.get_original_positions(paragraphs)
 
         view_settings = self.view.settings()
@@ -856,16 +839,46 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 original_text = self.view.substr(selection)
 
                 if original_text != wrapped_text:
+                    spaces_count_original = len( [
+                           char for char in self.view.substr( sublime.Region( selection.begin(),
+                                cursor_original_positions[index] ) ) if char in (' ', '\t')] )
+
                     self.view.replace(edit, selection, wrapped_text)
+                    spaces_count_wrapped = len( [
+                           char for char in self.view.substr( sublime.Region( selection.begin(),
+                                cursor_original_positions[index] ) ) if char in (' ', '\t')] )
+
+                    # print('spaces_count_original', spaces_count_original)
+                    # print('spaces_count_wrapped', spaces_count_wrapped)
+                    offsets.append(spaces_count_wrapped-spaces_count_original)
                     log(2, 'replaced text not the same:\noriginal=%r\nnew=%r', original_text, wrapped_text)
+
                 else:
+                    offsets.append(0)
                     log(2, 'replaced text is the same')
 
         if after_wrap == "cursor_below":
             self.move_cursor_below_the_last_paragraph()
 
         else:
-            self.move_the_cursor_to_the_original_position(cursor_original_positions)
+            self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
+
+    def move_the_cursor_to_the_original_position(self, cursor_original_positions, offsets):
+        self.view.sel().clear()
+
+        for index, position in enumerate(cursor_original_positions):
+            self.view.sel().add( sublime.Region( position+offsets[index], position+offsets[index] ) )
+
+    def move_cursor_below_the_last_paragraph(self):
+        selection = self.view.sel()
+        end = selection[len(selection) - 1].end()
+        line = self.view.line(end)
+        end = min(self.view.size(), line.end() + 1)
+        self.view.sel().clear()
+        region = sublime.Region(end)
+        self.view.sel().add(region)
+        self.view.show(region)
+        debug_end()
 
     def balance_characters_between_line_wraps(self, wrapper, text_lines, initial_indent, subsequent_indent):
         """
@@ -1316,23 +1329,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 text = '\n'.join(lines)
 
         return text
-
-    def move_cursor_below_the_last_paragraph(self):
-        selection = self.view.sel()
-        end = selection[len(selection) - 1].end()
-        line = self.view.line(end)
-        end = min(self.view.size(), line.end() + 1)
-        self.view.sel().clear()
-        region = sublime.Region(end)
-        self.view.sel().add(region)
-        self.view.show(region)
-        debug_end()
-
-    def move_the_cursor_to_the_original_position(self, cursor_original_positions):
-        self.view.sel().clear()
-
-        for position in cursor_original_positions:
-            self.view.sel().add( sublime.Region( position, position ) )
 
 
 last_used_width = 80
