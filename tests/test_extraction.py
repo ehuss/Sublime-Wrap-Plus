@@ -62,7 +62,7 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
                 /// C++ comment.""" )
 
         paragraph_results = self.wrap_plus._find_paragraphs( sublime.Region(0, 0) )
-        region, paragraphs, comment_prefix = paragraph_results[0]
+        region, paragraphs, comment_prefix, cursor_position = paragraph_results[0]
 
         # print( "self.wrap_plus._find_paragraphs: " + str( paragraph_results ) )
         self.assertEqual( '///', comment_prefix )

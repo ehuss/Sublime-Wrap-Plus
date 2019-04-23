@@ -450,6 +450,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         view = self._strip_view
         # Loop for each paragraph (only loops once if sublime_text_region is empty).
         paragraph_start_pt = sublime_text_region.begin()
+        first_selection_to_save = paragraph_start_pt
         while 1:
             log(2, 'paragraph scanning start %r.', paragraph_start_pt,)
             view.set_comments(self._line_comment, self._is_block_comment, paragraph_start_pt)
@@ -530,7 +531,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     break
 
             paragraph_region = sublime.Region(paragraph_start_pt, paragraph_end_pt)
-            result.append((paragraph_region, lines, view.required_comment_prefix))
+
+            if first_selection_to_save:
+                result.append((paragraph_region, lines, view.required_comment_prefix, first_selection_to_save))
+                first_selection_to_save = None
+            else:
+                result.append((paragraph_region, lines, view.required_comment_prefix, paragraph_start_pt))
 
             if is_empty:
                 break
@@ -756,22 +762,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         log(2, '\n\n#########################################################################')
 
         self._width = self._determine_width(width)
+        self.view_settings = self.view.settings()
 
         log(4,'wrap width = %r', self._width)
         self._determine_tab_size()
         self._determine_comment_style()
-
-        # paragraphs is a list of (region, lines, comment_prefix) tuples.
-        paragraphs = []
-        cursor_original_positions = []
-
-        for selection in self.view.sel():
-            log(2, 'examine %r', selection)
-            paragraphs.extend(self._find_paragraphs(selection))
-            cursor_original_positions.append(selection.begin())
-
-        self.view_settings = self.view.settings()
-        log(2, 'paragraphs is %r', paragraphs)
 
         wrap_extension_percent                 = self.view_settings.get('WrapPlus.semantic_wrap_extension_percent', 1.0)
         minimum_line_size_percent              = self.view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
@@ -805,17 +800,26 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             def line_wrapper_type(paragraph_lines, initial_indent, subsequent_indent, wrapper):
                 return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
 
-        log(4, "self._width: %s", self._width )
-        if paragraphs:
-            self.insert_wrapped_text(edit, paragraphs, line_wrapper_type, cursor_original_positions)
+        # paragraphs is a list of (region, lines, comment_prefix) tuples.
+        paragraphs = []
 
+        for selection in self.view.sel():
+            log(2, 'examine %r', selection)
+            paragraphs.extend(self._find_paragraphs(selection))
+
+        log(2, 'paragraphs is %r', paragraphs)
+        log(4, "self._width: %s", self._width )
+
+        if paragraphs:
+            self.insert_wrapped_text(edit, paragraphs, line_wrapper_type)
         else:
             after_wrap = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
             if after_wrap == "cursor_below":
                 self.move_cursor_below_the_last_paragraph()
 
-    def insert_wrapped_text(self, edit, paragraphs, line_wrapper_type, cursor_original_positions):
-        offsets = []
+    def insert_wrapped_text(self, edit, paragraphs, line_wrapper_type):
+        new_positions = []
+
         after_wrap       = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
         break_long_words = self.view_settings.get('WrapPlus.break_long_words', False)
         break_on_hyphens = self.view_settings.get('WrapPlus.break_on_hyphens', False)
@@ -823,16 +827,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # Use view selections to handle shifts from the replace() command.
         self.view.sel().clear()
         for index, others in enumerate(paragraphs):
-            region, lines, comment_prefix = others
+            region, lines, comment_prefix, cursor_position = others
             self.view.sel().add(region)
-
-            if index >= len(cursor_original_positions):
-                cursor_original_positions.append(region.begin())
 
         # Regions fetched from view.sel() will shift appropriately with
         # the calls to replace().
         for index, selection in enumerate(self.view.sel()):
-            paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
+            paragraph_region, paragraph_lines, required_comment_prefix, cursor_position = paragraphs[index]
 
             wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
             wrapper.width = self._width
@@ -843,24 +844,23 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             wrapped_text = line_wrapper_type(paragraph_lines, initial_indent, subsequent_indent, wrapper)
             original_text = self.view.substr(selection)
-            current_cursor = cursor_original_positions[index]
             log(2, 'wrapped_text len', len(wrapped_text))
             log(2, 'original_text len', len(original_text))
 
             if original_text != wrapped_text:
 
                 while True:
-                    word_region = self.view.word(current_cursor)
+                    word_region = self.view.word(cursor_position)
                     actual_word = self.view.substr(word_region).strip(' ')
-                    log(2, 'current_cursor', current_cursor )
+                    log(2, 'cursor_position', cursor_position )
                     log(2, 'actual_word %r' % actual_word)
 
-                    if current_cursor < 1 or not spaces_pattern.match(actual_word):
+                    if cursor_position < 1 or not spaces_pattern.match(actual_word):
                         break
-                    current_cursor -= 1
+                    cursor_position -= 1
 
                 cut_original_text = self.view.substr( sublime.Region( selection.begin(), word_region.end() ) )
-                distance_word_end = current_cursor - word_region.begin()
+                distance_word_end = cursor_position - word_region.begin()
                 log(2, 'distance_word_end', distance_word_end )
 
                 wrapped_text_difference = abs( len(original_text.rstrip(' ')) - len(wrapped_text) ) + 1
@@ -874,10 +874,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 if last_position > -1:
                     actual_position = selection.begin() + last_position + distance_word_end
-                    offset = actual_position - cursor_original_positions[index]
-                    log(2, 'offset', offset )
-                    log(2, 'actual_position', actual_position )
-                    offsets.append( offset )
+                    log(2, 'new actual_position', actual_position )
+                    new_positions.append( actual_position )
 
                 else:
                     # fallback to the original heuristic if the word is not found
@@ -886,29 +884,29 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                     log(2, 'spaces_count_original', spaces_count_original)
                     log(2, 'spaces_count_wrapped', spaces_count_wrapped)
 
-                    added_spaces_count = spaces_count_wrapped - spaces_count_original
-                    log(2, 'added_spaces_count', added_spaces_count)
-                    offsets.append(added_spaces_count)
+                    added_spaces_count = cursor_position + spaces_count_wrapped - spaces_count_original
+                    log(2, 'new actual_position', added_spaces_count)
+                    new_positions.append(added_spaces_count)
 
                 log(2, 'cut_original_text %r' % cut_original_text)
                 log(2, 'cut_replaced_text %r' % cut_replaced_text)
                 log(2, 'replaced text not the same!')
 
             else:
-                offsets.append(0)
+                new_positions.append(cursor_position)
                 log(2, 'replaced text is the same')
 
         if after_wrap == "cursor_below":
             self.move_cursor_below_the_last_paragraph()
 
         if after_wrap == "cursor_stay":
-            self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
+            self.move_the_cursor_to_the_original_position(new_positions)
 
-    def move_the_cursor_to_the_original_position(self, cursor_original_positions, offsets):
+    def move_the_cursor_to_the_original_position(self, new_positions):
         self.view.sel().clear()
 
-        for index, position in enumerate(cursor_original_positions):
-            self.view.sel().add( sublime.Region( position+offsets[index], position+offsets[index] ) )
+        for index, position in enumerate(new_positions):
+            self.view.sel().add( sublime.Region( position, position ) )
 
     def move_cursor_below_the_last_paragraph(self):
         selection = self.view.sel()
