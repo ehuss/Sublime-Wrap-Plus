@@ -768,9 +768,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         for selection in self.view.sel():
             log(2, 'examine %r', selection)
             paragraphs.extend(self._find_paragraphs(selection))
-
-            start = selection.begin()
-            cursor_original_positions.append(start)
+            cursor_original_positions.append(selection.begin())
 
         self.view_settings = self.view.settings()
         log(2, 'paragraphs is %r', paragraphs)
@@ -810,6 +808,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         log(4, "self._width: %s", self._width )
         if paragraphs:
             self.insert_wrapped_text(edit, paragraphs, line_wrapper_type, cursor_original_positions)
+
+        else:
+            after_wrap = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
+            if after_wrap == "cursor_below":
+                self.move_cursor_below_the_last_paragraph()
 
     def insert_wrapped_text(self, edit, paragraphs, line_wrapper_type, cursor_original_positions):
         offsets = []
@@ -894,7 +897,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if after_wrap == "cursor_below":
             self.move_cursor_below_the_last_paragraph()
 
-        else:
+        if after_wrap == "cursor_stay":
             self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
 
     def move_the_cursor_to_the_original_position(self, cursor_original_positions, offsets):
