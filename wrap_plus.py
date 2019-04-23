@@ -822,8 +822,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         # Use view selections to handle shifts from the replace() command.
         self.view.sel().clear()
-        for region, lines, comment_prefix in paragraphs:
+        for index, others in enumerate(paragraphs):
+            region, lines, comment_prefix = others
             self.view.sel().add(region)
+
+            if index >= len(cursor_original_positions):
+                cursor_original_positions.append(region.begin())
 
         # Regions fetched from view.sel() will shift appropriately with
         # the calls to replace().
