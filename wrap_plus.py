@@ -281,6 +281,7 @@ space_prefix_pattern = re.compile(r'^[ \t]*')
 # XXX: Does not handle escaped colons in field name.
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)' + fields)  # rest, javadoc, jsdoc, etc
+spaces_pattern = re.compile(r'^\s*$')
 
 sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
 sep_line = r'[{sep}]+[(?: |\t){sep}]*'.format(sep=sep_chars)
@@ -837,48 +838,56 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                 wrapped_text = line_wrapper_type(paragraph_lines)
                 original_text = self.view.substr(selection)
+                current_cursor = cursor_original_positions[index]
+                log(2, 'wrapped_text len', len(wrapped_text))
+                log(2, 'original_text len', len(original_text))
 
                 if original_text != wrapped_text:
-                    cut_original_text = self.view.substr( sublime.Region( selection.begin(), cursor_original_positions[index] ) )
-                    word_region = self.view.word(cursor_original_positions[index])
-                    actual_word = self.view.substr(word_region)
 
-                    distance_word_end = cursor_original_positions[index] - word_region.begin()
-                    wrapped_text_difference = 0
+                    while True:
+                        word_region = self.view.word(current_cursor)
+                        actual_word = self.view.substr(word_region).strip(' ')
+                        log(2, 'current_cursor', current_cursor )
+                        log(2, 'actual_word %r' % actual_word)
 
-                    if len(original_text) < len(wrapped_text):
-                        wrapped_text_difference = abs( len(original_text) - len(wrapped_text) )
+                        if current_cursor < 1 or not spaces_pattern.match(actual_word):
+                            break
+                        current_cursor -= 1
+
+                    cut_original_text = self.view.substr( sublime.Region( selection.begin(), word_region.end() ) )
+                    distance_word_end = current_cursor - word_region.begin()
+                    log(2, 'distance_word_end', distance_word_end )
+
+                    wrapped_text_difference = abs( len(original_text.rstrip(' ')) - len(wrapped_text) ) + 1
+                    log(2, 'wrapped_text_difference', wrapped_text_difference )
 
                     self.view.replace(edit, selection, wrapped_text)
                     replaced_region = sublime.Region( selection.begin(), word_region.end() + wrapped_text_difference )
                     cut_replaced_text = self.view.substr( replaced_region )
-                    last_position = cut_replaced_text.rfind(actual_word)
-
-                    log(2, 'cursor_original_positions[%s]' % index, cursor_original_positions[index])
-                    log(2, 'cut_replaced_text', cut_replaced_text)
-                    log(2, 'actual_word', actual_word)
-                    log(2, 'word_region.begin', word_region.begin())
-                    log(2, 'word_region.end', word_region.end())
+                    last_position = cut_replaced_text.rfind( actual_word )
                     log(2, 'last_position', last_position)
 
-                    # fallback to the original heuristic if the word is not found
                     if last_position > -1:
                         actual_position = selection.begin() + last_position + distance_word_end
                         offset = actual_position - cursor_original_positions[index]
-
-                        log(2,  'actual_position', actual_position, 'offset', offset )
+                        log(2, 'offset', offset )
+                        log(2, 'actual_position', actual_position )
                         offsets.append( offset )
 
                     else:
-                        cut_replaced_text = self.view.substr( sublime.Region( selection.begin(), word_region.begin() ) )
-                        spaces_count_original = len( [char for char in cut_original_text if char in (' ', '\t')] )
-                        spaces_count_wrapped = len( [char for char in cut_replaced_text if char in (' ', '\t')] )
-
+                        # fallback to the original heuristic if the word is not found
+                        spaces_count_original = len( [char for char in cut_original_text if spaces_pattern.match(char)] )
+                        spaces_count_wrapped = len( [char for char in cut_replaced_text if spaces_pattern.match(char)] )
                         log(2, 'spaces_count_original', spaces_count_original)
                         log(2, 'spaces_count_wrapped', spaces_count_wrapped)
-                        offsets.append(spaces_count_wrapped - spaces_count_original)
 
-                    log(2, 'replaced text not the same:\noriginal=%r\nnew=%r', original_text, wrapped_text)
+                        added_spaces_count = spaces_count_wrapped - spaces_count_original
+                        log(2, 'added_spaces_count', added_spaces_count)
+                        offsets.append(added_spaces_count)
+
+                    log(2, 'cut_original_text %r' % cut_original_text)
+                    log(2, 'cut_replaced_text %r' % cut_replaced_text)
+                    log(2, 'replaced text not the same!')
 
                 else:
                     offsets.append(0)
