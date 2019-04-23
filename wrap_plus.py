@@ -737,8 +737,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 required_comment_prefix + subsequent_indent,
                 new_lines)
 
-    def get_semantic_line_wrap_setting(self, view_settings, line_wrap_type):
-        is_semantic_line_wrap = view_settings.get( 'WrapPlus.semantic_line_wrap', False )
+    def get_semantic_line_wrap_setting(self, line_wrap_type):
+        is_semantic_line_wrap = self.view_settings.get( 'WrapPlus.semantic_line_wrap', False )
 
         if line_wrap_type:
 
@@ -749,18 +749,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 is_semantic_line_wrap = False
 
         return is_semantic_line_wrap
-
-    def get_original_positions(self, paragraphs):
-        cursor_original_positions = []
-
-        for selection in self.view.sel():
-            log(2, 'examine %r', selection)
-            paragraphs.extend(self._find_paragraphs(selection))
-
-            start = selection.begin()
-            cursor_original_positions.append(start)
-
-        return cursor_original_positions
 
     def run(self, edit, width=0, line_wrap_type=None):
         debug_enabled = self.view.settings().get('WrapPlus.debug', False)
@@ -775,33 +763,35 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
-        offsets = []
-        cursor_original_positions = self.get_original_positions(paragraphs)
+        cursor_original_positions = []
 
-        view_settings = self.view.settings()
+        for selection in self.view.sel():
+            log(2, 'examine %r', selection)
+            paragraphs.extend(self._find_paragraphs(selection))
+
+            start = selection.begin()
+            cursor_original_positions.append(start)
+
+        self.view_settings = self.view.settings()
         log(2, 'paragraphs is %r', paragraphs)
 
-        after_wrap       = view_settings.get('WrapPlus.after_wrap', "cursor_below")
-        break_long_words = view_settings.get('WrapPlus.break_long_words', False)
-        break_on_hyphens = view_settings.get('WrapPlus.break_on_hyphens', False)
+        wrap_extension_percent                 = self.view_settings.get('WrapPlus.semantic_wrap_extension_percent', 1.0)
+        minimum_line_size_percent              = self.view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
+        balance_characters_between_line_wraps  = self.view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
+        disable_line_wrapping_by_maximum_width = self.view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
 
-        wrap_extension_percent                 = view_settings.get('WrapPlus.semantic_wrap_extension_percent', 1.0)
-        minimum_line_size_percent              = view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
-        balance_characters_between_line_wraps  = view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
-        disable_line_wrapping_by_maximum_width = view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
-
-        self.maximum_words_in_comma_separated_list = view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
-        self.maximum_items_in_comma_separated_list = view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
+        self.maximum_words_in_comma_separated_list = self.view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
+        self.maximum_items_in_comma_separated_list = self.view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
 
         if balance_characters_between_line_wraps:
             # minimum_line_size_percent = 0.0
             disable_line_wrapping_by_maximum_width = True
 
         log(4, "minimum_line_size_percent: %s", minimum_line_size_percent )
-        if self.get_semantic_line_wrap_setting( view_settings, line_wrap_type ):
+        if self.get_semantic_line_wrap_setting(line_wrap_type ):
             self._width *= wrap_extension_percent
 
-            def line_wrapper_type(paragraph_lines):
+            def line_wrapper_type(paragraph_lines, initial_indent, subsequent_indent, wrapper):
                 text = self.semantic_line_wrap( paragraph_lines, initial_indent, subsequent_indent,
                         minimum_line_size_percent, disable_line_wrapping_by_maximum_width,
                         balance_characters_between_line_wraps )
@@ -814,90 +804,98 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         else:
 
-            def line_wrapper_type(paragraph_lines):
+            def line_wrapper_type(paragraph_lines, initial_indent, subsequent_indent, wrapper):
                 return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
 
         log(4, "self._width: %s", self._width )
         if paragraphs:
-            # Use view selections to handle shifts from the replace() command.
-            self.view.sel().clear()
-            for region, lines, comment_prefix in paragraphs:
-                self.view.sel().add(region)
+            self.insert_wrapped_text(edit, paragraphs, line_wrapper_type, cursor_original_positions)
 
-            # Regions fetched from view.sel() will shift appropriately with
-            # the calls to replace().
-            for index, selection in enumerate(self.view.sel()):
-                paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
+    def insert_wrapped_text(self, edit, paragraphs, line_wrapper_type, cursor_original_positions):
+        offsets = []
+        after_wrap       = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
+        break_long_words = self.view_settings.get('WrapPlus.break_long_words', False)
+        break_on_hyphens = self.view_settings.get('WrapPlus.break_on_hyphens', False)
 
-                wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
-                wrapper.width = self._width
-                wrapper.expand_tabs = False
+        # Use view selections to handle shifts from the replace() command.
+        self.view.sel().clear()
+        for region, lines, comment_prefix in paragraphs:
+            self.view.sel().add(region)
 
-                initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(
-                    paragraph_region, paragraph_lines, required_comment_prefix)
+        # Regions fetched from view.sel() will shift appropriately with
+        # the calls to replace().
+        for index, selection in enumerate(self.view.sel()):
+            paragraph_region, paragraph_lines, required_comment_prefix = paragraphs[index]
 
-                wrapped_text = line_wrapper_type(paragraph_lines)
-                original_text = self.view.substr(selection)
-                current_cursor = cursor_original_positions[index]
-                log(2, 'wrapped_text len', len(wrapped_text))
-                log(2, 'original_text len', len(original_text))
+            wrapper = textwrap.TextWrapper(break_long_words=break_long_words, break_on_hyphens=break_on_hyphens)
+            wrapper.width = self._width
+            wrapper.expand_tabs = False
 
-                if original_text != wrapped_text:
+            initial_indent, subsequent_indent, paragraph_lines = self._extract_prefix(
+                paragraph_region, paragraph_lines, required_comment_prefix)
 
-                    while True:
-                        word_region = self.view.word(current_cursor)
-                        actual_word = self.view.substr(word_region).strip(' ')
-                        log(2, 'current_cursor', current_cursor )
-                        log(2, 'actual_word %r' % actual_word)
+            wrapped_text = line_wrapper_type(paragraph_lines, initial_indent, subsequent_indent, wrapper)
+            original_text = self.view.substr(selection)
+            current_cursor = cursor_original_positions[index]
+            log(2, 'wrapped_text len', len(wrapped_text))
+            log(2, 'original_text len', len(original_text))
 
-                        if current_cursor < 1 or not spaces_pattern.match(actual_word):
-                            break
-                        current_cursor -= 1
+            if original_text != wrapped_text:
 
-                    cut_original_text = self.view.substr( sublime.Region( selection.begin(), word_region.end() ) )
-                    distance_word_end = current_cursor - word_region.begin()
-                    log(2, 'distance_word_end', distance_word_end )
+                while True:
+                    word_region = self.view.word(current_cursor)
+                    actual_word = self.view.substr(word_region).strip(' ')
+                    log(2, 'current_cursor', current_cursor )
+                    log(2, 'actual_word %r' % actual_word)
 
-                    wrapped_text_difference = abs( len(original_text.rstrip(' ')) - len(wrapped_text) ) + 1
-                    log(2, 'wrapped_text_difference', wrapped_text_difference )
+                    if current_cursor < 1 or not spaces_pattern.match(actual_word):
+                        break
+                    current_cursor -= 1
 
-                    self.view.replace(edit, selection, wrapped_text)
-                    replaced_region = sublime.Region( selection.begin(), word_region.end() + wrapped_text_difference )
-                    cut_replaced_text = self.view.substr( replaced_region )
-                    last_position = cut_replaced_text.rfind( actual_word )
-                    log(2, 'last_position', last_position)
+                cut_original_text = self.view.substr( sublime.Region( selection.begin(), word_region.end() ) )
+                distance_word_end = current_cursor - word_region.begin()
+                log(2, 'distance_word_end', distance_word_end )
 
-                    if last_position > -1:
-                        actual_position = selection.begin() + last_position + distance_word_end
-                        offset = actual_position - cursor_original_positions[index]
-                        log(2, 'offset', offset )
-                        log(2, 'actual_position', actual_position )
-                        offsets.append( offset )
+                wrapped_text_difference = abs( len(original_text.rstrip(' ')) - len(wrapped_text) ) + 1
+                log(2, 'wrapped_text_difference', wrapped_text_difference )
 
-                    else:
-                        # fallback to the original heuristic if the word is not found
-                        spaces_count_original = len( [char for char in cut_original_text if spaces_pattern.match(char)] )
-                        spaces_count_wrapped = len( [char for char in cut_replaced_text if spaces_pattern.match(char)] )
-                        log(2, 'spaces_count_original', spaces_count_original)
-                        log(2, 'spaces_count_wrapped', spaces_count_wrapped)
+                self.view.replace(edit, selection, wrapped_text)
+                replaced_region = sublime.Region( selection.begin(), word_region.end() + wrapped_text_difference )
+                cut_replaced_text = self.view.substr( replaced_region )
+                last_position = cut_replaced_text.rfind( actual_word )
+                log(2, 'last_position', last_position)
 
-                        added_spaces_count = spaces_count_wrapped - spaces_count_original
-                        log(2, 'added_spaces_count', added_spaces_count)
-                        offsets.append(added_spaces_count)
-
-                    log(2, 'cut_original_text %r' % cut_original_text)
-                    log(2, 'cut_replaced_text %r' % cut_replaced_text)
-                    log(2, 'replaced text not the same!')
+                if last_position > -1:
+                    actual_position = selection.begin() + last_position + distance_word_end
+                    offset = actual_position - cursor_original_positions[index]
+                    log(2, 'offset', offset )
+                    log(2, 'actual_position', actual_position )
+                    offsets.append( offset )
 
                 else:
-                    offsets.append(0)
-                    log(2, 'replaced text is the same')
+                    # fallback to the original heuristic if the word is not found
+                    spaces_count_original = len( [char for char in cut_original_text if spaces_pattern.match(char)] )
+                    spaces_count_wrapped = len( [char for char in cut_replaced_text if spaces_pattern.match(char)] )
+                    log(2, 'spaces_count_original', spaces_count_original)
+                    log(2, 'spaces_count_wrapped', spaces_count_wrapped)
 
-            if after_wrap == "cursor_below":
-                self.move_cursor_below_the_last_paragraph()
+                    added_spaces_count = spaces_count_wrapped - spaces_count_original
+                    log(2, 'added_spaces_count', added_spaces_count)
+                    offsets.append(added_spaces_count)
+
+                log(2, 'cut_original_text %r' % cut_original_text)
+                log(2, 'cut_replaced_text %r' % cut_replaced_text)
+                log(2, 'replaced text not the same!')
 
             else:
-                self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
+                offsets.append(0)
+                log(2, 'replaced text is the same')
+
+        if after_wrap == "cursor_below":
+            self.move_cursor_below_the_last_paragraph()
+
+        else:
+            self.move_the_cursor_to_the_original_position(cursor_original_positions, offsets)
 
     def move_the_cursor_to_the_original_position(self, cursor_original_positions, offsets):
         self.view.sel().clear()
