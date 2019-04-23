@@ -82,10 +82,11 @@ class TestWrap(unittest.TestCase):
             sel.add(pos)
             while pos < view.size() - rel_end:
                 view.run_command('wrap_lines_plus')
-                # Assume it advances the cursor past the wrapped section.
                 next_pos = view.sel()[0].a
                 if next_pos < view.size() - rel_end:
-                    self.assertGreater(next_pos, pos)
+                    self.assertGreater(next_pos, pos,
+                        'The cursor did not advanced up to the end of the file!\n'
+                        + view.substr(sublime.Region(0, view.size())))
                 pos = next_pos
 
     def _tagged_regions(self, view):
