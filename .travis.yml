@@ -52,7 +52,7 @@ install:
 
 script:
     # run tests with test coverage report
-    - sh travis.sh run_tests --coverage
+    - sh travis.sh run_tests --coverage; sh travis.sh show_full_sublime_text_console $?;
 
     # testing syntax_test files
     # - sh travis.sh run_syntax_tests
