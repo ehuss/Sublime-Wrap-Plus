@@ -826,13 +826,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             if after_wrap == "cursor_below":
                 self.move_cursor_below_the_last_paragraph()
 
-            if after_wrap == "cursor_stay":
-                self.move_the_cursor_to_the_original_position( new_positions )
+            if new_positions:
+                if after_wrap == "cursor_stay":
+                    self.move_the_cursor_to_the_original_position( new_positions )
 
-            if has_trailing_whitespace:
-                last_position = new_positions[-1]
-                self.view.insert( edit, last_position, " " )
-
+                if has_trailing_whitespace:
+                    last_position = new_positions[-1]
+                    self.view.insert( edit, last_position, " " )
         else:
             if after_wrap == "cursor_below":
                 self.move_cursor_below_the_last_paragraph()
