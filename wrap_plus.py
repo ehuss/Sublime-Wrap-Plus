@@ -811,7 +811,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             has_trailing_whitespace = possible_last_space \
                     and not not spaces_pattern.match(possible_last_space) \
                     and possible_last_space[-1] == '\n'
-            log(1, 'possible_last_space %r' % possible_last_space, 'has_trailing_whitespace', has_trailing_whitespace)
+            log(2, 'possible_last_space %r' % possible_last_space, 'has_trailing_whitespace', has_trailing_whitespace)
 
             for selection in selections:
                 log(2, 'examine %r', selection)
