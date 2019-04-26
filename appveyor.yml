@@ -6,7 +6,7 @@ environment:
 
 
 install:
-    - ps: appveyor DownloadFile "https://raw.githubusercontent.com/evandroforks/UnitTesting/master/sbin/appveyor.ps1"
+    - ps: appveyor DownloadFile "https://raw.githubusercontent.com/evandrocoan/UnitTesting/master/sbin/appveyor.ps1"
     - ps: .\appveyor.ps1 "bootstrap" -verbose
     - ps: pip install --disable-pip-version-check coverage codacy-coverage
 

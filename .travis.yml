@@ -20,7 +20,7 @@ matrix:
 
 
 before_install:
-    - curl -OL https://raw.githubusercontent.com/evandroforks/UnitTesting/master/sbin/travis.sh
+    - curl -OL https://raw.githubusercontent.com/evandrocoan/UnitTesting/master/sbin/travis.sh
 
     - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
             brew update;
