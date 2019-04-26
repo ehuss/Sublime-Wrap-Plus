@@ -773,6 +773,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         balance_characters_between_line_wraps  = self.view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = self.view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
 
+        after_wrap = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
         self.maximum_words_in_comma_separated_list = self.view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1
         self.maximum_items_in_comma_separated_list = self.view_settings.get('WrapPlus.semantic_maximum_items_in_comma_separated_list', 3) + 1
 
@@ -796,31 +797,48 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 return "".join( text )
 
         else:
-
             def line_wrapper_type(paragraph_lines, initial_indent, subsequent_indent, wrapper):
                 return self.classic_wrap_text(wrapper, paragraph_lines, initial_indent, subsequent_indent)
 
         # paragraphs is a list of (region, lines, comment_prefix) tuples.
         paragraphs = []
+        has_trailing_whitespace = False
+        selections = self.view.sel()
 
-        for selection in self.view.sel():
-            log(2, 'examine %r', selection)
-            paragraphs.extend(self._find_paragraphs(selection))
+        if selections:
+            possible_last_region = self.view.word(selections[0])
+            possible_last_space = self.view.substr(possible_last_region)
+            has_trailing_whitespace = possible_last_space \
+                    and not not spaces_pattern.match(possible_last_space) \
+                    and possible_last_space[-1] == '\n'
+            log(1, 'possible_last_space %r' % possible_last_space, 'has_trailing_whitespace', has_trailing_whitespace)
+
+            for selection in selections:
+                log(2, 'examine %r', selection)
+                paragraphs.extend(self._find_paragraphs(selection))
 
         log(2, 'paragraphs is %r', paragraphs)
         log(4, "self._width: %s", self._width )
 
         if paragraphs:
-            self.insert_wrapped_text(edit, paragraphs, line_wrapper_type)
+            new_positions = self.insert_wrapped_text(edit, paragraphs, line_wrapper_type)
+
+            if after_wrap == "cursor_below":
+                self.move_cursor_below_the_last_paragraph()
+
+            if after_wrap == "cursor_stay":
+                self.move_the_cursor_to_the_original_position( new_positions )
+
+            if has_trailing_whitespace:
+                last_position = new_positions[-1]
+                self.view.insert( edit, last_position, " " )
+
         else:
-            after_wrap = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
             if after_wrap == "cursor_below":
                 self.move_cursor_below_the_last_paragraph()
 
     def insert_wrapped_text(self, edit, paragraphs, line_wrapper_type):
         new_positions = []
-
-        after_wrap       = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
         break_long_words = self.view_settings.get('WrapPlus.break_long_words', False)
         break_on_hyphens = self.view_settings.get('WrapPlus.break_on_hyphens', False)
 
@@ -896,11 +914,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 new_positions.append(cursor_position)
                 log(2, 'replaced text is the same')
 
-        if after_wrap == "cursor_below":
-            self.move_cursor_below_the_last_paragraph()
-
-        if after_wrap == "cursor_stay":
-            self.move_the_cursor_to_the_original_position(new_positions)
+        return new_positions
 
     def move_the_cursor_to_the_original_position(self, new_positions):
         self.view.sel().clear()
