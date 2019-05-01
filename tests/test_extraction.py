@@ -132,3 +132,12 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
                    ]
                    ```""" ), self.get_view_contents() )
 
+
+def load_tests(loader, standard_tests, pattern):
+    suite = unittest.TestSuite()
+    suite.addTest( PrefixStrippingViewUnitTests( 'test_markdown_triple_quotes_line_start' ) )
+    return suite
+
+# Comment this to run individual Unit Tests
+load_tests = None
+

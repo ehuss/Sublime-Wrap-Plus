@@ -347,3 +347,11 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
                     initial_text if skip_list else [initial_text], "", "", **kwargs ) ) )
 
 
+def load_tests(loader, standard_tests, pattern):
+    suite = unittest.TestSuite()
+    suite.addTest( SemanticLineWrapUnitTests( 'test_semantic_line_wrap_with_word_and_alpha_separator' ) )
+    return suite
+
+# Comment this to run individual Unit Tests
+load_tests = None
+

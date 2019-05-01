@@ -1,6 +1,7 @@
 {
     "tests_dir" : "tests",
     "pattern" : "test_*.py",
+    // "pattern" : "test_semantic_linefeed.py",
     "async": true,
     "deferred": false,
     "verbosity": 2,
