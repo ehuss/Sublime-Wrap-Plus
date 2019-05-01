@@ -261,7 +261,7 @@ blank_line_pattern = re.compile( r'({}$|{}(?:[%/].*)?$|(?:.*"""\\?$))'.format( f
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
 alpha_separator_characters = ('e', 'and')
-list_separator_characters = ( ",", ";") + alpha_separator_characters
+list_separator_characters = ( ",", ";")
 word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
 phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
 
@@ -1126,7 +1126,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if not balance_characters_between_line_wraps:
             new_text.append( initial_indent )
 
-        is_word_backboundary         = False
         is_allowed_to_wrap           = False
         is_possible_space            = False
         is_flushing_comma_list       = False
@@ -1158,7 +1157,6 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         for index, character in enumerate( text ):
             accumulated_line_length = len( accumulated_line )
             next_word_length        = self.peek_next_word_length( index, text )
-            is_word_backboundary    = self.is_word_separator_alpha(index, text)
 
             if is_possible_space and character in whitespace_character:
                 continue
@@ -1208,9 +1206,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 force_flush_accumulated_line()
 
             if accumulated_line_length > minimum_line_size:
-                is_allowed_to_wrap = is_word_backboundary and character.isalpha() or not is_word_backboundary and not character.isalpha()
+                is_allowed_to_wrap = True
 
-            if character in word_separator_characters and is_allowed_to_wrap \
+            if self.is_word_separator_alpha(index, text, word_separator_characters) and is_allowed_to_wrap \
                     or is_flushing_accumalated_line:
 
                 if index + 2 < text_length:
@@ -1220,7 +1218,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                         if not is_flushing_comma_list:
 
-                            if character in list_separator_characters:
+                            if self.is_word_separator_alpha(index, text, list_separator_characters):
                                 is_comma_separated_list, comma_list_end_point, comma_separated_list_items_count = \
                                         self.is_comma_separated_list( text, index )
 
@@ -1229,11 +1227,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                                 if comma_separated_list_items_count < self.maximum_items_in_comma_separated_list:
                                     is_comma_separated_list = False
 
-                            elif character in word_separator_characters:
+                            elif self.is_word_separator_alpha(index, text, word_separator_characters):
                                 comma_list_size = -1
                                 is_comma_separated_list = False
 
-                        log(4, "semantic_line_wrap, index: %3d, comma_list_size: %d (%d)", index, comma_list_size, self.maximum_items_in_comma_separated_list )
+                        log(4, "semantic_line_wrap, index: %3d, comma_list_size: %d (%d)",
+                                index, comma_list_size, self.maximum_items_in_comma_separated_list,
+                                'is_comma', is_comma_separated_list,
+                                'is_flushing', is_flushing_accumalated_line )
                         if ( is_comma_separated_list \
                                 and comma_list_size > -1 ) \
                                 and not is_flushing_comma_list \
@@ -1290,10 +1291,11 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return 0
 
-    def is_word_separator_alpha(self, index, text):
+    def is_word_separator_alpha(self, index, text, checklisk):
         character = text[index]
-        is_the_separator_end = False
+        is_word_backboundary = False
 
+        log(4, 'startswith', index, text[index:])
         for separator in alpha_separator_characters:
 
             if character == separator[-1]:
@@ -1302,16 +1304,22 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if index > separator_length:
 
                     for separator_index, separator_character in enumerate( reversed(separator) ):
+                        log(4, 'checking', separator_character, text[index - separator_index] )
 
                         if separator_character != text[index - separator_index]:
                             break
 
                     # This else is only run when the break statement is not raised or the list is empty!
                     else:
-                        return ( text[index-separator_length] in whitespace_character
-                                and text[index-separator_length-1] not in word_separator_characters )
+                        backboundary = (
+                                text[index-separator_length] in whitespace_character
+                                and text[index-separator_length-1] not in word_separator_characters
+                                and spaces_pattern.match( text[index+1] )
+                            )
+                        is_word_backboundary = backboundary and character.isalpha() or not backboundary and not character.isalpha()
 
-        return False
+        log(4, 'is_word_backboundary', is_word_backboundary )
+        return is_word_backboundary or character in checklisk
 
     def is_comma_separated_list(self, text, index):
         """
@@ -1332,11 +1340,9 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             character = text[index]
 
             is_character_whitespace = character in whitespace_character
-            is_word_backboundary = self.is_word_separator_alpha(index, text)
 
             if index < text_length:
-                is_word_separator_character = character in list_separator_characters and (
-                            is_word_backboundary and character.isalpha() or not is_word_backboundary and not character.isalpha() )
+                is_word_separator_character = self.is_word_separator_alpha(index, text, list_separator_characters)
 
                 next_character = text[index+1]
                 is_next_character_whitepace = next_character in whitespace_character

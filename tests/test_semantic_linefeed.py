@@ -315,7 +315,8 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
                 ],
                 "    For all other languages you still need to find out another source code f\n"
                 "    tool,\n"
-                "    which will be certainly limited and still need to configure all over again.", "    ", "    " )
+                "    which will be certainly limited and\n"
+                "    still need to configure all over again.", "    ", "    " )
 
     def test_semantic_line_wrap_with_0_items_list(self):
         self.wrap_plus.maximum_items_in_comma_separated_list = 3

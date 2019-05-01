@@ -24,6 +24,27 @@ DEFAULT_SETTINGS = {
     'WrapPlus.skip_range': False,  # Workaround for a bug.
 }
 
+SEMANTIC_SETTINGS = {
+    'word_wrap': False,
+    'wrap_width': 0,
+    'rulers': [],
+    'tab_size': 4,
+    'translate_tabs_to_spaces': False,
+    'WrapPlus.break_long_words': False,
+    'WrapPlus.break_on_hyphens': False,
+    'WrapPlus.after_wrap': 'cursor_below',
+    'WrapPlus.semantic_line_wrap': True,
+    "WrapPlus.semantic_balance_characters_between_line_wraps": True,
+    "WrapPlus.semantic_minimum_line_size_percent": 0.0,
+    "WrapPlus.semantic_wrap_extension_percent": 1.3,
+    "WrapPlus.semantic_maximum_items_in_comma_separated_list": 3,
+    "WrapPlus.semantic_maximum_words_in_comma_separated_list": 3,
+    "WrapPlus.semantic_disable_line_wrapping_by_maximum_width": False,
+    'WrapPlus.include_line_endings': 'auto',
+    'WrapPlus.wrap_width': UNSET,
+    'WrapPlus.skip_range': False,  # Workaround for a bug.
+}
+
 has_failures = []
 
 def make_wrap_tests():
@@ -138,12 +159,15 @@ def make_wrap_tests():
                     view_settings = view.settings()
                     bad_keys = set(settings.keys()) - set(DEFAULT_SETTINGS.keys())
                     self.assertEqual(bad_keys, set())
-                    for setting_name, value in DEFAULT_SETTINGS.items():
+
+                    settings_type = SEMANTIC_SETTINGS.items() if filename.startswith('semantic') else DEFAULT_SETTINGS.items()
+                    for setting_name, value in settings_type:
                         value = settings.get(setting_name, value)
                         if value == UNSET:
                             view_settings.erase(setting_name)
                         else:
                             view_settings.set(setting_name, value)
+
                     view.run_command('append', {'characters': contents})
                     f(view)
                     actual = view.substr(sublime.Region(0, view.size()))
@@ -169,8 +193,9 @@ make_wrap_tests()
 def load_tests(loader, standard_tests, pattern):
     suite = unittest.TestSuite()
     # See _NAME above to get the test class name pattern
-    suite.addTest( IntegrationTesttex001Tests( 'test_thing' ) )
-    suite.addTest( IntegrationTesttxt020Tests( 'test_thing' ) )
+    # suite.addTest( IntegrationTesttex001Tests( 'test_thing' ) )
+    # suite.addTest( IntegrationTesttxt020Tests( 'test_thing' ) )
+    suite.addTest( IntegrationSemantictesttex000Tests( 'test_thing' ) )
     return suite
 
 # Comment this to run individual Unit Tests
