@@ -277,6 +277,13 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
                 "E explicar como esta nova ferramenta difere das demais já existentes,\n"
                 "e qual as vantagens de ter uma ferramenta." )
 
+    def test_semantic_line_wrap_with_multiword_and_alpha_separator(self):
+        self.semantic_line_wrap( [ "E explicar como esta nova ferramenta difere das demais já existentes,",
+                "and", "qual as vantagens de ter uma ferramenta."],
+                "E explicar como esta nova ferramenta difere das demais já existentes,\n"
+                "and qual as vantagens de ter uma ferramenta."
+            )
+
     def test_semantic_line_wrap_with_long_word_at_comma_list_end(self):
         self.semantic_line_wrap( [ "For all other languages you still need to find out another source code "
                 "formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/"
