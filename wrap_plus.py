@@ -1107,7 +1107,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         log(4, "calculate_lines_count, lines_count:     %s", lines_count )
         return lines_count, new_line_length
 
-    def semantic_line_wrap(self, paragraph_lines, initial_indent, subsequent_indent,
+    def semantic_line_wrap(self, paragraph_lines, initial_indent="", subsequent_indent="",
                 minimum_line_size_percent=0.0, disable_line_wrapping_by_maximum_width=False,
                 balance_characters_between_line_wraps=False):
         """
