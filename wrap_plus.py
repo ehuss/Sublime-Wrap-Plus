@@ -258,7 +258,7 @@ blank_line_pattern = re.compile(r'(?:^[\t \{\}\n]*(?:````?.*)?)$|(?:.*"""\\?$)')
 
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
 whitespace_character = (" ", "\t")
-list_separator_characters = ( ",", ";" )
+list_separator_characters = ( ",", ";", 'e', 'and')
 word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
 phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
 
@@ -1123,6 +1123,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if not balance_characters_between_line_wraps:
             new_text.append( initial_indent )
 
+        is_word_backboundary         = False
         is_allowed_to_wrap           = False
         is_possible_space            = False
         is_flushing_comma_list       = False
@@ -1154,6 +1155,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         for index, character in enumerate( text ):
             accumulated_line_length = len( accumulated_line )
             next_word_length        = self.peek_next_word_length( index, text )
+
+            is_word_backboundary = text[index-1] in whitespace_character and text[index-2] not in word_separator_characters
 
             if is_possible_space and character in whitespace_character:
                 continue
@@ -1203,7 +1206,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 force_flush_accumulated_line()
 
             if accumulated_line_length > minimum_line_size:
-                is_allowed_to_wrap = True
+                is_allowed_to_wrap = is_word_backboundary and character.isalpha() or not is_word_backboundary and not character.isalpha()
 
             if character in word_separator_characters and is_allowed_to_wrap \
                     or is_flushing_accumalated_line:
@@ -1304,10 +1307,13 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             character = text[index]
 
             is_character_whitespace = character in whitespace_character
+            is_word_backboundary = text[index-1] in whitespace_character and text[index-2] not in word_separator_characters
 
             if index < text_length:
+                is_word_separator_character = character in list_separator_characters and (
+                            is_word_backboundary and character.isalpha() or not is_word_backboundary and not character.isalpha() )
+
                 next_character = text[index+1]
-                is_word_separator_character = character in list_separator_characters
                 is_next_character_whitepace = next_character in whitespace_character
 
             else:

@@ -271,6 +271,13 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
         self.semantic_line_wrap( "1 2 3 4. 5 6 7, 1, 2, 3, 4, 5. 6 7 8 9 1",
         "1 2 3 4.\n5 6 7,\n1, 2, 3, 4,\n5.\n6 7 8 9 1" )
 
+    def test_semantic_line_wrap_with_word_and_alpha_separator(self):
+        self.semantic_line_wrap( ["E explicar como esta nova ferramenta difere das demais já existentes,",
+                "e", "qual as vantagens de ter uma ferramenta."],
+                "E explicar como esta nova ferramenta difere das demais já existentes,\n"
+                "e qual as vantagens de ter uma ferramenta.",
+            skip_list=True )
+
     def test_semantic_line_wrap_with_long_word_at_comma_list_end(self):
         self.semantic_line_wrap( "For all other languages you still need to find out another source code "
                 "formatter tool, which will be certainly limited\\footnote{\\url{https://stackoverflow.com/"
@@ -320,12 +327,23 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
                 "% DEITEL(forminhas das boas práticas)).\n"
                 "% E deixa claro qual é o problema" )
 
-    def semantic_line_wrap(self, initial_text, goal):
+    def semantic_line_wrap(self, initial_text, goal, **kwargs):
+        """
+        Call the wrap_plus.semantic_line_wrap() function correctly.
 
-        if isinstance( initial_text, list ):
-            self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap( [initial_text[0]], initial_text[1], initial_text[2] ) ) )
+        `initial_text` is the text to apply the line wrapping
+        `goal` is the expected result of this test
+
+        Optionally, `initial_text` can be a list with 3 elements:
+        [initial_text, initial_indent, subsequent_indent]
+        """
+        skip_list = kwargs.pop('skip_list', False)
+        if isinstance( initial_text, list ) and not skip_list:
+            self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap(
+                    [initial_text[0]], initial_text[1], initial_text[2], **kwargs ) ) )
 
         else:
-            self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap( [initial_text], "", "" ) ) )
+            self.assertEqual( goal, "".join( self.wrap_plus.semantic_line_wrap(
+                    initial_text if skip_list else [initial_text], "", "", **kwargs ) ) )
 
 
