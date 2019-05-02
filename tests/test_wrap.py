@@ -84,9 +84,6 @@ def make_wrap_tests():
                         self.skipTest("An test has failed, skipping everything else!")
 
                 def test_thing(self):
-                    # Fix appveyor/travis thinking Sublime Text is not responding
-                    sys.stderr.write('%s. %s <%s>' % (self.index + 1, self.filename, self.syntax))
-                    sys.stderr.flush()
                     # Get individual test substring.
                     try:
                         end = self.starts[self.index + 1]
@@ -177,8 +174,16 @@ def make_wrap_tests():
                     window.focus_view(view)
                     window.run_command('close_file')
 
-            test_name = "".join( character for character in filename if character.isalpha() )
-            _NAME = "Integration{}{:03d}Tests".format( test_name.title(), index )
+            test_name = []
+            for character in filename:
+                if character.isalpha():
+                    test_name.append(character.lower())
+                else:
+                    test_name.append('_')
+
+            test_name = "".join(test_name)
+            _NAME = "integration_{}_{:d}_tests".format( test_name, index )
+
             IntegrationTests.__name__ = _NAME
             IntegrationTests.index = index
             IntegrationTests.start = start
@@ -193,9 +198,7 @@ make_wrap_tests()
 def load_tests(loader, standard_tests, pattern):
     suite = unittest.TestSuite()
     # See _NAME above to get the test class name pattern
-    # suite.addTest( IntegrationTesttex001Tests( 'test_thing' ) )
-    # suite.addTest( IntegrationTesttxt020Tests( 'test_thing' ) )
-    suite.addTest( IntegrationSemantictesttex000Tests( 'test_thing' ) )
+    suite.addTest( integration_test_txt_15_tests( 'test_thing' ) )
     return suite
 
 # Comment this to run individual Unit Tests
