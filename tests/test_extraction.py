@@ -30,6 +30,7 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
 
         # make sure we have a window to work with
         settings = sublime.load_settings("Preferences.sublime-settings")
+        self.close_windows_when_empty = settings.get("close_windows_when_empty", False)
         settings.set("close_windows_when_empty", False)
 
     def tearDown(self):
@@ -37,6 +38,10 @@ class PrefixStrippingViewUnitTests(unittest.TestCase):
             self.view.set_scratch(True)
             self.view.window().focus_view(self.view)
             self.view.window().run_command("close_file")
+
+        if self.close_windows_when_empty:
+            settings = sublime.load_settings("Preferences.sublime-settings")
+            settings.set("close_windows_when_empty", self.close_windows_when_empty)
 
     def setText(self, string, start_point=0):
         self.view.run_command("append", {"characters": wrap_text( string ) })

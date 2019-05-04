@@ -29,6 +29,8 @@ time_start = 0
 debug_enabled = 1
 # log = getLogger(debug_enabled, "wrap_plus", "wrapplus.txt", mode='w')
 log = getLogger(debug_enabled, "wrap_plus")
+# log = getLogger( debug_enabled, "wrap_plus", "wrapplus.txt" )
+# log = getLogger( debug_enabled, "wrap_plus", "wrapplus.txt", mode='w', time=False, msecs=False, tick=False )
 
 
 def plugin_unloaded():
@@ -276,7 +278,7 @@ rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
 
 new_paragraph_pattern_string = r'^[\t ]*' + OR(lettered_list, bullet_list, field_start, r'\{')
-log(4, "pattern " + new_paragraph_pattern_string)
+log(4, "pattern", new_paragraph_pattern_string)
 
 new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
 space_prefix_pattern = re.compile(r'^[ \t]*')
@@ -285,6 +287,7 @@ space_prefix_pattern = re.compile(r'^[ \t]*')
 fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)' + fields)  # rest, javadoc, jsdoc, etc
 spaces_pattern = re.compile(r'^\s*$')
+not_spaces_pattern = re.compile(r'[^ ]+')
 
 sep_chars = '!@#$%^&*=+`~\'\":;.,?_-'
 sep_line = r'[{sep}]+[(?: |\t){sep}]*'.format(sep=sep_chars)
@@ -945,6 +948,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         wrapper.initial_indent    = ""
         wrapper.subsequent_indent = subsequent_indent
         subsequent_indent_length  = len( subsequent_indent )
+        log( 4, 'text_lines', text_lines )
 
         # `decrement_percent` must be stronger than 1.1, i.e., 1.1*1.1 = 1.21*0.9 = 1.089 < 1.1
         # otherwise this could immediately fail as the last line length would already be
@@ -985,16 +989,16 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
                         break
 
-                log( 4, "\nShrinking the lines..." )
+                log.clean( 4, "" )
+                log( 4, "Shrinking the lines... '%s'", new_lines )
                 new_lines_backup = list( new_lines )
 
                 if self.is_there_line_over_the_wrap_limit( new_lines ):
-
                     decrement_percent = increment_percent * DECREMENT_VALUE
                     new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, decrement_percent )[0]
 
                     # Try to decrease the maximum width until create a trailing new line
-                    while ( self.is_there_line_over_the_wrap_limit(new_lines) \
+                    while ( self.is_there_line_over_the_wrap_limit( new_lines ) \
                             or self.is_line_bellow_half_wrap_limit( new_lines, subsequent_indent_length ) ) \
                                 and decrement_percent > 0.4:
 
@@ -1004,7 +1008,12 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 # If still there are lines over the limit, it means some line has some very big word
                 # or some very big indentation, then there is nothing we can do other than discard
                 # the results. Comment this out, and you will see the Unit Tests failing with it.
-                if self.is_there_line_over_the_wrap_limit( new_lines ):
+                lonely_word_line = self.is_there_lonely_word_line( new_lines )
+
+                if lonely_word_line:
+                    new_lines = self._split_lines( wrapper, [text_lines[index]], self._width, lonely_word_line )[0]
+
+                elif self.is_there_line_over_the_wrap_limit( new_lines ):
                     new_lines = new_lines_backup
 
             if index < 1:
@@ -1035,6 +1044,34 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return False
 
+    def is_there_lonely_word_line(self, new_lines):
+        """
+            Check whether there is some line with a single big word only.
+
+            If so, it means, we must to stop wrapping with traditional line balancing algorithm.
+        """
+        for new_line in new_lines:
+            longest = -1
+            line_length = len( new_line )
+            line_percent_size = math.ceil( line_length / self._width )
+
+            for match in not_spaces_pattern.finditer( new_line ):
+                start, end = match.span()
+                length = end - start
+
+                if length > longest:
+                    longest = length
+
+            new_width = 0.95 if longest > self._width else line_percent_size
+            line_limit = self._width * 0.8
+            log( 4, 'line_percent_size', line_percent_size, 'line_length', line_length,
+                    'longest', longest, 'new_width', new_width, 'line_limit', line_limit )
+
+            if longest > line_limit:
+                return new_width
+
+        return False
+
     def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
         """
             (input)  text_lines: ['    This is my very long line which will wrap near its end,\n']
@@ -1058,13 +1095,14 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 else:
                     break
 
-            log( 4, "maximum_line_width %d new_width %d (%f)", maximum_line_width, math.ceil( new_line_length * middle_of_the_line_increment_percent ), middle_of_the_line_increment_percent )
-            wrapper.width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
+            new_width = math.ceil( new_line_length * middle_of_the_line_increment_percent )
+            log( 4, "maximum_line_width %d new_width %d (%f)", maximum_line_width, new_width, middle_of_the_line_increment_percent )
 
-            log( 4, "line " + line )
+            log( 4, "line %r", line )
+            wrapper.width = new_width
             wrapped_line  = wrapper.fill( line )
 
-            log( 4, "wrapped_line " + wrapped_line )
+            log( 4, "wrapped_line %r", wrapped_line )
             wrapped_lines = wrapped_line.split( "\n" )
 
             # Add again the removed `\n` character due the `split` statement
@@ -1079,6 +1117,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             new_lines.append( fixed_wrapped_lines )
 
+        log.clean("")
         log( 4, "new_lines %s", new_lines )
         return new_lines
 

@@ -136,6 +136,38 @@ class LineBalancingUnitTests(unittest.TestCase):
                 self.wrap_plus.balance_characters_between_line_wraps(
                 self.wrapper, input_text, "% ", "% " ) )
 
+    def test_balance_characters_with_verybig_word_on_line_at_100(self):
+        self._test_balance_characters_with_verybig_word_on_line_at(100)
+
+    def test_balance_characters_with_verybig_word_on_line_at_80(self):
+        self._test_balance_characters_with_verybig_word_on_line_at(80)
+
+    def _test_balance_characters_with_verybig_word_on_line_at(self, wrapsize):
+        self.wrap_plus._width = wrapsize
+        input_text = \
+        [
+            'Já que para compartilhar código e\n',
+            'trabalhar em times de forma eficiente,\n',
+            'é essential utilizar\\hyp{}se um sistema de versionamento\\footnote{\\url{http://www.codeservedcold.com/version-control-importance/}} que permita gerente de projetos e\n',
+            'os próprios programadores'
+        ]
+        expected_list = \
+        [
+            '',
+            'Já que para compartilhar código e\n',
+            '',
+            'trabalhar em times de forma eficiente,\n',
+            '',
+            'é essential utilizar\\hyp{}se um sistema de\n',
+            'versionamento\\footnote{\\url{http://www.codeservedcold.com/version-control-importance/}}\n',
+            'que permita gerente de projetos e\n',
+            '',
+            'os próprios programadores'
+        ]
+        self.assertEqual( expected_list,
+                self.wrap_plus.balance_characters_between_line_wraps(
+                self.wrapper, input_text, "", "" ) )
+
     def test_balance_characters_between_line_wraps_commented_line(self):
         indent = "%                                        "
         self.wrap_plus._width = 80
@@ -352,7 +384,10 @@ class SemanticLineWrapUnitTests(unittest.TestCase):
 
 def load_tests(loader, standard_tests, pattern):
     suite = unittest.TestSuite()
-    suite.addTest( SemanticLineWrapUnitTests( 'test_semantic_line_wrap_with_alpha_separator_and_brackets' ) )
+    # suite.addTest( SemanticLineWrapUnitTests( 'test_semantic_line_wrap_with_3_items_list' ) )
+    # suite.addTest( LineBalancingUnitTests( 'test_balance_characters_with_verybig_word_on_line_at_80' ) )
+    # suite.addTest( LineBalancingUnitTests( 'test_balance_characters_with_verybig_word_on_line_at_100' ) )
+    suite.addTest( LineBalancingUnitTests( 'test_balance_characters_between_line_wraps_with_long_subsequent_indentation' ) )
     return suite
 
 # Comment this to run individual Unit Tests

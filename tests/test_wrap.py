@@ -182,7 +182,7 @@ def make_wrap_tests():
                     test_name.append('_')
 
             test_name = "".join(test_name)
-            _NAME = "integration_{}_{:d}_tests".format( test_name, index )
+            _NAME = "integration_{}_{:02d}_tests".format( test_name, index )
 
             IntegrationTests.__name__ = _NAME
             IntegrationTests.index = index
@@ -198,7 +198,8 @@ make_wrap_tests()
 def load_tests(loader, standard_tests, pattern):
     suite = unittest.TestSuite()
     # See _NAME above to get the test class name pattern
-    suite.addTest( integration_test_txt_15_tests( 'test_thing' ) )
+    # suite.addTest( integration_test_txt_15_tests( 'test_thing' ) )
+    suite.addTest( integration_semantic_test_tex_02_tests( 'test_thing' ) )
     return suite
 
 # Comment this to run individual Unit Tests
