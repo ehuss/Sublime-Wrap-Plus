@@ -267,7 +267,7 @@ word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
 phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
 
 # This doesn't always work, but seems decent.
-numbered_list = r'(?:(?:([0-9#]+)[.)])+[\t ])'
+numbered_list = r'[\t ]*(?:(?:([0-9#]+)[.)])+[\t ])'
 numbered_list_pattern = re.compile(numbered_list)
 lettered_list = r'(?:[a-zA-Z][.)][\t ])'
 bullet_list = r'(?:[*+#-]+[\t ])'
