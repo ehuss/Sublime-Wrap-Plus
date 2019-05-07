@@ -51,7 +51,7 @@ def debug_start(enabled):
 
 def debug_end():
     if debug_enabled > 1:
-        log(1, 'Total time %.3f', time.time() - time_start)
+        log( 2, 'Total time %.3f', time.time() - time_start )
 
 
 class PrefixStrippingView(object):
@@ -324,35 +324,42 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         # in a loop over the input and also contains a loop over the input.
         # indent tracks whether we came from an indented line
         if limit == 0:
+            log( 2, 'limit', limit )
             return True
         regex_match = numbered_list_pattern.search(line)
         if regex_match and regex_match.group(1) == '1':
+            log( 2, 'regex_match %r', regex_match.group(1), '%r' % line )
             return True
         prev_line_region, prev_line = self._strip_view.prev_line(line_region)
         if prev_line_region is None:
+            log( 2, 'prev_line_region', prev_line_region, 'prev_line %r' % prev_line )
             return not indent
         if self._is_paragraph_break(prev_line_region, prev_line):
+            log( 2, '_is_paragraph_break', self._is_paragraph_break(prev_line_region, prev_line) )
             return not indent
         if new_paragraph_pattern.match(prev_line):
+            log( 2, 'new_paragraph_pattern', new_paragraph_pattern.match(prev_line), '%r' % prev_line )
             return not indent
         if prev_line[0] == ' ' or prev_line[0] == '\t':
-            # prev_line might be a numbered list or a normal paragraph
+            log( 2, 'prev_line might be a numbered list or a normal paragraph: %r', prev_line )
             return self._is_real_numbered_list(prev_line_region, prev_line, limit - 1, indent=True)
         if numbered_list_pattern.match(prev_line):
+            log( 2, 'numbered_list_pattern.match(prev_line)', numbered_list_pattern.match(prev_line).group(0), '%r' % prev_line )
             return self._is_real_numbered_list(prev_line_region, prev_line, limit - 1)
-        return False  # previous line appears to be a normal paragraph
+        log( 2, 'previous line appears to be a normal paragraph: %r', line )
+        return False
 
     def _is_paragraph_start(self, line_region, line):
         # Certain patterns at the beginning of the line indicate this is the
         # beginning of a paragraph.
         if new_paragraph_pattern.match(line):
-            log(2, 'is not a new paragraph')
+            log( 2, 'is not a new paragraph %r', line )
             return True
         if numbered_list_pattern.match(line):
             result = self._is_real_numbered_list(line_region, line)
-            log(2, 'is %sa paragraph continuation', 'not ' if result else '')
+            log( 2, 'is %sa paragraph continuation', 'not ' if result else '', '%r' % line )
             return result
-        log(2, 'is not a paragraph')
+        log( 2, 'is not a paragraph %r', line )
         return False
 
     def _is_paragraph_break(self, line_region, line, pure=False):
@@ -363,6 +370,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         if self._is_blank_line(line): return True
         scope_name = self.view.scope_name(line_region.begin())
         log(2, 'scope_name=%r %r line=%r', scope_name, line_region, line)
+
         if 'heading' in scope_name:
             log(2, "'heading' in scope_name")
             return True
