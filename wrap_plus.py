@@ -1128,7 +1128,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
             new_lines.append( fixed_wrapped_lines )
 
-        log.clean("")
+        log.clean(4, "")
         log( 4, "new_lines %s", new_lines )
         return new_lines
 
