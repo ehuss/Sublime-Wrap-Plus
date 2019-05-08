@@ -276,7 +276,8 @@ latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*T
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
 
-new_paragraph_pattern_string = r'^[\t ]*' + OR(lettered_list, bullet_list, field_start, r'\{')
+start_line_block =  r'(?:\{|\})'
+new_paragraph_pattern_string = r'^[\t ]*' + OR(lettered_list, bullet_list, field_start, start_line_block)
 log(4, "pattern", new_paragraph_pattern_string)
 
 new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
@@ -492,7 +493,10 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if is_empty:
                     log(2, 'empty sel on paragraph break %r', current_line,)
                     return []
-                current_line_region, current_line = view.next_line(current_line_region)
+                new_current_line_region, new_current_line = view.next_line(current_line_region)
+                log( 2, 'current_line_region', new_current_line_region, 'current_line', new_current_line )
+                if new_current_line is None: break
+                current_line_region, current_line = new_current_line_region, new_current_line
 
             paragraph_start_pt = current_line_region.begin()
             paragraph_end_pt = current_line_region.end()
@@ -1357,7 +1361,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                         backboundary = (
                                 text[index-separator_length] in whitespace_character
                                 and text[index-separator_length-1] not in word_separator_characters
-                                and not not spaces_pattern.match( text[index+1] )
+                                and index + 1 < len( text ) and not not spaces_pattern.match( text[index+1] )
                             )
                         is_word_backboundary = backboundary and character.isalpha() or not backboundary and not character.isalpha()
                         log( 4, separator, is_word_backboundary, backboundary )
