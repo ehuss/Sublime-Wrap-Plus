@@ -1055,16 +1055,19 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return False
 
-    def is_there_lonely_word_line(self, new_lines):
+    def is_there_lonely_word_line(self, new_lines, maximumwidth=None, limitpercent=None):
         """
             Check whether there is some line with a single big word only.
 
             If so, it means, we must to stop wrapping with traditional line balancing algorithm.
         """
+        limitpercent = limitpercent if limitpercent else 0.8
+        maximumwidth = maximumwidth if maximumwidth else self._width
+
         for new_line in new_lines:
             longest = -1
             line_length = len( new_line )
-            line_percent_size = math.ceil( line_length / self._width )
+            line_percent_size = math.ceil( line_length / maximumwidth )
 
             for match in not_spaces_pattern.finditer( new_line ):
                 start, end = match.span()
@@ -1073,8 +1076,8 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if length > longest:
                     longest = length
 
-            new_width = 0.95 if longest > self._width else line_percent_size
-            line_limit = self._width * 0.8
+            new_width = 0.95 if longest > maximumwidth else line_percent_size
+            line_limit = maximumwidth * limitpercent
             log( 4, 'line_percent_size', line_percent_size, 'line_length', line_length,
                     'longest', longest, 'new_width', new_width, 'line_limit', line_limit )
 
