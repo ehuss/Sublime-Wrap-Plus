@@ -1086,6 +1086,30 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         return False
 
+    def is_there_big_word_on_line(self, line, new_width):
+        """
+            Check whether there is some big word on the line.
+
+            If so, returns the `new_width` properly fixed for wrapping.fill()
+        """
+        longest = -1
+        wordlimit = new_width * 0.5
+
+        for match in not_spaces_pattern.finditer( line ):
+            start, end = match.span()
+            length = end - start
+
+            if length > longest:
+                longest = length
+
+        log( 4, 'longest', longest, 'wordlimit', wordlimit, 'new_width', new_width )
+        if longest > wordlimit:
+            new_width = new_width + wordlimit * 0.1
+            log( 4, 'new_width', new_width )
+            return new_width
+
+        return new_width
+
     def _split_lines(self, wrapper, text_lines, maximum_line_width, middle_of_the_line_increment_percent=1):
         """
             (input)  text_lines: ['    This is my very long line which will wrap near its end,\n']
@@ -1113,7 +1137,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             log( 4, "maximum_line_width %d new_width %d (%f)", maximum_line_width, new_width, middle_of_the_line_increment_percent )
 
             log( 4, "line %r", line )
-            wrapper.width = new_width
+            wrapper.width = self.is_there_big_word_on_line( line, new_width )
             wrapped_line  = wrapper.fill( line )
 
             log( 4, "wrapped_line %r", wrapped_line )
