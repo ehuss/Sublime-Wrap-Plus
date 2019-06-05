@@ -1076,14 +1076,17 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
                 if length > longest:
                     longest = length
 
-            new_width = 0.95 if longest > maximumwidth else line_percent_size
+            percentwidth = 0.95 if longest > maximumwidth else line_percent_size
             line_limit = maximumwidth * limitpercent
             log( 4, 'line_percent_size', line_percent_size, 'line_length', line_length,
-                    'longest', longest, 'new_width', new_width, 'line_limit', line_limit )
+                    'longest', longest, 'percentwidth', percentwidth, 'line_limit', line_limit,
+                    'new_line', new_line )
 
             if longest > line_limit:
-                return new_width
+                log( 4, 'TRUE, percentwidth', percentwidth )
+                return percentwidth
 
+        log( 4, 'FALSE' )
         return False
 
     def is_there_big_word_on_line(self, line, new_width):
@@ -1116,6 +1119,7 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
             (output) new_lines:  [['    This is my very long line\n', '    which will wrap near its\n', '    end,\n']]
         """
         new_lines = []
+        log( 4, 'text_lines', text_lines )
 
         initial_indent    = wrapper.initial_indent
         subsequent_indent = wrapper.subsequent_indent
