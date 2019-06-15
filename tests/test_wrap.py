@@ -45,6 +45,27 @@ SEMANTIC_SETTINGS = {
     'WrapPlus.skip_range': False,  # Workaround for a bug.
 }
 
+SEMANTIC_SETTINGS_80 = {
+    'word_wrap': False,
+    'wrap_width': 0,
+    'rulers': [],
+    'tab_size': 4,
+    'translate_tabs_to_spaces': False,
+    'WrapPlus.break_long_words': False,
+    'WrapPlus.break_on_hyphens': False,
+    'WrapPlus.after_wrap': 'cursor_below',
+    'WrapPlus.semantic_line_wrap': True,
+    "WrapPlus.semantic_balance_characters_between_line_wraps": True,
+    "WrapPlus.semantic_minimum_line_size_percent": 0.0,
+    "WrapPlus.semantic_wrap_extension_percent": 1.2,
+    "WrapPlus.semantic_maximum_items_in_comma_separated_list": 1,
+    "WrapPlus.semantic_maximum_words_in_comma_separated_list": 3,
+    "WrapPlus.semantic_disable_line_wrapping_by_maximum_width": False,
+    'WrapPlus.include_line_endings': 'auto',
+    'WrapPlus.wrap_width': 80,
+    'WrapPlus.skip_range': False,  # Workaround for a bug.
+}
+
 has_failures = []
 
 def make_wrap_tests():
@@ -157,7 +178,15 @@ def make_wrap_tests():
                     bad_keys = set(settings.keys()) - set(DEFAULT_SETTINGS.keys())
                     self.assertEqual(bad_keys, set())
 
-                    settings_type = SEMANTIC_SETTINGS.items() if filename.startswith('semantic') else DEFAULT_SETTINGS.items()
+                    if filename.startswith('semantic_80'):
+                        settings_type = SEMANTIC_SETTINGS_80.items()
+
+                    elif filename.startswith('semantic'):
+                        settings_type = SEMANTIC_SETTINGS.items()
+
+                    else:
+                        settings_type = DEFAULT_SETTINGS.items()
+
                     for setting_name, value in settings_type:
                         value = settings.get(setting_name, value)
                         if value == UNSET:
@@ -176,7 +205,7 @@ def make_wrap_tests():
 
             test_name = []
             for character in filename:
-                if character.isalpha():
+                if character.isalnum():
                     test_name.append(character.lower())
                 else:
                     test_name.append('_')
@@ -200,7 +229,7 @@ def load_tests(loader, standard_tests, pattern):
     # See _NAME above to get the test class name pattern
     # suite.addTest( integration_test_txt_15_tests( 'test_thing' ) )
     # suite.addTest( integration_semantic_test_tex_02_tests( 'test_thing' ) )
-    suite.addTest( integration_semantic_test_tex_03_tests( 'test_thing' ) )
+    suite.addTest( integration_semantic_80_test_tex_00_tests( 'test_thing' ) )
     return suite
 
 # Comment this to run individual Unit Tests
