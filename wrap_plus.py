@@ -257,14 +257,9 @@ def CONCAT(*args):
 
 first_group = lambda x: r"(?:^[\t \{\}\n]%s(?:````?.*)?)" % x
 blank_line_pattern = re.compile( r'({}$|{}(?:[%/].*)?$|(?:.*"""\\?$)|.*\$\$.+)'.format( first_group('*'), first_group('+') ) )
-# print('pattern', blank_line_pattern.pattern)
-
 next_word_pattern = re.compile(r'\s+[^ ]+', re.MULTILINE)
-whitespace_character = (" ", "\t")
-alpha_separator_characters = ('e', 'and')
-list_separator_characters = ( ",", ";")
-word_separator_characters = ( ".", "?", "!", ":" ) + list_separator_characters
-phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
+space_prefix_pattern = re.compile(r'^[ \t]*')
+log( 4, "pattern blank_line_pattern", blank_line_pattern.pattern )
 
 # This doesn't always work, but seems decent.
 numbered_list = r'[\t ]*(?:(?:([0-9#]+)[.)])+[\t ])'
@@ -275,13 +270,6 @@ list_pattern = re.compile(r'^[ \t]*' + OR(numbered_list, lettered_list, bullet_l
 latex_hack = r'(?:\\)(?!,|;|&|%|text|emph|cite|\w?(page)?ref|url|footnote|(La)*TeX)'
 rest_directive = r'(?:\.\.)'
 field_start = r'(?:[:@])'  # rest, javadoc, jsdoc, etc.
-
-start_line_block =  r'(?:\{|\})'
-new_paragraph_pattern_string = r'^[\t ]*' + OR(lettered_list, bullet_list, field_start, start_line_block)
-log(4, "pattern", new_paragraph_pattern_string)
-
-new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
-space_prefix_pattern = re.compile(r'^[ \t]*')
 
 fields = OR(r'(?<!\\):[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)' + fields)  # rest, javadoc, jsdoc, etc
@@ -788,6 +776,26 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
         minimum_line_size_percent              = self.view_settings.get('WrapPlus.semantic_minimum_line_size_percent', 0.2)
         balance_characters_between_line_wraps  = self.view_settings.get('WrapPlus.semantic_balance_characters_between_line_wraps', False)
         disable_line_wrapping_by_maximum_width = self.view_settings.get('WrapPlus.semantic_disable_line_wrapping_by_maximum_width', False)
+
+        global whitespace_character
+        global alpha_separator_characters
+        global list_separator_characters
+        global word_separator_characters
+        global phrase_separator_characters
+
+        whitespace_character = self.view_settings.get( 'WrapPlus.whitespace_character', [" ", "\t"] )
+        alpha_separator_characters = self.view_settings.get( 'WrapPlus.alpha_separator_characters', ['e', 'and'] )
+        list_separator_characters = self.view_settings.get( 'WrapPlus.list_separator_characters', [ ",", ";"] )
+        word_separator_characters = self.view_settings.get( 'WrapPlus.word_separator_characters', [ ".", "?", "!", ":" ] )
+        word_separator_characters += list_separator_characters
+        phrase_separator_characters = set( word_separator_characters ) - set( list_separator_characters )
+
+        global start_line_block
+        global new_paragraph_pattern
+
+        start_line_block = self.view_settings.get( 'WrapPlus.start_line_block', r'(?:\{|\})' )
+        new_paragraph_pattern = re.compile( r'^[\t ]*' + OR( lettered_list, bullet_list, field_start, start_line_block ) )
+        log( 4, "pattern new_paragraph", new_paragraph_pattern.pattern )
 
         after_wrap = self.view_settings.get('WrapPlus.after_wrap', "cursor_below")
         self.maximum_words_in_comma_separated_list = self.view_settings.get('WrapPlus.semantic_maximum_words_in_comma_separated_list', 3) + 1

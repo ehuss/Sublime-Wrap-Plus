@@ -22,6 +22,12 @@
     // Set the wrap column, overriding Sublime's "wrap_width" if not 0.
     // "WrapPlus.wrap_width": 78
 
+    "WrapPlus.start_line_block": "(?:\\{|\\})",
+    "WrapPlus.whitespace_character": [" ", "\\t"],
+    "WrapPlus.alpha_separator_characters": ["e", "and", "or", "ou"],
+    "WrapPlus.list_separator_characters": [ ",", ";"],
+    "WrapPlus.word_separator_characters": [ ".", "?", "!", ":"],
+
     // If true, the semantic linewrap also know as semantic linefeed will be used.
     // See the following address for more descriptions:
     // http://rhodesmill.org/brandon/2012/one-sentence-per-line/
@@ -39,7 +45,7 @@
     // will wrap near its end,
     //
     // This is valid only when the `WrapPlus.semantic_line_wrap` above is enabled.
-    "WrapPlus.semantic_balance_characters_between_line_wraps": true,
+    "WrapPlus.semantic_balance_characters_between_line_wraps": false,
 
     // The minimum of the percentage of the current maximum line width a line can
     // have. For example, if you `wrap_width` is set to 100, and you set this to `0.2`,
