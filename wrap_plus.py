@@ -283,8 +283,7 @@ log(4, "pattern", new_paragraph_pattern_string)
 new_paragraph_pattern = re.compile(new_paragraph_pattern_string)
 space_prefix_pattern = re.compile(r'^[ \t]*')
 
-# XXX: Does not handle escaped colons in field name.
-fields = OR(r':[^:]+:', '@[a-zA-Z]+ ')
+fields = OR(r'(?<!\\):[^:]+:', '@[a-zA-Z]+ ')
 field_pattern = re.compile(r'^([ \t]*)' + fields)  # rest, javadoc, jsdoc, etc
 spaces_pattern = re.compile(r'^\s*$')
 not_spaces_pattern = re.compile(r'[^ ]+')
