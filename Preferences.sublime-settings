@@ -23,10 +23,10 @@
     // "WrapPlus.wrap_width": 78
 
     "WrapPlus.start_line_block": "(?:\\{|\\})",
-    "WrapPlus.whitespace_character": [" ", "\\t"],
-    "WrapPlus.alpha_separator_characters": ["e", "and", "or", "ou"],
-    "WrapPlus.list_separator_characters": [ ",", ";"],
-    "WrapPlus.word_separator_characters": [ ".", "?", "!", ":"],
+    "WrapPlus.whitespace_character": [ " ", "\\t" ],
+    "WrapPlus.alpha_separator_characters": [ "e", "and", "or", "ou" ],
+    "WrapPlus.list_separator_characters": [ ",", ";" ],
+    "WrapPlus.word_separator_characters": [ ".", "?", "!", ":" ],
 
     // If true, the semantic linewrap also know as semantic linefeed will be used.
     // See the following address for more descriptions:
