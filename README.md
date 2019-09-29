@@ -10,29 +10,28 @@
 
 Enhanced "wrap lines" command for Sublime Text 2 or 3.  This is for the *manual* hard line wrap command (<kbd>Alt</kbd><kbd>Q</kbd> in Windows and Linux, <kbd>Command</kbd><kbd>Alt</kbd><kbd>Q</kbd> in OS X).  It does not affect the automatic soft line wrapping.
 
-## Downloading
-The best way to download and install Sublime Wrap Plus is to use the [Package Control](https://packagecontrol.io) plugin.  If you do not already have it installed, it's really the best way to manage your packages.
 
-For users new to the package manager:
+## Installation
 
-* Go to https://packagecontrol.io/installation and install Package Control.
-* Restart Sublime Text.
+### By Package Control
 
-Install Sublime Wrap Plus:
+1. Download & Install `Sublime Text 3` (https://www.sublimetext.com/3)
+1. Go to the menu `Tools -> Install Package Control`, then,
+   wait few seconds until the `Package Control` installation finishes
+1. Go to the menu `Preferences -> Package Control`
+1. Type `Package Control Add Channel` on the opened quick panel and press <kbd>Enter</kbd>
+1. Then, input the following address and press <kbd>Enter</kbd>
+   ```
+   https://raw.githubusercontent.com/evandrocoan/StudioChannel/master/channel.json
+   ```
+1. Now, go again to the menu `Preferences -> Package Control`
+1. This time type `Package Control Install Package` on the opened quick panel and press <kbd>Enter</kbd>
+1. Then, search for `WrapPlus` and press <kbd>Enter</kbd>
 
-* Bring up the Command Palette (<kbd>Command</kbd><kbd>Shift</kbd><kbd>P</kbd> on OS X, <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>P</kbd> on Linux/Windows).
-* Select ***`Package Control: Install Package`*** and wait while Package Control fetches the latest package list.
-* Select Wrap Plus when the list appears.
+See also:
+1. [ITE - Integrated Toolset Environment](https://github.com/evandrocoan/ITE)
+1. [Package control docs](https://packagecontrol.io/docs/usage) for details.
 
-Package Control will handle automatically updating your packages.
-
-Alternatively, you can fetch from Github:
-
-```
-git clone git://github.com/ehuss/Sublime-Wrap-Plus.git
-```
-
-and place it in your Packages directory, which can be found by selecting **`Preferences → Browse Packages...`**.
 
 ## Configuring
 No need to configure anything.  By default it uses the default keystroke for wrap lines:
