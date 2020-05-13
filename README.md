@@ -67,12 +67,12 @@ There are a few settings you can tweak if you so desire.  You can set them in **
     </tr>
     <tr>
         <td><code>"WrapPlus.break_long_words"</code></td>
-        <td><code>true</code></td>
+        <td><code>false</code></td>
         <td>A single word that is longer than your wrap column will be forced to be break at the wrap column.</td>
     </tr>
     <tr>
         <td><code>"WrapPlus.break_on_hyphens"</code></td>
-        <td><code>true</code></td>
+        <td><code>false</code></td>
         <td>Whether or not to break lines on hyphens.</td>
     </tr>
     <tr>
