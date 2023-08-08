@@ -72,8 +72,8 @@ class PrefixStrippingView(object):
     def _is_c_comment(self, scope_name):
         if 'comment' not in scope_name and 'block' not in scope_name:
             return False
-        for start, end, disable_indent in self.bc:
-            if start == '/*' and end == '*/':
+        for c in self.bc:
+            if c[0] == '/*' and c[1] == '*/':
                 break
         else:
             return False
@@ -97,8 +97,8 @@ class PrefixStrippingView(object):
         # Determine if pt is inside a "line comment".
         # Only whitespace is allowed to the left of the line comment.
         # XXX: What is disable_indent?
-        for start, disable_indent in lc:
-            start = start.rstrip()
+        for c in lc:
+            start = c[0].rstrip()
             if line_strp.startswith(start):
                 ldiff = len(line) - len(line.lstrip())
                 p = line[:ldiff + len(start)]
