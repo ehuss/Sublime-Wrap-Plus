@@ -74,15 +74,14 @@ Packages/C++/C.sublime-syntax
 /* C comment style
 just writing stuff. */
 ---
-/* C comment style just writing stuff.*/
+/* C comment style just writing stuff. */
 ===
 /*
 C comment style.
 This probably shouldn't wrap with the opening tag, but it does in the C improved syntax. */
 ---
-/*
-C comment style. This probably shouldn't wrap with the opening tag, but it
-does in the C improved syntax.*/
+/* C comment style. This probably shouldn't wrap with the opening tag, but it
+does in the C improved syntax. */
 ===
 /*
 <START>C comment style.
