@@ -1,7 +1,6 @@
-from __future__ import print_function
 import sublime
 import sublime_plugin
-from . import py_textwrap as textwrap
+from .wrap import py_textwrap as textwrap
 import re
 import time
 try:
@@ -119,6 +118,12 @@ class PrefixStrippingView(object):
 
         scope_r = self.view.extract_scope(pt)
         scope_name = self.view.scope_name(pt)
+        if 'comment.block.documentation.summary.python' in scope_name:
+            # Recent versions of the Python syntax have a different scope for
+            # the first line of a docstring. This causes problems when
+            # wrapping the first line. This extends the scope to encompass the
+            # entire docstring. (I'm not sure why there is a summary scope.)
+            scope_r = self.view.expand_to_scope(pt, 'comment.block')
         debug('scope=%r range=%r', scope_name, scope_r)
 
         if self._is_c_comment(scope_name):
