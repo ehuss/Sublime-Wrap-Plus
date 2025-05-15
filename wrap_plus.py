@@ -510,20 +510,27 @@ class WrapLinesPlusCommand(sublime_plugin.TextCommand):
 
         :returns: The maximum line width.
         """
-        if width == 0 and self.view.settings().get('wrap_width'):
+
+        if width == 0:
             try:
                 width = int(self.view.settings().get('wrap_width'))
-            except TypeError:
+            except (TypeError, ValueError):
                 pass
 
-        if width == 0 and self.view.settings().get('rulers'):
-            # try and guess the wrap width from the ruler, if any
-            try:
-                width = int(self.view.settings().get('rulers')[0])
-            except ValueError:
-                pass
-            except TypeError:
-                pass
+        if width == 0:
+            # try and guess the wrap width from the first ruler, if any
+            rulers = self.view.settings().get('rulers')
+            if isinstance(rulers, list) and len(rulers) > 0:
+                # use first ruler
+                ruler = rulers[0]
+                # extract column from rulers like [80, "solid"]
+                if isinstance(ruler, list) and len(ruler) > 0:
+                    ruler = ruler[0]
+                # ensure integer
+                try:
+                    width = int(ruler)
+                except (TypeError, ValueError):
+                    pass
 
         width = self.view.settings().get('WrapPlus.wrap_width', width)
 
